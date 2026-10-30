@@ -2,13 +2,13 @@
 
 ## 1. 核心路径索引 (Key Paths)
 
-- **工程根目录**：[`/Users/albert/Documents/project/apps/alphagame-VibeHack`](file:///Users/albert/Documents/project/apps/alphagame-VibeHack)
-- **赛事完整手册**：[`docs/VIBE_HACKS_06_GUIDE.md`](file:///Users/albert/Documents/project/apps/alphagame-VibeHack/docs/VIBE_HACKS_06_GUIDE.md)
-- **工具 API 参考**：[`docs/TOOLS_API_REFERENCE.md`](file:///Users/albert/Documents/project/apps/alphagame-VibeHack/docs/TOOLS_API_REFERENCE.md)
-- **游戏策划案**：[`docs/GAME_DESIGN.md`](file:///Users/albert/Documents/project/apps/alphagame-VibeHack/docs/GAME_DESIGN.md)
-- **美术资产目录**：[`assets/art/`](file:///Users/albert/Documents/project/apps/alphagame-VibeHack/assets/art)（模型 `models/`、贴图 `textures/`、参考图 `concepts/`、界面 `ui/`）
-- **音频资产目录**：[`assets/audio/`](file:///Users/albert/Documents/project/apps/alphagame-VibeHack/assets/audio)（背景音乐 `bgm/`、音效 `sfx/`、语音 `voices/`）
-- **提示词目录**：[`assets/prompts/`](file:///Users/albert/Documents/project/apps/alphagame-VibeHack/assets/prompts)
+- **工程根目录**：[`/Users/albert/Documents/project/alphagame-VibeHack`](file:///Users/albert/Documents/project/alphagame-VibeHack)
+- **赛事完整手册**：[`docs/VIBE_HACKS_06_GUIDE.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/docs/VIBE_HACKS_06_GUIDE.md)
+- **工具 API 参考**：[`docs/TOOLS_API_REFERENCE.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/docs/TOOLS_API_REFERENCE.md)
+- **游戏策划案**：[`docs/GAME_DESIGN.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/docs/GAME_DESIGN.md)
+- **美术资产目录**：[`assets/art/`](file:///Users/albert/Documents/project/alphagame-VibeHack/assets/art)（模型 `models/`、贴图 `textures/`、参考图 `concepts/`、界面 `ui/`）
+- **音频资产目录**：[`assets/audio/`](file:///Users/albert/Documents/project/alphagame-VibeHack/assets/audio)（背景音乐 `bgm/`、音效 `sfx/`、语音 `voices/`）
+- **提示词目录**：[`assets/prompts/`](file:///Users/albert/Documents/project/alphagame-VibeHack/assets/prompts)
 
 ---
 
