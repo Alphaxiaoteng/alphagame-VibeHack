@@ -1,56 +1,29 @@
-# alphagame-VibeHack 智能体作业契约 (Agent Guidelines)
+# 项目智能体作业规则 (AGENTS.md)
 
-本文档定义当前项目（`alphagame-VibeHack`）内所有编码与生成智能体必须严格遵守的工程规范、美术资产统一纪律与安全红线。
+## 1. 核心路径索引 (Key Paths)
 
----
-
-## 1. 核心铁律：生成风格必须绝对统一 (Unified Aesthetic & Asset Consistency)
-
-在 3D 游戏开发中，资产风格割裂（如卡通积木人混搭写实逼真载具、低像素贴图混搭高光 PBR 材质）是破坏游戏品质与沉浸感的第一根因。**所有通过 AI 生成、调取或手写的资产，必须在同一美学定式下运作：**
-
-### 1.1 3D 美术风格定式统一
-- **单一视觉流派锁定**：在项目立项确定基调后（例如：**低多边形极简几何 Low-Poly** 或 **赛博朋克像素微光 Cyber-Voxel**），所有模型必须严格属于同一流派。
-  - **严禁混搭**：绝对禁止在 Low-Poly 场景中混入写实超高模、拟真肌肉或带复杂法线细节的外部模型。
-- **面数与拓扑规格统一**：
-  - 小型道具（宝箱、武器、金币）：500 ～ 2,000 三角面。
-  - 核心角色 / 载具：3,000 ～ 10,000 三角面。
-  - 场景建筑与地形块：2,000 ～ 15,000 三角面。
-  - Web 端实时帧率必须稳定维持在 60 FPS 以上。
-- **着色与光影统一**：场景材质与着色器逻辑统一（统一采用 Flat Shading 扁平着色，或统一采用统一 Roughness/Metallic 参数的 PBR 材质），禁止部分模型发高光、部分模型无光照。
-
-### 1.2 比例与世界尺度统一 (World Scale Standard)
-- **统一基准尺度**：引擎场景内以 **1 Unit = 1 米 (Meter)** 为绝对基准。
-- **核心实体比例参考**：
-  - 人形角色标准高度：`1.7m ~ 1.85m`。
-  - 门与通道高度：`2.2m ~ 2.5m`。
-  - 载具与障碍物严格依照角色比例缩放，严禁生成道具比角色还大数倍的失真现象。
-
-### 1.3 调色盘与材质质感统一 (Color Palette & Texture)
-- **色系阶梯约束**：全项目限制在统一的 5~8 色主色盘以内，避免色彩杂乱。
-- **贴图分辨率阶梯**：统一使用 512x512 或 1024x1024 贴图，贴图锐化度与噪点级别保持一致。
-
-### 1.4 音频与音效风格统一 (Audio Consistency)
-- **音乐调性**：BGM 风格与游戏主题强绑定（例如：合成器波 Synthwave 或 8-bit 复古芯片音乐），避免场景间风格剧烈冲突。
-- **音效质感**：交互音效（跳跃、打击、收集、UI 点击）统一采用相同采样率与空间混响感，严禁写实音效与卡通音效混杂。
-
-### 1.5 提示词配方与参数约束
-每次调用 `tripo make` 生成资产时，必须附加统一样式提示词与预设参数：
-```bash
-# 统一附加风格词：low poly, stylized, clean geometry, vibrant color palette
-tripo make "<主体描述>, low poly stylized, clean geometry, game asset" --for ar-web -o ./assets/art/models
-```
+- **工程根目录**：[`/Users/albert/Documents/project/apps/alphagame-VibeHack`](file:///Users/albert/Documents/project/apps/alphagame-VibeHack)
+- **赛事完整手册**：[`docs/VIBE_HACKS_06_GUIDE.md`](file:///Users/albert/Documents/project/apps/alphagame-VibeHack/docs/VIBE_HACKS_06_GUIDE.md)
+- **工具 API 参考**：[`docs/TOOLS_API_REFERENCE.md`](file:///Users/albert/Documents/project/apps/alphagame-VibeHack/docs/TOOLS_API_REFERENCE.md)
+- **游戏策划案**：[`docs/GAME_DESIGN.md`](file:///Users/albert/Documents/project/apps/alphagame-VibeHack/docs/GAME_DESIGN.md)
+- **美术资产目录**：[`assets/art/`](file:///Users/albert/Documents/project/apps/alphagame-VibeHack/assets/art)（模型 `models/`、贴图 `textures/`、参考图 `concepts/`、界面 `ui/`）
+- **音频资产目录**：[`assets/audio/`](file:///Users/albert/Documents/project/apps/alphagame-VibeHack/assets/audio)（背景音乐 `bgm/`、音效 `sfx/`、语音 `voices/`）
+- **提示词目录**：[`assets/prompts/`](file:///Users/albert/Documents/project/apps/alphagame-VibeHack/assets/prompts)
 
 ---
 
-## 2. 凭据防护与安全红线 (Security Guardrails)
+## 2. 防上下文污染规则 (Anti-Context Pollution)
 
-1. **零密钥泄露**：严禁在 Git 跟踪的任何代码、文档或脚本中硬编码任何 API Key（包含 Tripo、MiniMax、智谱、硅基流动等凭据）。
-2. **环境隔离规范**：所有 API Key 统一在本地 `.env.local` 中配置（已加入 `.gitignore`），代码中统一通过 `process.env.XXX` 读取。
-3. **不可逆指令禁止**：未经确认严禁执行破坏性操作或 `git push --force`。
+- **严禁全量长文本轰炸**：禁止向会话上下文中一次性倾倒大段代码、冗余文档或未剪裁的调试日志；必须按需定向切片读取。
+- **渐进式加载**：优先通过上述路径索引定位具体文件，单次读取控制在必要行数范围，杜绝盲目全局通扫。
+- **保持输出高信噪比**：终端命令输出必须限制截流（如 `head -n 50`），交付回复结论先行、直入主题。
 
 ---
 
-## 3. 极速冲刺与双重门禁 (Verification Protocol)
+## 3. 生成与开发要求 (Generation Guidelines)
 
-- **静态门禁**：修改代码后必须执行类型校验或编译构建（`tsc --noEmit` 或 `npm run build`），确保零语法与类型报错。
-- **运行时渲染门禁**：新增 3D 模型或界面后，必须在浏览器 WebGL 环境中真机预览，确认模型材质正常、无反向法线、无穿模与掉帧。
+- **生成风格统一**：
+  - 3D 模型风格统一（统一 Low-Poly / Stylized 等同一流派），模型面数与尺度比例（`1 Unit = 1m`）保持一致，禁止写实与卡通风格割裂混搭。
+  - 音频调性统一（BGM 与音效风格匹配当前游戏世界观设定）。
+- **零凭据泄露**：
+  - 严禁在代码与文档中硬编码任何 API Key，私密凭证统一在本地 `.env.local` 注入。
