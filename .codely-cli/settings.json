@@ -1,0 +1,14 @@
+{
+  "model": "codely-core",
+  "flashModel": "codely-flash",
+  "multimodalModel": "codely-vl",
+  "defaultAgentModel": "codely-core",
+  "mcpServers": {
+    "TJGenerators": {
+      "httpUrl": "https://ai-generator.tuanjie.cn/mcp"
+    },
+    "AssetStore": {
+      "httpUrl": "https://assetstore-mcp.u3d.cn/mcp"
+    }
+  }
+}

@@ -17,15 +17,16 @@
 
 ---
 
-## 核心文档索引
+## 核心文档索引 (全部归口于 docs/)
 
-- [项目智能体作业规则 (AGENTS.md)](AGENTS.md)
-- [游戏详细设计与开发规格 (docs/GAME_DESIGN.md)](docs/GAME_DESIGN.md)
-- [《查房》AI 详细开发说明 (午夜值班_AI开发说明.md)](午夜值班_AI开发说明.md)
-- [三阶段 AI 自动化开发提示词 (午夜值班_三阶段AI开发提示词.md)](午夜值班_三阶段AI开发提示词.md)
-- [开发与玩家验收规范 (midnight-game-qa/SKILL.md)](midnight-game-qa/SKILL.md)
-- [工具 API 调用参考 (docs/TOOLS_API_REFERENCE.md)](docs/TOOLS_API_REFERENCE.md)
-- [VibeHacks #06 赛事指南 (docs/VIBE_HACKS_06_GUIDE.md)](docs/VIBE_HACKS_06_GUIDE.md)
+- [智能体作业契约 (AGENTS.md)](AGENTS.md)
+- [《查房》游戏详细设计案 (docs/GAME_DESIGN.md)](docs/GAME_DESIGN.md)
+- [《查房》AI 详细开发说明 (docs/查房_AI开发说明.md)](docs/查房_AI开发说明.md)
+- [《查房》三阶段开发流水线提示词 (docs/查房_三阶段AI开发提示词.md)](docs/查房_三阶段AI开发提示词.md)
+- [《查房》玩法 20 秒速读 (docs/查房_玩法速读.md)](docs/查房_玩法速读.md)
+- [比赛规则一页速览 (docs/比赛规则_一页速览.md)](docs/比赛规则_一页速览.md)
+- [工具 API 调用参考手册 (docs/TOOLS_API_REFERENCE.md)](docs/TOOLS_API_REFERENCE.md)
+- [VibeHacks #06 赛事总览指南 (docs/VIBE_HACKS_06_GUIDE.md)](docs/VIBE_HACKS_06_GUIDE.md)
 
 ---
 

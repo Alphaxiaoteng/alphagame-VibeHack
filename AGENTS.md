@@ -4,9 +4,11 @@
 
 - **工程根目录**：[`/Users/albert/Documents/project/alphagame-VibeHack`](file:///Users/albert/Documents/project/alphagame-VibeHack)
 - **游戏策划案 (GDD)**：[`docs/GAME_DESIGN.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/docs/GAME_DESIGN.md)
-- **《查房》AI 详细开发说明（核心规格）**：[`午夜值班_AI开发说明.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/午夜值班_AI开发说明.md)
-- **《查房》三阶段开发流水线提示词**：[`午夜值班_三阶段AI开发提示词.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/午夜值班_三阶段AI开发提示词.md)
-- **开发与玩家验收规范 (Skill)**：[`midnight-game-qa/SKILL.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/midnight-game-qa/SKILL.md)
+- **《查房》AI 详细开发说明（核心规格）**：[`docs/查房_AI开发说明.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/docs/查房_AI开发说明.md)
+- **《查房》三阶段开发流水线提示词**：[`docs/查房_三阶段AI开发提示词.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/docs/查房_三阶段AI开发提示词.md)
+- **《查房》玩法 20 秒速读**：[`docs/查房_玩法速读.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/docs/查房_玩法速读.md)
+- **比赛规则一页速览**：[`docs/比赛规则_一页速览.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/docs/比赛规则_一页速览.md)
+- **开发与玩家验收规范 (Skill)**：[`.codely-cli/skills/midnight-game-qa/SKILL.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/.codely-cli/skills/midnight-game-qa/SKILL.md)
 - **工具 API 参考手册**：[`docs/TOOLS_API_REFERENCE.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/docs/TOOLS_API_REFERENCE.md)
 - **赛事完整手册**：[`docs/VIBE_HACKS_06_GUIDE.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/docs/VIBE_HACKS_06_GUIDE.md)
 - **美术资产目录**：[`assets/art/`](file:///Users/albert/Documents/project/alphagame-VibeHack/assets/art)（模型 `models/`、贴图 `textures/`、参考图 `concepts/`、界面 `ui/`）
