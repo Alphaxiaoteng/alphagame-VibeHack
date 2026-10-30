@@ -1,14 +1,14 @@
-# 项目智能体作业规则 (AGENTS.md)
+# 《查房》(Rounds) 智能体作业规则 (AGENTS.md)
 
 ## 1. 核心路径索引 (Key Paths)
 
 - **工程根目录**：[`/Users/albert/Documents/project/alphagame-VibeHack`](file:///Users/albert/Documents/project/alphagame-VibeHack)
-- **《午夜值班》AI 开发说明（核心规格）**：[`午夜值班_AI开发说明.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/午夜值班_AI开发说明.md)
-- **《午夜值班》玩法速读**：[`午夜值班_玩法速读.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/午夜值班_玩法速读.md)
-- **《午夜值班》三阶段开发提示词**：[`午夜值班_三阶段AI开发提示词.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/午夜值班_三阶段AI开发提示词.md)
+- **游戏策划案 (GDD)**：[`docs/GAME_DESIGN.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/docs/GAME_DESIGN.md)
+- **《查房》AI 详细开发说明（核心规格）**：[`午夜值班_AI开发说明.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/午夜值班_AI开发说明.md)
+- **《查房》三阶段开发流水线提示词**：[`午夜值班_三阶段AI开发提示词.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/午夜值班_三阶段AI开发提示词.md)
 - **开发与玩家验收规范 (Skill)**：[`midnight-game-qa/SKILL.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/midnight-game-qa/SKILL.md)
+- **工具 API 参考手册**：[`docs/TOOLS_API_REFERENCE.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/docs/TOOLS_API_REFERENCE.md)
 - **赛事完整手册**：[`docs/VIBE_HACKS_06_GUIDE.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/docs/VIBE_HACKS_06_GUIDE.md)
-- **工具 API 参考**：[`docs/TOOLS_API_REFERENCE.md`](file:///Users/albert/Documents/project/alphagame-VibeHack/docs/TOOLS_API_REFERENCE.md)
 - **美术资产目录**：[`assets/art/`](file:///Users/albert/Documents/project/alphagame-VibeHack/assets/art)（模型 `models/`、贴图 `textures/`、参考图 `concepts/`、界面 `ui/`）
 - **音频资产目录**：[`assets/audio/`](file:///Users/albert/Documents/project/alphagame-VibeHack/assets/audio)（背景音乐 `bgm/`、音效 `sfx/`、语音 `voices/`）
 - **提示词目录**：[`assets/prompts/`](file:///Users/albert/Documents/project/alphagame-VibeHack/assets/prompts)
@@ -26,8 +26,8 @@
 ## 3. 生成与凭据要求 (Generation & Credential Guidelines)
 
 - **生成风格统一**：
-  - 遵循《午夜值班》写实取向、明亮可读、气氛克制的 3D 医院美学，模型比例（`1 Unit = 1m`）与真实材质统一，禁止写实与卡通风格混搭。
-  - 音频调性统一（脚步声、巡逻节奏、广播音与紧张氛围音效）。
+  - 遵循《查房》写实取向、明亮可读、气氛克制的 3D 医院美学，模型比例（`1 Unit = 1m`）与真实材质统一，禁止写实与卡通风格割裂混搭。
+  - 音频调性统一（脚步声、巡逻节奏、广播音与冷峻压迫感氛围音效）。
 - **凭据双轨注入规范（严禁代码硬编码）**：
   - **专用 CLI 工具（如 Tripo CLI）**：使用官方受控凭据系统存储（如 `~/.tripo/config.json`，权限 `0600`，由 `tripo login` 隔离维护）。
   - **业务代码与运行时 API（如 硅基流动 / 智谱）**：通过本地项目环境文件 `.env.local`（已在 `.gitignore` 阻断提交）注入 `process.env`，绝不随 Git 仓库提交。

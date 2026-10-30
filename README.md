@@ -1,16 +1,36 @@
-# alphagame-VibeHack
+# 《查房》(Rounds)
 
-[VibeHacks #06](https://vibecafe.ai/hacks/6) 参赛工程骨架。
+> VibeHacks #06 (Vibe Coding for 3D 游戏世界) 参赛作品
 
-## 目录结构
+**一句话定位**：在主电源中断的公立医院躲避巡查值班员，利用三条不可逆的“值班指令”临时改写医院规则与路线，在回字形走廊中周旋并坚持存活 60 秒，最终冲向通电的安全门逃脱。
 
-- `assets/art/`：美术资产（模型 `models/`、贴图 `textures/`、参考图 `concepts/`、界面 `ui/`）
-- `assets/audio/`：音频资产（背景音乐 `bgm/`、音效 `sfx/`、角色语音 `voices/`）
-- `assets/prompts/`：资产生成与 LLM 提示词库
-- `docs/`：设计方案与文档
-- `src/`：业务源码
+---
 
-## 比赛规则合规说明
+## 游戏核心机制
 
-- 首个 commit 时间戳严格晚于 2026-10-30 18:00
-- 协作者已添加主办方账号 `@Glowin`
+- **目标**：存活 60 秒直至安全门通电亮起，亲自冲到门口获胜；被值班员碰到立即失败。
+- **三条值班指令（改写规则，承受代价）**：
+  1. `[1] 全院开灯`：看清出口路线与值班员走廊，代价是值班员视野同样扩大。
+  2. `[2] 封锁走廊`：防火门落下阻断追捕通道，代价是玩家也无法穿过。
+  3. `[3] 广播查房`：将病房灯光点亮引走值班员，代价是广播后值班员搜索范围与警觉度大幅提升。
+- **操作方式**：`WASD` 移动 · 按住 `Shift` 奔跑 · 鼠标右键拖动视角 · `1/2/3` 发动指令 · `Esc` 暂停 · `R` 重新开始。
+
+---
+
+## 核心文档索引
+
+- [项目智能体作业规则 (AGENTS.md)](AGENTS.md)
+- [游戏详细设计与开发规格 (docs/GAME_DESIGN.md)](docs/GAME_DESIGN.md)
+- [《查房》AI 详细开发说明 (午夜值班_AI开发说明.md)](午夜值班_AI开发说明.md)
+- [三阶段 AI 自动化开发提示词 (午夜值班_三阶段AI开发提示词.md)](午夜值班_三阶段AI开发提示词.md)
+- [开发与玩家验收规范 (midnight-game-qa/SKILL.md)](midnight-game-qa/SKILL.md)
+- [工具 API 调用参考 (docs/TOOLS_API_REFERENCE.md)](docs/TOOLS_API_REFERENCE.md)
+- [VibeHacks #06 赛事指南 (docs/VIBE_HACKS_06_GUIDE.md)](docs/VIBE_HACKS_06_GUIDE.md)
+
+---
+
+## 技术架构
+
+- **渲染引擎**：Three.js + TypeScript + Vite（纯前端 WebGL 单页，扫码即玩）
+- **3D 资产管线**：Tripo 3D 官方 CLI（模型、贴图、骨骼绑定）
+- **AI 动态注入**：硅基流动 SiliconFlow（`zai-org/GLM-5.3-Flash` 驱动 NPC 对白与关卡逻辑）
