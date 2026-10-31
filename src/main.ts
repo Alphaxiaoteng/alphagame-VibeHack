@@ -817,6 +817,23 @@ function boot(): void {
     }
   });
 
+  let mobileAutoFullscreenDone = false;
+  const tryAutoMobileFullscreen = (): void => {
+    if (!hasTouch || mobileAutoFullscreenDone) return;
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+      mobileAutoFullscreenDone = true;
+      document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(() => {
+        mobileAutoFullscreenDone = false;
+      });
+    }
+  };
+  // 手机端打开页面时尝试默认进入全屏；若浏览器需手势激活，则在首次触摸/点击时自动进入一次全屏
+  if (hasTouch) {
+    tryAutoMobileFullscreen();
+    window.addEventListener('touchend', tryAutoMobileFullscreen, { once: true, passive: true });
+    window.addEventListener('click', tryAutoMobileFullscreen, { once: true, capture: true });
+  }
+
   const unlockMenuBgm = (): void => {
     audio.unlock();
     if (game.phase === 'start') audio.startMenuBgm();
@@ -832,7 +849,8 @@ function boot(): void {
     });
   };
   press(primary, () => {
-    // 手机端不在点击开始/重来时强制触发浏览器原生全屏，避免弹出系统级「如需退出全屏模式…」长驻遮挡顶栏；玩家可按需点左上角「全屏」
+    // 手机端首次点击进入时确保默认开启全屏（仅自动触发一次，且已移除 setPointerCapture 防止系统提示条卡死）
+    tryAutoMobileFullscreen();
     if (game.phase === 'paused') resumeGame();
     else if (game.phase === 'start') startIntroSequence();
     else beginRound();
