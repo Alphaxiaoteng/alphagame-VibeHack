@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import './style.css';
 import { AudioEngine, VOICE_URLS } from './audio/audioEngine';
-import { COMMANDS, COMMAND_COOLDOWN, COMMAND_IDS, DOORS, EXIT_POINT, FURNITURE_RECTS, GUARD_RADIUS, PLAYER_RADIUS, TIME_LIMIT, WALKABLE_RECTS } from './core/config';
-import type { CommandId, DoorId, PlayerInput, Point } from './core/config';
+import { COMMANDS, COMMAND_COOLDOWN, COMMAND_IDS, DIFFICULTIES, DOORS, EXIT_POINT, FURNITURE_RECTS, GUARD_RADIUS, PLAYER_RADIUS, TIME_LIMIT, WALKABLE_RECTS } from './core/config';
+import type { CommandId, DifficultyId, DoorId, PlayerInput, Point } from './core/config';
 import { dangerWindow, pauseAfterBackground } from './core/lifecycle';
 import { appendRecord, createLocalStore, formatRecord, formatSummary, readRecords } from './core/gameLog';
 import type { RoundRecord } from './core/gameLog';
@@ -121,6 +121,7 @@ function boot(): void {
   let contextLost = false;
   let hiddenAt: number | null = null;
   let resumeNote = '';
+  let unlockNotice: string | null = null;
   let previousGuardMode = game.guard.mode;
   let audioWarned = false;
   let focusWarned = false;
@@ -151,6 +152,7 @@ function boot(): void {
   function beginRound(): void {
     clearInput();
     resumeNote = '';
+    unlockNotice = null;
     game.start();
     audio.startRound(); // 必须直接在用户手势内 resume AudioContext
     follow.reset();
@@ -220,8 +222,56 @@ function boot(): void {
   const logStore = createLocalStore();
   let logRecords: RoundRecord[] = readRecords(logStore);
 
+  // ── 难度：三档层层进阶，通关解锁下一档 ─────────────────────
+  const UNLOCK_KEY = 'rounds-difficulty-v1';
+  const nextOf: Record<DifficultyId, DifficultyId | null> = { intern: 'standard', standard: 'graveyard', graveyard: null };
+  const loadUnlocked = (): DifficultyId[] => {
+    try {
+      const raw = window.localStorage.getItem(UNLOCK_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (!Array.isArray(parsed)) return ['intern', 'standard'];
+      const valid = parsed.filter((id): id is DifficultyId => id === 'intern' || id === 'standard' || id === 'graveyard');
+      return valid.length > 0 ? valid : ['intern', 'standard'];
+    } catch {
+      return ['intern', 'standard'];
+    }
+  };
+  let unlockedDifficulties = loadUnlocked();
+  let selectedDifficulty: DifficultyId = unlockedDifficulties.includes('standard') ? 'standard' : 'intern';
+
+  const difficultyCards = [...document.querySelectorAll<HTMLButtonElement>('.difficulty-card')];
+  function renderDifficultyCards(): void {
+    for (const card of difficultyCards) {
+      const id = card.dataset.difficulty as DifficultyId;
+      card.dataset.selected = String(id === selectedDifficulty);
+      const locked = !unlockedDifficulties.includes(id);
+      if (locked) card.dataset.locked = 'true';
+      else delete card.dataset.locked;
+      card.disabled = locked || game.phase === 'playing' || game.phase === 'paused';
+    }
+  }
+  for (const card of difficultyCards) {
+    card.addEventListener('click', () => {
+      const id = card.dataset.difficulty as DifficultyId;
+      if (!unlockedDifficulties.includes(id) || game.phase === 'playing' || game.phase === 'paused') return;
+      selectedDifficulty = id;
+      game.setDifficulty(id);
+      renderDifficultyCards();
+      card.blur();
+    });
+  }
+
+  /** 通关当前难度：解锁下一档并持久化；返回解锁提示文案（无解锁返回 null）。 */
+  function clearDifficulty(id: DifficultyId): string | null {
+    const next = nextOf[id];
+    if (!next || unlockedDifficulties.includes(next)) return null;
+    unlockedDifficulties = [...unlockedDifficulties, next];
+    try { window.localStorage.setItem(UNLOCK_KEY, JSON.stringify(unlockedDifficulties)); } catch { /* 解锁进度仅本会话 */ }
+    return `已解锁：${DIFFICULTIES[next].name}`;
+  }
+
   function recordRound(result: 'won' | 'lost'): void {
-    const updated = appendRecord(logRecords, result, game.elapsed, game.commandsUsed);
+    const updated = appendRecord(logRecords, result, game.elapsed, game.commandsUsed, game.difficulty.id);
     logRecords = updated.records;
     try { logStore?.save(logRecords); } catch { /* 存档失败只影响跨会话，不影响本局 */ }
   }
@@ -302,12 +352,14 @@ function boot(): void {
         audio.voice('caught');
         recordRound('lost');
         break;
-      case 'won':
+      case 'won': {
         clearInput();
         audio.stopRound();
         audio.chime();
         recordRound('won');
+        unlockNotice = clearDifficulty(game.difficulty.id);
         break;
+      }
     }
     // 触控设备没有 R 键：结算后给一个屏上「再来一次」。
     if (hasTouch && (event.type === 'caught' || event.type === 'won')) {
@@ -473,6 +525,7 @@ function boot(): void {
     document.body.dataset.phase = game.phase;
     overlay.hidden = game.phase === 'playing';
     renderShiftLog(game.phase);
+    renderDifficultyCards();
     pause.disabled = game.phase !== 'playing' && game.phase !== 'paused';
     pause.innerHTML = game.phase === 'paused' ? '继续 <kbd>Esc</kbd>' : '暂停 <kbd>Esc</kbd>';
     help.hidden = game.phase !== 'start';
@@ -488,7 +541,7 @@ function boot(): void {
       const verdict = game.commandsUsed === 0 ? '零指令硬闯，今晚你是真的会躲。' : game.commandsUsed === 1 ? '一击改写路线，干净利落。' : '把医院规则玩弄于股掌。';
       copy.textContent = `安全门已抵达，逃离成功。本局发动 ${game.commandsUsed} 次指令——${verdict}`;
       primary.innerHTML = '再来一次 <span aria-hidden="true">→</span>';
-      footnote.textContent = 'R 也可重开：位置、门、体力、倒计时与音效全部复位。';
+      footnote.textContent = (unlockNotice ? `${unlockNotice}。` : '') + 'R 也可重开：位置、门、体力、倒计时与音效全部复位。';
     } else if (game.phase === 'lost') {
       kicker.textContent = '值班记录 / 巡查中断';
       title.textContent = '被值班员抓住。';
@@ -714,6 +767,8 @@ function boot(): void {
   hospital.scene.updateMatrixWorld(true);
   follow.update(game.player.position);
   updateUI();
+  game.setDifficulty(selectedDifficulty);
+  renderDifficultyCards();
   document.body.dataset.ready = 'true';
   document.body.dataset.touch = String(hasTouch);
 

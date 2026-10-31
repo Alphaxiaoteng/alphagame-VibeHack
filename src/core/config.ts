@@ -112,6 +112,48 @@ export const ALERT_SEARCH_SECONDS = 6;
 /** 开局宽限：随机巡逻不可预判，前几秒值班员可能路过出生点；宽限期内直接目视不转追逐，站着不动绝不开局即死。 */
 export const GRACE_SECONDS = 6;
 
+/** 三档难度：同一张地图，靠值班员感知与节奏递进；标准档 = 上表现值（零漂移事实源）。 */
+export type DifficultyId = 'intern' | 'standard' | 'graveyard';
+
+export interface DifficultyPreset {
+  id: DifficultyId;
+  /** 玩家可见名（值班记录风格） */
+  name: string;
+  /** 一句话说明，开始卡片副标题 */
+  brief: string;
+  sightRange: number;
+  litSightRange: number;
+  hearingRange: number;
+  chaseSpeed: number;
+  patrolSpeed: number;
+  searchSeconds: number;
+  alertSearchSeconds: number;
+  graceSeconds: number;
+}
+
+export const DIFFICULTIES: Record<DifficultyId, DifficultyPreset> = {
+  intern: {
+    id: 'intern', name: '见习夜班', brief: '值班员刚接手 · 反应慢半拍',
+    sightRange: 6.5, litSightRange: 10, hearingRange: 5.5,
+    chaseSpeed: 3.9, patrolSpeed: 2.4,
+    searchSeconds: 3, alertSearchSeconds: 4.5, graceSeconds: 8,
+  },
+  standard: {
+    id: 'standard', name: '标准夜班', brief: '他熟悉这栋楼 · 当前平衡',
+    sightRange: SIGHT_RANGE, litSightRange: LIT_SIGHT_RANGE, hearingRange: HEARING_RANGE,
+    chaseSpeed: CHASE_SPEED, patrolSpeed: PATROL_SPEED,
+    searchSeconds: SEARCH_SECONDS, alertSearchSeconds: ALERT_SEARCH_SECONDS, graceSeconds: GRACE_SECONDS,
+  },
+  graveyard: {
+    id: 'graveyard', name: '高危夜巡', brief: '他守了十年 · 耳聪目明',
+    sightRange: 9.5, litSightRange: 14, hearingRange: 9,
+    chaseSpeed: 4.5, patrolSpeed: 3.2,
+    searchSeconds: 5, alertSearchSeconds: 7.5, graceSeconds: 3,
+  },
+};
+
+export const DIFFICULTY_ORDER: readonly DifficultyId[] = ['intern', 'standard', 'graveyard'];
+
 export type CommandId = 'lights' | 'lockdown' | 'broadcast';
 export const COMMAND_IDS: readonly CommandId[] = ['lights', 'lockdown', 'broadcast'];
 export const COMMANDS = {

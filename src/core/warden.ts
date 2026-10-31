@@ -1,4 +1,5 @@
-import { ALERT_SEARCH_SECONDS, CHASE_SPEED, GRACE_SECONDS, GUARD_RADIUS, GUARD_SPAWN, HEARING_RANGE, PATROL_SPEED, PATROL_WAYPOINTS, PLAYER_SPAWN, SEARCH_SECONDS, SIGHT_RANGE, SPAWN_SAFE_RADIUS } from './config';
+import { DIFFICULTIES, GUARD_RADIUS, GUARD_SPAWN, PATROL_WAYPOINTS, PLAYER_SPAWN, SPAWN_SAFE_RADIUS } from './config';
+import type { DifficultyPreset } from './config';
 import type { Player } from './player';
 import type { Point } from './config';
 import { distance, moveCircle } from './map';
@@ -14,6 +15,8 @@ export class PatrolGuard {
   path: Point[] = [];
   targetIndex = 0;
   facing = 0;
+  /** 巡逻速度等调参：Warden 子类与游戏共享同一引用，难度切换时整体替换。 */
+  tuning: DifficultyPreset = DIFFICULTIES.standard;
   private revision = -1;
 
   constructor(map: HospitalMap, private readonly rand: () => number = Math.random) {
@@ -100,7 +103,7 @@ export class PatrolGuard {
 
   update(dt: number, map: HospitalMap): void {
     if (map.revision !== this.revision) this.replan(map);
-    let budget = PATROL_SPEED * dt;
+    let budget = this.tuning.patrolSpeed * dt;
     let hops = 0;
     while (budget > 1e-6 && hops < 8) {
       hops += 1;
@@ -153,6 +156,8 @@ export class Warden extends PatrolGuard {
   searchRemaining = 0;
   broadcastInterrupted = false;
   seesPlayer = false;
+  /** 本局难度调参：由 RoundsGame.setDifficulty 在开局注入，游玩中不可热切。 */
+  tuning: DifficultyPreset = DIFFICULTIES.standard;
   private broadcastTarget: Point | null = null;
   /** 广播结束时仍在追声源：失去声音后才去病房兑现警觉搜索。 */
   private pendingAlertTarget: Point | null = null;
@@ -201,14 +206,14 @@ export class Warden extends PatrolGuard {
   /** 新一局调用：开局几秒直接目视不转追逐，杜绝随机巡逻撞上出生点的“开局即死”。 */
   beginGrace(): void {
     this.graceImmunity = true;
-    this.graceRemaining = GRACE_SECONDS;
+    this.graceRemaining = this.tuning.graceSeconds;
   }
 
-  canSeePlayer(map: HospitalMap, player: Player, range = SIGHT_RANGE): boolean {
+  canSeePlayer(map: HospitalMap, player: Player, range?: number): boolean {
     const dx = player.position.x - this.position.x;
     const dz = player.position.z - this.position.z;
     const gap = Math.hypot(dx, dz);
-    if (gap > range) return false;
+    if (gap > (range ?? this.tuning.sightRange)) return false;
     if (gap > 0.001 && (dx * Math.cos(this.facing) + dz * Math.sin(this.facing)) / gap < Math.SQRT1_2) return false;
     return map.hasLineOfSight(this.position, player.position);
   }
@@ -234,7 +239,7 @@ export class Warden extends PatrolGuard {
     }
     this.mode = 'search';
     this.targetPoint = { ...point };
-    this.searchRemaining = ALERT_SEARCH_SECONDS;
+    this.searchRemaining = this.tuning.alertSearchSeconds;
     this.replan(map);
   }
 
@@ -253,12 +258,12 @@ export class Warden extends PatrolGuard {
   graceImmunity = false;
   private graceRemaining = 0;
 
-  override update(dt: number, map: HospitalMap, player?: Player, sightRange = SIGHT_RANGE): void {
+  override update(dt: number, map: HospitalMap, player?: Player, sightRange?: number): void {
     this.pathTimer += dt;
     if (this.graceRemaining > 0) this.graceRemaining = Math.max(0, this.graceRemaining - dt);
     else this.graceImmunity = false;
     const visible = !!player && this.perception && this.canSeePlayer(map, player, sightRange);
-    const heard = !!player && this.perception && player.sprinting && distance(this.position, player.position) <= HEARING_RANGE;
+    const heard = !!player && this.perception && player.sprinting && distance(this.position, player.position) <= this.tuning.hearingRange;
     this.seesPlayer = visible && !this.graceImmunity;
     if (heard) this.graceImmunity = false;
     if (player && (this.seesPlayer || heard)) {
@@ -281,7 +286,7 @@ export class Warden extends PatrolGuard {
       this.mode = 'search';
       const target = this.pendingAlertTarget ?? this.lastKnownPoint ?? this.position;
       this.targetPoint = { ...target };
-      this.searchRemaining = this.alertSearch ? ALERT_SEARCH_SECONDS : SEARCH_SECONDS;
+      this.searchRemaining = this.alertSearch ? this.tuning.alertSearchSeconds : this.tuning.searchSeconds;
       this.pendingAlertTarget = null;
       this.replan(map);
     }
@@ -292,7 +297,7 @@ export class Warden extends PatrolGuard {
     }
 
     const before = { ...this.position };
-    let budget = (this.mode === 'chase' ? CHASE_SPEED : PATROL_SPEED) * dt;
+    let budget = (this.mode === 'chase' ? this.tuning.chaseSpeed : this.tuning.patrolSpeed) * dt;
     for (let hop = 0; budget > 1e-6 && this.path.length > 0 && hop < 12; hop++) {
       const point = this.path[0];
       const gap = distance(this.position, point);

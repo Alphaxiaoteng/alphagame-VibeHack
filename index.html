@@ -52,6 +52,11 @@
           <h1 id="overlay-title">今晚，走出医院。</h1>
           <p id="overlay-copy" class="briefing-copy">躲开值班员，活过 <strong>45 秒</strong>。<br />安全门亮起后，跑到东侧门前逃生。</p>
           <div id="start-help" class="briefing-help"><div><kbd>W A S D</kbd><span>相对镜头移动</span></div><div><kbd>Shift</kbd><span>短暂奔跑，体力用完需松开</span></div><div><kbd>鼠标右键</kbd><span>按住拖动转镜头，无需锁定鼠标</span></div><div><kbd>触摸板双指</kbd><span>左右滑动转镜头</span></div><div id="touch-help" hidden><kbd>左下摇杆</kbd><span>拖动移动 · 右侧「跑」加速 · 点指令卡改规则</span></div></div>
+          <div id="difficulty-picker" class="difficulty-picker" aria-label="选择值班难度">
+            <button type="button" class="difficulty-card" data-difficulty="intern"><strong>见习夜班</strong><small>值班员刚接手 · 反应慢半拍</small></button>
+            <button type="button" class="difficulty-card" data-difficulty="standard"><strong>标准夜班</strong><small>他熟悉这栋楼 · 当前平衡</small></button>
+            <button type="button" class="difficulty-card" data-difficulty="graveyard" data-locked="true"><strong>高危夜巡</strong><small>他守了十年 · 耳聪目明</small></button>
+          </div>
           <button id="primary" class="primary" type="button">开始值班 <span aria-hidden="true">→</span></button>
           <p class="boot-note" aria-live="polite">正在载入值班室（three.js 场景约 0.6 MB）… 按钮就绪后自动亮起。</p>
           <p id="overlay-footnote" class="briefing-footnote">1 开灯：你也会暴露 · 2 封门：你也要绕路 · 3 广播：先躲开视线。可按键，也可点击下方卡片。</p>

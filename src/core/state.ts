@@ -3,17 +3,16 @@ import {
   COMMANDS,
   COMMAND_COOLDOWN,
   COMMAND_IDS,
+  DIFFICULTIES,
   EXIT_POINT,
   EXIT_TRIGGER_RADIUS,
   GUARD_RADIUS,
-  LIT_SIGHT_RANGE,
   MAX_STEP,
   NO_INPUT,
-  SIGHT_RANGE,
   TIME_LIMIT,
   WARD_TARGETS,
 } from './config';
-import type { CommandId, DoorId, PlayerInput, Point } from './config';
+import type { CommandId, DifficultyId, DifficultyPreset, DoorId, PlayerInput, Point } from './config';
 import { HospitalMap, distance } from './map';
 import { Player } from './player';
 import { Warden } from './warden';
@@ -33,13 +32,15 @@ export type GameEventType =
   | 'commandStarted'
   | 'commandEnded'
   | 'commandRejected'
-  | 'guardChanged';
+  | 'guardChanged'
+  | 'difficultyCleared';
 
 export interface GameEvent {
   type: GameEventType;
   door?: DoorId;
   command?: CommandId;
   message?: string;
+  difficulty?: DifficultyId;
 }
 
 export interface CommandEffect {
@@ -83,7 +84,19 @@ export class RoundsGame {
   }
 
   get sightRange(): number {
-    return this.lightsOn ? LIT_SIGHT_RANGE : SIGHT_RANGE;
+    return this.lightsOn ? this.difficulty.litSightRange : this.difficulty.sightRange;
+  }
+
+  /** 当前难度预设：渲染与 HUD 直接读取展示。 */
+  get difficulty(): DifficultyPreset {
+    return this.guard.tuning;
+  }
+
+  /** 换难度只在下一局生效：游玩/暂停中拒绝热切，避免中途改变感知规则。 */
+  setDifficulty(id: DifficultyId): boolean {
+    if (this.phase === 'playing' || this.phase === 'paused') return false;
+    this.guard.tuning = DIFFICULTIES[id];
+    return true;
   }
 
   get remaining(): number {
@@ -142,6 +155,7 @@ export class RoundsGame {
     if (this.exitUnlocked && distance(this.player.position, EXIT_POINT) <= EXIT_TRIGGER_RADIUS) {
       this.phase = 'won';
       this.events.push({ type: 'won' });
+      this.events.push({ type: 'difficultyCleared', difficulty: this.difficulty.id });
     }
   }
 

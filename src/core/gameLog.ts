@@ -2,6 +2,7 @@
  * 值班日志：逐局记录结果与表现，跨会话持久化。
  * 纯逻辑 + 可注入存储，浏览器环境用 localStorage，测试用内存存储。
  */
+import type { DifficultyId } from './config';
 export interface RoundRecord {
   /** 第几局，跨会话持续递增 */
   index: number;
@@ -12,6 +13,8 @@ export interface RoundRecord {
   commands: number;
   /** 结算时间戳（ms） */
   at: number;
+  /** 本局难度 */
+  difficulty?: DifficultyId;
 }
 
 export interface LogStore {
@@ -41,13 +44,14 @@ export function createLocalStore(): LogStore | null {
 function isRecord(value: unknown): value is RoundRecord {
   if (typeof value !== 'object' || value === null) return false;
   const record = value as Record<string, unknown>;
-  return (
-    typeof record.index === 'number' && Number.isFinite(record.index) &&
-    (record.result === 'won' || record.result === 'lost') &&
-    typeof record.seconds === 'number' && Number.isFinite(record.seconds) &&
-    typeof record.commands === 'number' && Number.isFinite(record.commands) &&
-    typeof record.at === 'number' && Number.isFinite(record.at)
-  );
+  if (
+    typeof record.index !== 'number' || !Number.isFinite(record.index) ||
+    (record.result !== 'won' && record.result !== 'lost') ||
+    typeof record.seconds !== 'number' || !Number.isFinite(record.seconds) ||
+    typeof record.commands !== 'number' || !Number.isFinite(record.commands) ||
+    typeof record.at !== 'number' || !Number.isFinite(record.at)
+  ) return false;
+  return record.difficulty === undefined || typeof record.difficulty === 'string';
 }
 
 /** 读档容错：损坏的旧数据直接当作没有历史，不让一局游戏挂掉。 */
@@ -69,6 +73,7 @@ export function appendRecord(
   result: 'won' | 'lost',
   seconds: number,
   commands: number,
+  difficulty: DifficultyId = 'standard',
   at = Date.now(),
 ): { records: RoundRecord[]; record: RoundRecord } {
   const lastIndex = records.length > 0 ? records[records.length - 1].index : 0;
@@ -78,6 +83,7 @@ export function appendRecord(
     seconds: Math.max(0, Math.round(seconds)),
     commands: Math.max(0, Math.round(commands)),
     at,
+    difficulty,
   };
   const next = [...records, record];
   return { records: next.length > LOG_CAP ? next.slice(next.length - LOG_CAP) : next, record };
@@ -107,8 +113,11 @@ export function summarize(records: readonly RoundRecord[]): LogSummary {
 export function formatRecord(record: RoundRecord): string {
   const outcome = record.result === 'won' ? '逃脱成功' : '被值班员抓住';
   const detail = record.result === 'won' ? `指令 ${record.commands} 次` : `坚持 ${record.seconds} 秒 · 指令 ${record.commands} 次`;
-  return `第 ${record.index} 局 · ${outcome} · ${detail}`;
+  const tag = record.difficulty ? `${DIFFICULTY_TAG[record.difficulty]} · ` : '';
+  return `第 ${record.index} 局 · ${tag}${outcome} · ${detail}`;
 }
+
+const DIFFICULTY_TAG: Record<DifficultyId, string> = { intern: '见习', standard: '标准', graveyard: '高危' };
 
 /** 汇总文案：无记录时返回空串，调用方据此隐藏区块。 */
 export function formatSummary(records: readonly RoundRecord[]): string {
