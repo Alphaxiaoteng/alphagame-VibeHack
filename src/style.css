@@ -1343,13 +1343,15 @@ body[data-touch="true"] .keyboard-only { display: none; }
   font-weight: 800;
   letter-spacing: 0.12em;
   color: #ffffff;
+  white-space: nowrap;
 }
 .tutorial-panel-head small {
   margin-left: auto;
   font-family: ui-monospace, SFMono-Regular, monospace;
   font-size: 10px;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.12em;
   color: rgba(148, 163, 184, 0.68);
+  white-space: nowrap;
 }
 .tutorial-rows {
   display: flex;
@@ -1366,6 +1368,9 @@ body[data-touch="true"] .keyboard-only { display: none; }
   display: flex;
   align-items: center;
   gap: 4px;
+}
+.tutorial-panel:last-child .tut-keys {
+  min-width: 44px;
 }
 .tut-keys kbd {
   min-width: 26px;
