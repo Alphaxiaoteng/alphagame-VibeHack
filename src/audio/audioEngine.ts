@@ -459,23 +459,36 @@ export class AudioEngine {
   private async loadAllAssets(): Promise<void> {
     const context = this.context;
     if (!context) return;
-    const decodeMap = async <K extends string>(entries: [K, string][], target: Map<K, AudioBuffer>, isVoice = false) => {
-      await Promise.all(entries.map(async ([id, url]) => {
-        try {
-          const response = await fetch(url);
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const buffer = await context.decodeAudioData(await response.arrayBuffer());
-          target.set(id, buffer);
-        } catch {
-          if (isVoice) this.issue = '部分语音加载失败，游戏仍可继续';
-        }
-      }));
+    // 严格限制音频并发请求数为 2，优先加载短小高频音效与开局人声，避免首屏 21 路并发占满带宽与主线程解码卡顿
+    type Task = () => Promise<void>;
+    const tasks: Task[] = [];
+    const enqueue = <K extends string>(entries: [K, string][], target: Map<K, AudioBuffer>, isVoice = false) => {
+      for (const [id, url] of entries) {
+        tasks.push(async () => {
+          try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const buffer = await context.decodeAudioData(await response.arrayBuffer());
+            target.set(id, buffer);
+          } catch {
+            if (isVoice) this.issue = '部分语音加载失败，游戏仍可继续';
+          }
+        });
+      }
     };
-    await Promise.all([
-      decodeMap(Object.entries(VOICE_URLS) as [VoiceId, string][], this.buffers, true),
-      decodeMap(Object.entries(BGM_URLS) as [BgmId, string][], this.bgmBuffers),
-      decodeMap(Object.entries(SFX_URLS) as [SfxId, string][], this.sfxBuffers),
-    ]);
+    enqueue(Object.entries(SFX_URLS) as [SfxId, string][], this.sfxBuffers);
+    enqueue(Object.entries(VOICE_URLS) as [VoiceId, string][], this.buffers, true);
+    enqueue(Object.entries(BGM_URLS) as [BgmId, string][], this.bgmBuffers);
+
+    const concurrency = 2;
+    let cursor = 0;
+    const worker = async () => {
+      while (cursor < tasks.length) {
+        const index = cursor++;
+        await tasks[index]();
+      }
+    };
+    await Promise.all(Array.from({ length: concurrency }, () => worker()));
     this.ready = true;
   }
 

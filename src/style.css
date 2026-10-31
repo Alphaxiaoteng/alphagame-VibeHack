@@ -130,13 +130,8 @@ kbd {
   color: var(--paper-ink-muted);
 }
 
-/* 右上角纸质档案签按钮（全屏 / M 声音 / Esc 暂停） */
-.toolbar {
-  display: flex;
-  gap: 8px;
-  pointer-events: auto;
-  margin-left: auto;
-}
+/* 左上角全屏按钮与右上角纸质档案签按钮 */
+.top-left-btn,
 .toolbar button {
   display: inline-flex;
   align-items: center;
@@ -154,11 +149,22 @@ kbd {
   letter-spacing: 0.1em;
   color: var(--paper-ink);
   transition: all 0.15s ease;
+  pointer-events: auto;
 }
+.top-left-btn:hover:not(:disabled),
 .toolbar button:hover:not(:disabled) {
   background-color: #efe7d6;
   border-color: var(--paper-stamp-red);
   transform: translateY(-1px);
+}
+#mute {
+  display: none !important;
+}
+.toolbar {
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+  margin-left: auto;
 }
 .toolbar button:disabled { opacity: 0.48; transform: none; }
 .toolbar kbd { font-size: 10px; padding: 1px 5px; }
@@ -167,10 +173,10 @@ kbd {
   display: none !important;
 }
 
-/* 左上角纸质查房指令便签 */
+/* 左上角纸质查房指令便签（位于左上角全屏按钮正下方） */
 .objective {
   position: absolute;
-  top: 16px;
+  top: 56px;
   left: 24px;
   display: flex;
   align-items: flex-start;
@@ -389,14 +395,43 @@ body[data-phase="start"] .hud { display: none; }
   border-color: var(--paper-rule);
   background: transparent;
 }
+.commands button > *:not(.cooldown-fill) {
+  position: relative;
+  z-index: 1;
+}
+.commands button[data-state="cooldown"] .command-status {
+  color: #f7f3eb;
+  background: var(--paper-stamp-red);
+  border-color: #521010;
+}
+.commands button[data-state="active"] .command-status {
+  color: #f7f3eb;
+  background: var(--paper-stamp-green);
+  border-color: #13382d;
+}
 .commands .cooldown-fill {
   position: absolute;
   left: 0;
+  top: 0;
   bottom: 0;
-  height: 3px;
+  height: 100%;
   width: var(--progress, 0%);
-  background: var(--paper-stamp-red);
-  opacity: 0.9;
+  background: linear-gradient(90deg, rgba(140, 29, 29, 0.24) 0%, rgba(185, 43, 43, 0.38) 100%);
+  border-right: 2px solid var(--paper-stamp-red);
+  box-shadow: inset 0 -3px 0 var(--paper-stamp-red);
+  opacity: 1;
+  pointer-events: none;
+  z-index: 0;
+  transition: width 0.08s linear;
+}
+.commands button[data-state="active"] .cooldown-fill {
+  background: linear-gradient(90deg, rgba(27, 77, 62, 0.25) 0%, rgba(47, 167, 101, 0.38) 100%);
+  border-right-color: #2fa765;
+  box-shadow: inset 0 -3px 0 #2fa765;
+}
+.commands button:not([data-state="cooldown"]):not([data-state="active"]) .cooldown-fill {
+  border-right-width: 0;
+  box-shadow: none;
 }
 .commands button.denied { animation: denied .32s ease; }
 @keyframes denied { 25% { border-color: #b92b2b; } 60% { transform: translateX(3px); } }
@@ -1216,7 +1251,7 @@ body:not([data-ready="true"]) .boot-note { display: block; }
   .overlay { padding-left: 6vw; }
 }
 @media (max-width: 900px) {
-  .commands { display: none; }
+  .commands { display: flex; }
   .stage-label { display: none; }
   .toolbar { gap: 4px; }
   .topbar { padding: 12px 16px; }
@@ -2343,12 +2378,16 @@ body[data-touch="true"] .keyboard-only { display: none; }
    移动触控端 (Mobile / Touch) 极简化与防遮挡优化（零毛玻璃）
    ========================================================= */
 body[data-touch="true"] .toolbar #btn-qr,
-body[data-touch="true"] .toolbar #btn-fullscreen,
 body[data-touch="true"] .toolbar #pause {
   display: none !important;
 }
+body[data-touch="true"] #btn-fullscreen {
+  display: inline-flex !important;
+  padding: 5px 11px !important;
+  font-size: 11px !important;
+}
 body[data-touch="true"] .objective {
-  top: 68px !important;
+  top: 52px !important;
   left: 12px !important;
   max-width: 220px !important;
   padding: 6px 10px !important;
@@ -2365,7 +2404,7 @@ body[data-touch="true"] .bottom-hud {
   left: 50% !important;
   right: auto !important;
   transform: translateX(-50%) !important;
-  bottom: 20px !important;
+  bottom: 16px !important;
   width: auto !important;
   margin: 0 !important;
 }
@@ -2374,11 +2413,14 @@ body[data-touch="true"] .commands {
   gap: 8px !important;
 }
 body[data-touch="true"] .commands button {
-  width: 48px !important;
-  height: 48px !important;
-  min-width: 48px !important;
-  padding: 0 !important;
+  width: auto !important;
+  min-width: 78px !important;
+  height: 50px !important;
+  padding: 4px 10px !important;
+  flex-direction: column !important;
+  align-items: center !important;
   justify-content: center !important;
+  gap: 2px !important;
   border-radius: 1px !important;
   background-color: #dcd2be !important;
   background-image: var(--paper-noise), var(--paper-sheet-bg) !important;
@@ -2386,18 +2428,29 @@ body[data-touch="true"] .commands button {
   border-top: 3px solid var(--paper-stamp-red) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.72) !important;
 }
-body[data-touch="true"] .commands .cmd-info,
-body[data-touch="true"] .commands .command-status {
+body[data-touch="true"] .commands kbd.key-badge,
+body[data-touch="true"] .commands kbd,
+body[data-touch="true"] .commands .cmd-info small {
   display: none !important;
 }
-body[data-touch="true"] .commands kbd.key-badge,
-body[data-touch="true"] .commands kbd {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  font-size: 17px !important;
+body[data-touch="true"] .commands .cmd-info {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+body[data-touch="true"] .commands .cmd-info strong {
+  font-size: 12px !important;
   font-weight: 900 !important;
+  letter-spacing: 0.04em !important;
   color: var(--paper-ink) !important;
+  white-space: nowrap !important;
+}
+body[data-touch="true"] .commands .command-status {
+  display: inline-block !important;
+  margin-left: 0 !important;
+  font-size: 9.5px !important;
+  padding: 0 5px !important;
+  line-height: 1.35 !important;
 }
 body[data-touch="true"] #touch-fullscreen,
 body[data-touch="true"] #touch-pause {

@@ -100,6 +100,7 @@ export class HospitalRenderer {
   exitDoorRight: THREE.Group | null = null;
   outdoorLight: THREE.PointLight | null = null;
   outdoorSunlight: THREE.Mesh | null = null;
+  private exitDoorOpenProgress = 0;
   private wardenMixer: THREE.AnimationMixer | null = null;
   private wardenWalkAction: THREE.AnimationAction | null = null;
   private wardenIdleAction: THREE.AnimationAction | null = null;
@@ -128,8 +129,8 @@ export class HospitalRenderer {
 
       model.traverse((child) => {
         if (child instanceof THREE.Mesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
+          child.castShadow = false;
+          child.receiveShadow = false;
         }
       });
 
@@ -151,7 +152,10 @@ export class HospitalRenderer {
         }
       }
 
-      // 战术巡逻手电筒动态前向光束（强化冷暖对比与地面光锥）
+      // 战术巡逻手电筒动态前向光束（关闭程序化兜底模型的重复聚光灯，杜绝双 SpotLight 叠加卡顿）
+      if (this.guardHuman.flashlightSpot) {
+        this.guardHuman.flashlightSpot.visible = false;
+      }
       const spot = new THREE.SpotLight(0xfff5d6, 14.0, 22, Math.PI / 5.5, 0.32, 1.0);
       spot.position.set(0.2, 1.15, 0.1);
       const spotTarget = new THREE.Object3D();
@@ -165,83 +169,74 @@ export class HospitalRenderer {
       this.wardenAnimatedModel = model;
       this.guardRig.add(model);
       this.guardHuman.body.visible = false;
-      console.log('Tripo 3D 骨骼动画值班员成功装配至场景！');
     } catch (err) {
       console.warn('Tripo 动画值班员加载备用回退:', err);
     }
   }
 
-  /** 异步加载并接入 Tripo 生成的高精 3D 医用抢救推车（贴北墙死角放置，通道留白极大，零阻挡走廊行动） */
-  private loadCrashCart(): void {
+  /** 零延迟构建高保真 3D 医用抢救推车并纳入静态合批（消除 3.1MB 高模下载与 GPU 纹理上传卡顿） */
+  private buildCrashCart(): void {
     const cartGroup = new THREE.Group();
-    // 贴北走廊北墙死角 (x=10.2, z=3.35, yaw=Math.PI)，深度仅 0.45m，走廊净宽度超过 2.3m
     cartGroup.position.set(10.2, 0, 3.35);
     cartGroup.rotation.y = Math.PI;
 
-    const loader = new GLTFLoader();
-    loader.load(
-      './models/crash_cart.glb',
-      (gltf) => {
-        const model = gltf.scene;
-        const bbox = new THREE.Box3().setFromObject(model);
-        const size = bbox.getSize(new THREE.Vector3());
-        const targetHeight = 0.95; // 真实医疗抢救车标准台面高度 0.95m
-        const scale = targetHeight / Math.max(size.y, 0.001);
-        model.scale.setScalar(scale);
+    const redBody = new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.35, metalness: 0.25 });
+    const drawerFace = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.4, metalness: 0.2 });
+    const monitorScreen = new THREE.MeshStandardMaterial({ color: 0x0f172a, emissive: 0x064e3b, emissiveIntensity: 0.45, roughness: 0.2 });
 
-        const center = bbox.getCenter(new THREE.Vector3());
-        model.position.set(-center.x * scale, -bbox.min.y * scale, -center.z * scale);
-
-        model.traverse((child) => {
-          if (child instanceof THREE.Mesh) {
-            child.castShadow = false;
-            child.receiveShadow = true;
-          }
-        });
-        cartGroup.add(model);
-        console.log('Tripo 3D 医用抢救推车成功装配至场景！');
-      },
-      undefined,
-      (err) => console.warn('Crash cart model loading fallback:', err)
-    );
-
+    // 主车体与不锈钢台面
+    cartGroup.add(box(0.66, 0.72, 0.44, redBody, 0, 0.46, 0, 0.015));
+    cartGroup.add(box(0.70, 0.03, 0.48, trim, 0, 0.835, 0, 0.008));
+    // 四层急救抽屉与铝合金拉手
+    for (let i = 0; i < 4; i++) {
+      const y = 0.22 + i * 0.155;
+      cartGroup.add(box(0.58, 0.125, 0.015, drawerFace, 0, y, 0.225));
+      cartGroup.add(box(0.24, 0.016, 0.025, metal, 0, y + 0.02, 0.24));
+    }
+    // 顶部监护除颤仪与推把
+    cartGroup.add(box(0.28, 0.22, 0.18, trim, -0.14, 0.96, -0.04, 0.012));
+    cartGroup.add(box(0.22, 0.15, 0.01, monitorScreen, -0.14, 0.96, 0.052));
+    cartGroup.add(tube(new THREE.Vector3(-0.35, 0.82, 0), new THREE.Vector3(-0.35, 0.82, 0.36), 0.014, metal));
+    // 四角静音万向脚轮
+    for (const sx of [-0.28, 0.28]) {
+      for (const sz of [-0.18, 0.18]) {
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.028, 12), rubber);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(sx, 0.05, sz);
+        cartGroup.add(wheel);
+      }
+    }
+    this.staticRoots.push(cartGroup);
     this.scene.add(cartGroup);
   }
 
-  /** 异步加载并接入 Tripo 生成的高精 3D 医用轮椅（放置于西南病房外墙转角，极度写实且不挡走廊主道） */
-  private loadWheelchair(): void {
+  /** 零延迟构建高保真 3D 医用轮椅并纳入静态合批（消除 3.5MB 高模下载与 GPU 纹理上传卡顿） */
+  private buildWheelchair(): void {
     const chairGroup = new THREE.Group();
-    // 紧贴西南走廊凹角墙边 (x=4.8, z=11.2, 略微斜向 yaw=0.35)，不挡走廊中轴巡查路线
     chairGroup.position.set(4.8, 0, 11.2);
     chairGroup.rotation.y = 0.35;
 
-    const loader = new GLTFLoader();
-    loader.load(
-      './models/wheelchair.glb',
-      (gltf) => {
-        const model = gltf.scene;
-        const bbox = new THREE.Box3().setFromObject(model);
-        const size = bbox.getSize(new THREE.Vector3());
-        const targetHeight = 0.92; // 真实标准医用轮椅高度 0.92m
-        const scale = targetHeight / Math.max(size.y, 0.001);
-        model.scale.setScalar(scale);
-
-        const center = bbox.getCenter(new THREE.Vector3());
-        model.position.set(-center.x * scale, -bbox.min.y * scale, -center.z * scale);
-
-        model.traverse((child) => {
-          if (child instanceof THREE.Mesh) {
-            child.castShadow = false;
-            child.receiveShadow = true;
-          }
-        });
-        chairGroup.add(model);
-        console.log('Tripo 3D 医用轮椅成功装配至场景！');
-      },
-      undefined,
-      (err) => console.warn('Wheelchair model loading fallback:', err)
-    );
-
+    const leather = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.65 });
+    // 座垫、靠背与两侧扶手
+    chairGroup.add(box(0.46, 0.05, 0.44, leather, 0, 0.48, 0, 0.01));
+    chairGroup.add(box(0.46, 0.42, 0.04, leather, 0, 0.70, -0.20, 0.01));
+    for (const side of [-1, 1]) {
+      const x = side * 0.245;
+      chairGroup.add(box(0.04, 0.03, 0.38, leather, x, 0.66, -0.02, 0.008));
+      chairGroup.add(tube(new THREE.Vector3(x, 0.18, -0.20), new THREE.Vector3(x, 0.92, -0.20), 0.014, metal));
+      chairGroup.add(tube(new THREE.Vector3(x, 0.16, 0.20), new THREE.Vector3(x, 0.65, 0.20), 0.014, metal));
+      // 后置大直径驱动轮
+      const bigWheel = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.022, 8, 20), rubber);
+      bigWheel.rotation.y = Math.PI / 2;
+      bigWheel.position.set(side * 0.28, 0.28, -0.08);
+      chairGroup.add(bigWheel);
+      // 前置小转向轮
+      const frontWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.024, 12), rubber);
+      frontWheel.rotation.z = Math.PI / 2;
+      frontWheel.position.set(side * 0.23, 0.075, 0.22);
+      chairGroup.add(frontWheel);
+    }
+    this.staticRoots.push(chairGroup);
     this.scene.add(chairGroup);
   }
 
@@ -335,6 +330,8 @@ export class HospitalRenderer {
     this.buildFurniture();
     this.buildProps();
     this.buildDoors();
+    this.buildCrashCart();
+    this.buildWheelchair();
     this.mergeStaticGeometry();
     this.guardRimLight.position.set(0, 1.95, 0);
     this.guardRig.add(this.guardRimLight);
@@ -401,10 +398,6 @@ export class HospitalRenderer {
     this.guardRig.add(this.guardXrayBeacon);
     // 异步加载 Tripo 导出的带真实骨骼与行走动画的 3D 值班员模型
     this.loadAnimatedWarden();
-    // 异步加载 Tripo 导出的高精 3D 医用抢救推车（贴北墙放置，零阻挡通道）
-    this.loadCrashCart();
-    // 异步加载 Tripo 导出的高精 3D 医用轮椅（贴西南墙角放置，零阻挡通道）
-    this.loadWheelchair();
   }
 
   sync(game: RoundsGame, dt: number, cameraYaw = 0, cameraPitch = 0): void {
@@ -516,6 +509,14 @@ export class HospitalRenderer {
     this.exitBeacon.visible = game.exitUnlocked;
     this.exitChannel.visible = game.exitUnlocked;
     (this.exitLamp.material as THREE.MeshStandardMaterial).emissiveIntensity = game.exitUnlocked ? 1.5 : 0.6;
+    // 倒计时结束安全门通电后，双扇安全门自动推开，不再关着
+    if (game.exitUnlocked) {
+      this.exitDoorOpenProgress = Math.min(1, this.exitDoorOpenProgress + Math.max(0.016, dt) * 1.5);
+      const easedOpen = 1 - Math.pow(1 - this.exitDoorOpenProgress, 3);
+      this.openExitDoor(easedOpen);
+    } else if (this.exitDoorOpenProgress > 0) {
+      this.resetExitDoor();
+    }
     const showRoute = game.lightsOn || game.exitUnlocked;
     if (showRoute && (!this.routeVisible || this.routeRevision !== game.map.revision || game.elapsed - this.routeUpdate >= 0.35 || restarted)) this.updateRoute(game);
     this.route.visible = showRoute;
@@ -690,38 +691,9 @@ export class HospitalRenderer {
     const handle = box(0.018, 0.12, 0.024, silverTrimMat, 0.24, 0, 0.105, 0.004);
     station.add(handle);
 
-    // 真实 3D 灭火器总成（首帧使用高保真 3D 网格，同时异步载入 Tripo P2 游戏级 GLB）
+    // 真实 3D 灭火器总成（直接使用零延迟程序化 3D 网格并纳入静态合批，消除 2.9MB 高模下载与帧卡顿）
     const extGroup = new THREE.Group();
     extGroup.position.set(0, -0.37, 0.0);
-
-    const loader = new GLTFLoader();
-    loader.load(
-      './models/fire_extinguisher.glb',
-      (gltf) => {
-        const model = gltf.scene;
-        const bbox = new THREE.Box3().setFromObject(model);
-        const size = bbox.getSize(new THREE.Vector3());
-        const targetHeight = 0.54;
-        const scale = targetHeight / Math.max(size.y, 0.001);
-        model.scale.setScalar(scale);
-        const center = bbox.getCenter(new THREE.Vector3());
-        // 模型居中并调整朝向让气压表与手柄正对观察窗
-        model.position.set(-center.x * scale, -bbox.min.y * scale, -center.z * scale);
-        model.rotation.y = Math.PI / 2;
-        model.traverse((child) => {
-          if (child instanceof THREE.Mesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        });
-        extGroup.clear();
-        extGroup.add(model);
-      },
-      undefined,
-      (err) => {
-        console.warn('GLB 灭火器备用加载，已由程序化 3D 网格兜底:', err);
-      }
-    );
 
     // 程序化 3D 灭火器网格（保证首帧 0ms 立显，鲜艳大红罐体 + 黑色软管 + 铜阀门 + 压力表）
     const redPaint = new THREE.MeshStandardMaterial({ color: 0xd32f2f, roughness: 0.2, metalness: 0.25 });
@@ -763,6 +735,7 @@ export class HospitalRenderer {
     signBoard.position.set(0, 0.56, 0.015);
     station.add(signBoard);
 
+    this.staticRoots.push(station);
     this.scene.add(station);
   }
 
@@ -794,6 +767,7 @@ export class HospitalRenderer {
     clampPin.rotation.z = Math.PI / 2;
     group.add(clampPin);
 
+    this.staticRoots.push(group);
     this.scene.add(group);
   }
 
@@ -842,6 +816,7 @@ export class HospitalRenderer {
     plaqueMesh.position.set(0, -0.18, 0.09);
     group.add(plaqueMesh);
 
+    this.staticRoots.push(group);
     this.scene.add(group);
   }
 
@@ -894,6 +869,7 @@ export class HospitalRenderer {
       group.add(lampHead);
     }
 
+    this.staticRoots.push(group);
     this.scene.add(group);
   }
 
@@ -942,6 +918,7 @@ export class HospitalRenderer {
     const readingStrip = box(0.5, 0.025, 0.025, new THREE.MeshStandardMaterial({ color: 0xffedd5, emissive: 0xffedd5, emissiveIntensity: 0.4 }), 0, 0.075, 0.02);
     group.add(readingStrip);
 
+    this.staticRoots.push(group);
     this.scene.add(group);
   }
 
@@ -1026,6 +1003,7 @@ export class HospitalRenderer {
     poster.position.set(0, 0, 0.008);
     group.add(poster);
 
+    this.staticRoots.push(group);
     this.scene.add(group);
   }
 
@@ -1108,9 +1086,7 @@ export class HospitalRenderer {
     this.scene.add(this.ambient);
     const key = this.key;
     key.position.set(17,10,10); key.target.position.set(15,0,11);
-    key.castShadow = true; key.shadow.mapSize.set(1024,1024);
-    Object.assign(key.shadow.camera, { left: -17, right: 17, top: 13, bottom: -13, near: 0.5, far: 22 });
-    key.shadow.bias = -0.0008; key.shadow.normalBias = 0.035; key.shadow.radius = 2;
+    key.castShadow = false;
     this.scene.add(key,key.target);
     const positions: [number,number,boolean][] = [];
     for (const x of [5,10,15,20,25]) { positions.push([x,4.5,true],[x,17.5,true]); }
@@ -1158,6 +1134,7 @@ export class HospitalRenderer {
     pharmacyCasings.add(box(2.72, 0.1, 0.06, trim, 0, 2.18, 0.006));
     for (const side of [-1, 1]) pharmacyCasings.add(box(0.07, 2.2, 0.06, trim, side * 1.31, 1.1, 0.006));
     const pharmacySign = plaque('药房', 'PHARMACY / 配药窗口', 1.16, 0.37, true); pharmacySign.position.set(0, 2.47, 0.018); pharmacyCasings.add(pharmacySign);
+    this.staticRoots.push(pharmacyCasings);
     this.scene.add(pharmacyCasings);
     // 凹间内的配药台与层架：贴北墙，深度 0.35 m 落在玩家碰撞半径之外。
     const counterGroup = new THREE.Group();
@@ -1172,6 +1149,7 @@ export class HospitalRenderer {
     const counterSlot = new THREE.Group(); counterSlot.position.set(20, 0, 15.18);
     counterSlot.add(counterGroup);
     this.nurseCounterSlot = { slot: counterSlot, procedural: counterGroup };
+    this.staticRoots.push(counterSlot);
     this.scene.add(counterSlot);
     const directions = plaque('住院部 01    → 安全门', 'INPATIENT DEPARTMENT / EAST EXIT',2.35,0.56,true);
     directions.position.set(9.2,2.1,3.01); this.scene.add(directions);
@@ -1220,6 +1198,7 @@ export class HospitalRenderer {
         const bedSlot = new THREE.Group(); bedSlot.position.set(cx,0,cz);
         bedSlot.add(bed);
         this.bedSlots.push({ slot: bedSlot, procedural: bed });
+        this.staticRoots.push(bedSlot);
         this.scene.add(bedSlot);
       } else {
         const cabinet = new THREE.Group();
@@ -1244,6 +1223,7 @@ export class HospitalRenderer {
         cabSlot.rotation.y = cx<15 ? Math.PI/2 : -Math.PI/2;
         cabSlot.add(cabinet);
         this.cabinetSlots.push({ slot: cabSlot, procedural: cabinet });
+        this.staticRoots.push(cabSlot);
         this.scene.add(cabSlot);
         const blocker = box(w,1.85,d,new THREE.MeshBasicMaterial({ visible:false }),cx,0.925,cz);
         this.blockers.push(blocker); this.scene.add(blocker);
@@ -1521,6 +1501,7 @@ export class HospitalRenderer {
 
   /** 重启或复位安全门 */
   public resetExitDoor(): void {
+    this.exitDoorOpenProgress = 0;
     if (this.exitDoorLeft) this.exitDoorLeft.rotation.y = 0;
     if (this.exitDoorRight) this.exitDoorRight.rotation.y = 0;
     if (this.outdoorLight) this.outdoorLight.intensity = 0;

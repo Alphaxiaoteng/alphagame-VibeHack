@@ -142,14 +142,21 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   const coverSubtitle = document.createElement('span');
   coverMeta.append(coverTitle, coverSubtitle);
 
-  // 3D 角色动作视窗
+  // 3D 角色动作视窗（懒加载：仅当用户点击打开档案弹窗时才创建 WebGL 上下文与下载 3D 角色模型，杜绝后台双渲染器抢占 GPU）
   const role3dContainer = document.createElement('div');
   role3dContainer.className = 'shop-role-3d-box';
   const role3dBadge = document.createElement('span');
   role3dBadge.className = 'shop-role-3d-label';
   role3dBadge.textContent = '实况立绘';
-  const role3d = new Role3DPreview(124, 124);
-  role3dContainer.append(role3d.domElement, role3dBadge);
+  let role3d: Role3DPreview | null = null;
+  function ensureRole3d(): Role3DPreview {
+    if (!role3d) {
+      role3d = new Role3DPreview(124, 124);
+      role3dContainer.prepend(role3d.domElement);
+    }
+    return role3d;
+  }
+  role3dContainer.append(role3dBadge);
 
   cover.append(coverImage, role3dContainer, coverBadge, coverMeta);
 
@@ -246,8 +253,10 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
     coverBadge.classList.toggle('locked', levelLocked);
     coverBadge.classList.toggle('free', !levelLocked && !!currentLevel?.free);
 
-    // 更新 3D 动作角色动态展示
-    role3d.show(skinId);
+    // 仅在弹窗打开时更新 3D 动作角色动态展示，避免首页与游玩期间后台运行第二套 WebGL 渲染循环
+    if (!configModal.hidden) {
+      ensureRole3d().show(skinId);
+    }
 
     // 渲染关卡按钮
     for (const button of levelRow.querySelectorAll<HTMLButtonElement>('button')) {
@@ -302,12 +311,12 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   const openModal = () => {
     document.body.dataset.configOpen = 'true';
     configModal.hidden = false;
-    role3d.show(skinId);
+    ensureRole3d().show(skinId);
   };
   const closeModal = () => {
     delete document.body.dataset.configOpen;
     configModal.hidden = true;
-    role3d.hide();
+    role3d?.hide();
   };
   openConfigBtn.addEventListener('click', openModal);
   closeConfigBtn.addEventListener('click', closeModal);

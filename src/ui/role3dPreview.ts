@@ -126,6 +126,11 @@ export class Role3DPreview {
     action.setEffectiveWeight(1.0);
     action.play();
 
+    this.bbox.setFromObject(this.currentModel);
+    this.bbox.getCenter(this.targetCenter);
+    this.camera.position.set(this.targetCenter.x, this.targetCenter.y + 0.08, this.targetCenter.z + 2.15);
+    this.camera.lookAt(this.targetCenter.x, this.targetCenter.y + 0.04, this.targetCenter.z);
+
     this.renderFrame();
   }
 
@@ -134,12 +139,6 @@ export class Role3DPreview {
   private lastTime = performance.now();
 
   private renderFrame(): void {
-    if (this.currentModel) {
-      this.bbox.setFromObject(this.currentModel);
-      this.bbox.getCenter(this.targetCenter);
-      this.camera.position.set(this.targetCenter.x, this.targetCenter.y + 0.08, this.targetCenter.z + 2.15);
-      this.camera.lookAt(this.targetCenter.x, this.targetCenter.y + 0.04, this.targetCenter.z);
-    }
     this.renderer.render(this.scene, this.camera);
   }
 

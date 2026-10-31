@@ -12,7 +12,6 @@ import type { GameEvent, Phase } from './core/state';
 import { FirstPersonCamera } from './render/camera';
 import { HospitalRenderer } from './render/scene';
 import { SPRINT_EXHAUSTED_BELOW, isTap, sprintEngaged, stickAxes, touchControlsVisible } from './render/touch';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { mountShop, paidReturnNotice } from './ui/shop';
 import { levelById, skinById } from './core/economy';
 
@@ -45,22 +44,16 @@ function boot(): void {
   (window as any).__ROUNDS_GAME__ = game;
   (window as any).__ROUNDS_FOLLOW__ = follow;
   (window as any).__ROUNDS_HOSPITAL__ = hospital;
-  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.72;
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMappingExposure = 0.76;
+  renderer.shadowMap.enabled = false;
   const canvas = renderer.domElement;
   canvas.tabIndex = 0;
   canvas.setAttribute('aria-label', '医院走廊，WASD 移动，按住鼠标右键转动镜头');
   element('scene').appendChild(canvas);
-  // 环境反射：深夜住院部低强度冷调反射，让水磨石地面与金属推车呈现细腻手电高光，拒绝全图泛白。
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  hospital.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  hospital.scene.environmentIntensity = 0.12;
-  pmrem.dispose();
 
   const timer = element('timer');
   const timerLabel = element('timer-label');
@@ -539,13 +532,41 @@ function boot(): void {
   }
 
   function updateUI(): void {
-    if (game.phase === 'playing') drawMap();
+    if (game.phase === 'playing') {
+      drawMap();
+      // 每帧实时更新技能冷却遮罩动画与倒计时读数，消除无冷却动画的问题
+      for (const id of COMMAND_IDS) {
+        const button = commandButtons[id];
+        const state = game.commandStatus(id);
+        const isActive = game.activeEffect?.id === id;
+        const isCooling = !isActive && state.cooldown > 0;
+        const rawProgress = isActive
+          ? game.activeEffect!.remaining / COMMANDS[id].duration
+          : isCooling
+          ? state.cooldown / COMMAND_COOLDOWN
+          : 0;
+        const progress = Math.max(0, Math.min(1, Math.round(rawProgress * 100) / 100));
+        const nextState = isActive ? 'active' : isCooling ? 'cooldown' : state.available ? 'ready' : 'blocked';
+        if (button.dataset.state !== nextState) button.dataset.state = nextState;
+        if (button.dataset.progress !== String(progress)) {
+          button.dataset.progress = String(progress);
+          button.style.setProperty('--progress', `${(progress * 100).toFixed(1)}%`);
+        }
+        const label = isActive
+          ? `生效 ${game.activeEffect!.remaining.toFixed(1)}s`
+          : isCooling
+          ? `冷却 ${state.cooldown.toFixed(1)}s`
+          : (state.reason || '可用');
+        const statusEl = button.querySelector('.command-status')!;
+        if (statusEl.textContent !== label) statusEl.textContent = label;
+      }
+    }
     if (previousPhase === game.phase && game.elapsed >= uiTime && game.elapsed - uiTime < 0.07) return;
     uiTime = game.elapsed;
-    timerLabel.textContent = game.exitUnlocked ? '东侧安全门 · 已通电' : '安全门通电';
+    timerLabel.textContent = game.exitUnlocked ? '东侧安全门 · 已打开' : '安全门通电';
     const time = game.exitUnlocked ? '逃生' : `${Math.ceil(game.remaining)}<span>s</span>`;
     if (timer.innerHTML !== time) timer.innerHTML = time;
-    objective.textContent = game.exitUnlocked ? '东侧安全门已通电 · 立刻前往门口逃生' : '躲开值班员，等安全门通电';
+    objective.textContent = game.exitUnlocked ? '东侧安全门已打开 · 立刻前往门口逃生' : '躲开值班员，等安全门通电';
     const liveGuardDist = distance(game.player.position, game.guard.position).toFixed(1);
     status.textContent = game.lightsOn ? `开灯透视：猎人在${corridor(game.guard.position)} · 距你 ${liveGuardDist}m` : {
       patrol: '巡查中 · 走路安静，奔跑会被听见',
@@ -558,7 +579,7 @@ function boot(): void {
     const audioIssue = audio.snapshot().issue;
     if (audioIssue && !audioWarned && game.phase === 'playing') {
       audioWarned = true;
-      notice(`${audioIssue}。游戏可以继续，可用右上角按钮静音`);
+      notice(`${audioIssue}，游戏可正常继续`);
     }
     // 键盘操作需要页面焦点；点过画布却没焦点时，给一次可读提示而不是让玩家以为坏了。
     if (game.phase === 'playing' && !focusWarned && !document.hasFocus()) {
@@ -570,14 +591,6 @@ function boot(): void {
       const state = game.commandStatus(id);
       button.disabled = game.phase !== 'playing' || !!game.activeEffect || state.cooldown > 0;
       button.setAttribute('aria-disabled', String(!state.available));
-      const label = state.reason || '可用';
-      const status = button.querySelector('.command-status')!;
-      if (status.textContent !== label) status.textContent = label;
-      const progress = Math.round((game.activeEffect?.id === id ? game.activeEffect.remaining / COMMANDS[id].duration : state.cooldown / COMMAND_COOLDOWN) * 50) / 50;
-      if (button.dataset.progress !== String(progress)) {
-        button.dataset.progress = String(progress);
-        button.style.setProperty('--progress', `${progress * 100}%`);
-      }
     }
     const effect = game.activeEffect;
     effectPanel.hidden = !effect;
@@ -689,7 +702,7 @@ function boot(): void {
   let introPaused = false;
   let introElapsedMs = 0;
   let introLastTimestamp = 0;
-  const introDurationMs = 2500;
+  const introDurationMs = 5000;
 
   function finishIntroSequence(): void {
     if (!introActive) return;
@@ -762,7 +775,7 @@ function boot(): void {
       loaderPause.innerHTML = '暂停 <kbd>P</kbd>';
     }
     if (loaderFill) loaderFill.style.transform = 'scaleX(0)';
-    if (loaderCountdown) loaderCountdown.textContent = '2.5s';
+    if (loaderCountdown) loaderCountdown.textContent = '5.0s';
     introLastTimestamp = performance.now();
     introRafId = requestAnimationFrame(stepIntro);
   }

@@ -83,8 +83,8 @@ const DIFFICULTY_OVERRIDES: Record<DifficultyId, TuningOverrides> = {
   },
 };
 
-export const WALK_SPEED = 4.0;
-export const RUN_SPEED = 5.8;
+export const WALK_SPEED = 3.4;
+export const RUN_SPEED = 5.0;
 export const STAMINA_DRAIN_SECONDS = 3;
 export const STAMINA_RECOVER_SECONDS = 6;
 

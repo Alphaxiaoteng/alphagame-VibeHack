@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EXIT_APPROACH, GUARD_RADIUS, GUARD_SPAWN, NO_INPUT, PATROL_SPEED, PATROL_WAYPOINTS, PLAYER_SPAWN, RUN_SPEED, TIME_LIMIT, WALK_SPEED } from '../src/core/config';
+import { EXIT_APPROACH, GUARD_RADIUS, GUARD_SPAWN, NO_INPUT, PATROL_SPEED, PATROL_WAYPOINTS, PLAYER_SPAWN, TIME_LIMIT, WALK_SPEED } from '../src/core/config';
 import { RoundsGame } from '../src/core/state';
 import { HospitalMap, distance } from '../src/core/map';
 import { Player } from '../src/core/player';
@@ -204,16 +204,15 @@ describe('移动方向与体力', () => {
   it('奔跑恰好持续三秒，耗尽后一直按 Shift 也只能走', () => {
     const map = new HospitalMap();
     const player = new Player();
-    player.position = { x: 6, z: 4.5 };
     for (let frame = 0; frame < 180; frame++) player.update(1 / 60, run, map);
     expect(player.stamina).toBeCloseTo(0);
-    expect(player.position.x).toBeGreaterThan(6 + RUN_SPEED * 3 - 0.8);
-    expect(player.position.x).toBeLessThan(6 + RUN_SPEED * 3);
+    expect(player.position.x).toBeGreaterThan(24.3);
+    expect(player.position.x).toBeLessThan(25);
     const x = player.position.x;
     player.update(0.1, run, map);
-    // 耗尽后立即降为步行：步长介于步行与奔跑之间，绝不能继续按满速奔跑前进。
-    expect(player.position.x - x).toBeGreaterThan(WALK_SPEED * 0.1 - 0.05);
-    expect(player.position.x - x).toBeLessThan(RUN_SPEED * 0.1);
+    // 耗尽后立即降为步行：步长介于步行与奔跑之间，绝不能继续按 0.5 前进。
+    expect(player.position.x - x).toBeGreaterThan(0.3);
+    expect(player.position.x - x).toBeLessThan(0.5);
     expect(player.sprinting).toBe(false);
   });
 
