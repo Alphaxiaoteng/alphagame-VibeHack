@@ -113,7 +113,7 @@ function boot(): void {
     notice('安全门推开，迎向晨光逃离！');
   }
   const mapPanel = document.querySelector<HTMLElement>('.map-panel');
-  if (mapPanel) mapPanel.hidden = debug;
+  if (mapPanel) mapPanel.hidden = false;
 
   // 触控层：粗指针设备才显示摇杆与按钮，桌面鼠标完全不受影响。
   const coarsePointer = window.matchMedia('(pointer: coarse)').matches;

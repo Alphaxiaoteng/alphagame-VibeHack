@@ -310,7 +310,7 @@
     </div>
     
     <button type="button" class="pay-btn" id="pay-btn">确认支付 $0.99 (模拟出单) →</button>
-    <a href="/" class="cancel-link">取消并返回病房</a>
+    <a href="./" class="cancel-link">取消并返回病房</a>
     
     <div class="stamp-watermark">
       <span>PANCAKE CHECKOUT ENGINE</span>
@@ -320,41 +320,44 @@
 
   <script>
     const params = new URLSearchParams(location.search);
-    const sku = params.get('sku') || 'LEVEL_VAULT';
-    const ref = params.get('ref') || '';
-    const name = params.get('name') || '03 封印殿';
-    const price = params.get('price') || '0.99';
+    const sku = params.get("sku") || "LEVEL_VAULT";
+    const ref = params.get("ref") || "";
+    const name = params.get("name") || "03 封印殿";
+    const price = params.get("price") || "0.99";
 
-    document.getElementById('p-name').textContent = name + ' (买断解锁)';
-    document.getElementById('p-price').textContent = price;
-    const btn = document.getElementById('pay-btn');
+    document.getElementById("p-name").textContent = name + " (买断解锁)";
+    document.getElementById("p-price").textContent = price;
+    const btn = document.getElementById("pay-btn");
     btn.textContent = `确认支付 $${price} (模拟出单) →`;
 
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      btn.textContent = '正在出单与记账…';
+    function saveLocalUnlock(unlockedSku) {
       try {
-        const resp = await fetch('/api/demo-pay', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
+        const raw = localStorage.getItem("rounds.demo-skus");
+        const list = raw ? JSON.parse(raw) : [];
+        if (Array.isArray(list) && !list.includes(unlockedSku)) {
+          list.push(unlockedSku);
+          localStorage.setItem("rounds.demo-skus", JSON.stringify(list));
+        } else if (!Array.isArray(list)) {
+          localStorage.setItem("rounds.demo-skus", JSON.stringify([unlockedSku]));
+        }
+      } catch {}
+    }
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btn.textContent = "正在出单与记账…";
+      saveLocalUnlock(sku);
+      try {
+        await fetch("./api/demo-pay", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
           body: JSON.stringify({ sku, ref })
         });
-        const d = await resp.json();
-        if (d.ok) {
-          btn.textContent = '支��成功！正在返回游戏…';
-          setTimeout(() => {
-            location.href = '/?paid=1';
-          }, 800);
-        } else {
-          alert('支付失败: ' + (d.error || '未知'));
-          btn.disabled = false;
-          btn.textContent = `确认支付 $${price} (模拟出单) →`;
-        }
-      } catch (e) {
-        alert('网络异常: ' + e.message);
-        btn.disabled = false;
-        btn.textContent = `确认支付 $${price} (模拟出单) →`;
-      }
+      } catch {}
+      btn.textContent = "支付成功！正在返回游戏…";
+      setTimeout(() => {
+        location.href = "./?paid=1";
+      }, 600);
     });
   </script>
 </body>

@@ -415,46 +415,68 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
     void checkout(sku);
   });
 
+  function readLocalSkus(): ProductSku[] {
+    try {
+      const raw = localStorage.getItem('rounds.demo-skus');
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? (parsed as ProductSku[]) : [];
+    } catch {
+      return [];
+    }
+  }
+
   async function checkout(sku: ProductSku): Promise<void> {
     const product = productBySku(sku);
     try {
-      const response = await fetch('/api/checkout', {
+      const response = await fetch('./api/checkout', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ sku, ref, origin: location.origin }),
       });
+      if (response.status === 404 || response.status === 405) {
+        window.location.href = `./demo-checkout.html?sku=${encodeURIComponent(sku)}&ref=${encodeURIComponent(ref)}&name=${encodeURIComponent(product?.name ?? 'DLC')}&price=${product?.price ?? '0.99'}`;
+        return;
+      }
       const payload = (await response.json()) as { checkoutUrl?: string; error?: string };
       if (!response.ok || !payload.checkoutUrl) {
-        throw new Error(payload.error ?? `下单失败（HTTP ${response.status}）`);
+        buy.disabled = false;
+        showBuyModal(
+          `解锁 ${product?.name ?? '付费内容'}`,
+          `请求已到达网关。当前环境未连接外部真实发卡行。`,
+          sku,
+          payload.error ?? `下单失败（HTTP ${response.status}）`
+        );
+        return;
       }
       // 成功获得收银台 URL，立即触发页面跳转！
       window.location.href = payload.checkoutUrl;
-    } catch (error) {
-      buy.disabled = false;
-      showBuyModal(
-        `解锁 ${product?.name ?? '付费内容'}`,
-        `请求已到达网关。当前环境未连接外部真实发卡行。`,
-        sku,
-        error instanceof Error ? error.message : '网络连接受限'
-      );
+    } catch {
+      window.location.href = `./demo-checkout.html?sku=${encodeURIComponent(sku)}&ref=${encodeURIComponent(ref)}&name=${encodeURIComponent(product?.name ?? 'DLC')}&price=${product?.price ?? '0.99'}`;
     }
   }
 
   async function refresh(): Promise<void> {
+    const localSkus = readLocalSkus();
     try {
       const [catalog, owned] = await Promise.all([
-        fetch('/api/catalog').then(response => response.json() as Promise<{ ready?: boolean }>),
-        fetch(`/api/entitlements?ref=${encodeURIComponent(ref)}`).then(response => response.json() as Promise<{ skus?: string[] }>),
+        fetch('./api/catalog').then(response => response.json() as Promise<{ ready?: boolean }>),
+        fetch(`./api/entitlements?ref=${encodeURIComponent(ref)}`).then(response => response.json() as Promise<{ skus?: string[] }>),
       ]);
       ready = !!catalog.ready;
-      entitlements = resolveEntitlements(owned.skus ?? []);
+      const mergedSkus = Array.from(new Set([...(owned.skus ?? []), ...localSkus])) as ProductSku[];
+      entitlements = resolveEntitlements(mergedSkus);
       if (!canPlayLevel(levelId, entitlements)) levelId = 'ward-01';
       if (!canUseSkin(skinId, entitlements)) skinId = 'standard';
       paint();
       hooks.onSelect(levelId, skinId);
     } catch {
-      ready = false;
+      ready = true;
+      entitlements = resolveEntitlements(localSkus);
+      if (!canPlayLevel(levelId, entitlements)) levelId = 'ward-01';
+      if (!canUseSkin(skinId, entitlements)) skinId = 'standard';
       paint();
+      hooks.onSelect(levelId, skinId);
     }
   }
 

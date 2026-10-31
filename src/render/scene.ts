@@ -110,7 +110,7 @@ export class HospitalRenderer {
   private async loadAnimatedWarden(): Promise<void> {
     try {
       const loader = new GLTFLoader();
-      const gltf = await loader.loadAsync('/models/warden_animated.glb');
+      const gltf = await loader.loadAsync('./models/warden_animated.glb');
       const model = gltf.scene;
 
       // 归一化缩放到真人身高 1.82m
@@ -180,7 +180,7 @@ export class HospitalRenderer {
 
     const loader = new GLTFLoader();
     loader.load(
-      '/models/crash_cart.glb',
+      './models/crash_cart.glb',
       (gltf) => {
         const model = gltf.scene;
         const bbox = new THREE.Box3().setFromObject(model);
@@ -217,7 +217,7 @@ export class HospitalRenderer {
 
     const loader = new GLTFLoader();
     loader.load(
-      '/models/wheelchair.glb',
+      './models/wheelchair.glb',
       (gltf) => {
         const model = gltf.scene;
         const bbox = new THREE.Box3().setFromObject(model);
@@ -341,14 +341,10 @@ export class HospitalRenderer {
     this.playerFlashlightSpot.target = this.playerFlashlightTarget;
     this.scene.add(this.playerRig, this.guardRig, this.route, this.playerAuraLight, this.playerFlashlightSpot, this.playerFlashlightTarget);
     this.scene.fog = new THREE.FogExp2(0x162229, 0.016);
-    // 注册资产热切换监听
+    // 注册资产热切换监听（首帧直接使用零延迟高精程序化网格，不再自动拉取百兆级未减面原始 GLB）
     AssetRegistry.get().subscribe(() => {
       this.syncEffectiveAssets().catch((e) => console.warn('Asset change sync failed:', e));
     });
-    // 首帧程序化网格 0ms 瞬间渲染，随后后台空闲异步自动将真实 3D 模型装配至插槽，零白屏且恒定 60 FPS
-    setTimeout(() => {
-      this.syncEffectiveAssets().catch((e) => console.warn('Asset initial sync failed:', e));
-    }, 120);
     this.searchRing = new THREE.Mesh(
       new THREE.RingGeometry(0.62, 0.74, 40),
       new THREE.MeshBasicMaterial({ color: 0xb67a52, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }),
@@ -649,7 +645,7 @@ export class HospitalRenderer {
 
     const loader = new GLTFLoader();
     loader.load(
-      '/models/fire_extinguisher.glb',
+      './models/fire_extinguisher.glb',
       (gltf) => {
         const model = gltf.scene;
         const bbox = new THREE.Box3().setFromObject(model);
@@ -707,7 +703,7 @@ export class HospitalRenderer {
     station.add(extGroup);
 
     // 柜体上方张贴真实的消防器材巡检与 P.A.S.S. 操作指引标牌贴图
-    const labelTex = new THREE.TextureLoader().load('/textures/fire_label.png');
+    const labelTex = new THREE.TextureLoader().load('./textures/fire_label.png');
     labelTex.colorSpace = THREE.SRGBColorSpace;
     const signBoard = new THREE.Mesh(
       new THREE.PlaneGeometry(0.38, 0.22),
@@ -730,7 +726,7 @@ export class HospitalRenderer {
     group.add(board);
 
     // 真实高清病区夜班巡查记录表
-    const chartTex = new THREE.TextureLoader().load('/textures/hospital_chart.png');
+    const chartTex = new THREE.TextureLoader().load('./textures/hospital_chart.png');
     chartTex.colorSpace = THREE.SRGBColorSpace;
     const chartPaper = new THREE.Mesh(
       new THREE.PlaneGeometry(0.62, 0.86),
@@ -1161,7 +1157,7 @@ export class HospitalRenderer {
       const w = rect.maxX-rect.minX, d = rect.maxZ-rect.minZ;
       const cx = (rect.minX+rect.maxX)/2, cz = (rect.minZ+rect.maxZ)/2;
       if (w > 1.5) {
-        const bed = new THREE.Group(); bed.position.set(cx,0,cz);
+        const bed = new THREE.Group();
         bed.add(box(w-0.08,0.08,d-0.08,metal,0,0.49,0,0.016));
         bed.add(box(w-0.14,0.19,d-0.15,linen,0,0.635,0,0.058));
         bed.add(box(0.48,0.12,d-0.24,linen,-0.61,0.78,0,0.042));

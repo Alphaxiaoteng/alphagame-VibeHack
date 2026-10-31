@@ -482,7 +482,26 @@ body[data-phase="start"] .hud { display: none; }
 #touch-sprint.exhausted { color: var(--paper-ink-dim); }
 body[data-touch="true"] .bottom-hud .stamina-panel { display: none; }
 body[data-touch="true"] .controls-note { display: none; }
-body[data-touch="true"] .map-panel { display: none; }
+body[data-touch="true"] .map-panel {
+  display: block !important;
+  right: 12px;
+  top: 56px;
+  width: 148px;
+  padding: 5px 6px 4px;
+  z-index: 15;
+}
+body[data-touch="true"] .map-panel > div {
+  font-size: 9px;
+  padding: 0 1px 3px;
+}
+body[data-touch="true"] .map-panel canvas {
+  width: 134px;
+  height: 98px;
+}
+body[data-touch="true"] .map-panel small {
+  font-size: 8.5px;
+  margin-top: 3px;
+}
 
 /* 右下角纸质按键备忘签 */
 .controls-note {
@@ -558,7 +577,7 @@ body[data-phase="start"] .cover-stage {
 .cover-backdrop {
   position: absolute;
   inset: 0;
-  background-image: url('/key-art-hero.jpg');
+  background-image: url('../key-art-hero.jpg');
   background-size: cover;
   background-position: right center;
   background-repeat: no-repeat;
@@ -1174,7 +1193,17 @@ body:not([data-ready="true"]) .boot-note { display: block; }
 #fatal[data-kind="context"] .fatal-hint { display: none; }
 
 @media (max-width: 1024px) {
-  .map-panel { display: none; }
+  .map-panel {
+    display: block;
+    right: 14px;
+    top: 64px;
+    width: 156px;
+    padding: 6px 6px 5px;
+  }
+  .map-panel canvas {
+    width: 142px;
+    height: 104px;
+  }
 }
 @media (max-width: 1180px) {
   .identity { gap: 9px; }
@@ -1315,7 +1344,7 @@ body[data-touch="true"] .keyboard-only { display: none; }
 .intro-loader-backdrop {
   position: absolute;
   inset: 0;
-  background-image: url('/key-art-hero.jpg');
+  background-image: url('../key-art-hero.jpg');
   background-size: cover;
   background-position: center;
   filter: brightness(0.16) contrast(1.12);
