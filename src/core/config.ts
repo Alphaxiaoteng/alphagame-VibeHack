@@ -53,9 +53,9 @@ export const BASE_TUNING = {
 type TuningOverrides = Partial<{ [K in keyof typeof BASE_TUNING]: number }>;
 
 const DIFFICULTY_NAMES: Record<DifficultyId, string> = {
-  intern: '一星难度',
-  standard: '二星难度',
-  graveyard: '三星难度',
+  intern: '简单',
+  standard: '中',
+  graveyard: '极难',
 };
 const DIFFICULTY_BRIEFS: Record<DifficultyId, string> = {
   intern: '值班员走得慢 · 看得近',
@@ -92,7 +92,8 @@ export const GUARD_RADIUS = 0.4;
 export const PLAYER_SPAWN: Point = { x: 10, z: 4.5 };
 /** 巡逻选路时出生点周围的安全圈：直线方向穿过该圈的候选路点被排除，防止对角线路沿北走廊碾过出生点。 */
 export const SPAWN_SAFE_RADIUS = 3;
-export const GUARD_SPAWN: Point = { x: 22, z: 4.5 };
+/** 值班员开局出生在对角线南走廊，隔着建筑群与防火门，绝不开局直线冲出撞脸。 */
+export const GUARD_SPAWN: Point = { x: 19, z: 17.5 };
 
 export const EXIT_POINT: Point = { x: 27, z: 11 };
 export const EXIT_TRIGGER_RADIUS = 1.0;

@@ -265,6 +265,8 @@ function boot(): void {
 
   const difficultyCards = [...document.querySelectorAll<HTMLButtonElement>('.difficulty-card')];
   function renderDifficultyCards(): void {
+    const badge = document.getElementById('diff-current-badge');
+    if (badge) badge.textContent = DIFFICULTIES[selectedDifficulty].name;
     for (const card of difficultyCards) {
       const id = card.dataset.difficulty as DifficultyId;
       card.dataset.selected = String(id === selectedDifficulty);
@@ -637,7 +639,7 @@ function boot(): void {
     if (pitchModal) {
       pitchModal.hidden = false;
       if (pitchIframe && (!pitchIframe.src || pitchIframe.src === 'about:blank' || pitchIframe.src.endsWith('about:blank'))) {
-        pitchIframe.src = '/pitch.html';
+        pitchIframe.src = '/PPT_20261031_查房_3D心理微恐解密游戏路演_本地演示.html';
       }
     }
   }
@@ -650,6 +652,25 @@ function boot(): void {
   if (briefingQr) press(briefingQr, openQrModal);
   if (btnPitch) press(btnPitch, openPitchModal);
   if (briefingPitch) press(briefingPitch, openPitchModal);
+
+  // 全屏切换（支持桌面与手机浏览器全屏沉浸视界）
+  const btnFullscreen = document.getElementById('btn-fullscreen') as HTMLButtonElement | null;
+  const touchFullscreen = document.getElementById('touch-fullscreen') as HTMLButtonElement | null;
+  function toggleFullscreen(): void {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+  function updateFsText(): void {
+    const isFs = !!document.fullscreenElement;
+    if (btnFullscreen) btnFullscreen.textContent = isFs ? '窗口' : '全屏';
+    if (touchFullscreen) touchFullscreen.textContent = isFs ? '窗口' : '全屏';
+  }
+  if (btnFullscreen) press(btnFullscreen, toggleFullscreen);
+  if (touchFullscreen) press(touchFullscreen, toggleFullscreen);
+  document.addEventListener('fullscreenchange', updateFsText);
 
   document.querySelectorAll('[data-close-modal]').forEach(el => {
     el.addEventListener('click', closeAllModals);
@@ -948,6 +969,12 @@ function boot(): void {
     audio.update(game);
     hospital.sync(game, game.phase === 'playing' ? dt : 0);
     hospital.scene.updateMatrixWorld(true);
+    if (game.phase === 'start') {
+      // 标题待机时为背景走廊增加电影感微幅手持呼吸镜头（平滑正弦微晃，消除死板静止）
+      const t = performance.now() * 0.0006;
+      follow.yaw += Math.sin(t) * 0.0003;
+      follow.pitch = Math.sin(t * 1.3) * 0.006;
+    }
     follow.update(game.player.position);
     // 奔跑时镜头轻微扩张（72°→78°）、停下回落：给出速度感，又不破坏明亮克制的观感。
     const sprintingForFov = game.phase === 'playing' && input.sprint && (input.forward !== 0 || input.right !== 0);

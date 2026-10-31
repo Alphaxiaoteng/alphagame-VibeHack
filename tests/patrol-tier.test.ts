@@ -12,12 +12,12 @@ describe('三档巡逻走位', () => {
     guard.setPatrolTarget(0, map());
     guard.position = { ...PATROL_WAYPOINTS[0] };
     guard.path = [];
-    guard.update(1 / 60, map()); // 触发选点 + 进入停留
+    guard.movePatrol(1 / 60, map()); // 触发选点 + 进入停留
     expect(guard.pauseRemaining).toBeGreaterThan(1.5); // 一星停留 ≈2s
     const stuck = { ...guard.position };
-    for (let frame = 0; frame < 60; frame++) guard.update(1 / 60, map()); // 1 秒
+    for (let frame = 0; frame < 60; frame++) guard.movePatrol(1 / 60, map()); // 1 秒
     expect(distance(guard.position, stuck)).toBeLessThan(0.05); // 停留期内不移动
-    for (let frame = 0; frame < 180; frame++) guard.update(1 / 60, map()); // 3 秒
+    for (let frame = 0; frame < 180; frame++) guard.movePatrol(1 / 60, map()); // 3 秒
     expect(guard.pauseRemaining).toBe(0); // 停留结束，恢复移动
   });
 
@@ -27,7 +27,7 @@ describe('三档巡逻走位', () => {
     guard.setPatrolTarget(0, map());
     guard.position = { ...PATROL_WAYPOINTS[0] };
     guard.path = [];
-    guard.update(1 / 60, map());
+    guard.movePatrol(1 / 60, map());
     expect(guard.pauseRemaining).toBeGreaterThan(0.4);
     expect(guard.pauseRemaining).toBeLessThan(1.0);
   });
@@ -38,7 +38,7 @@ describe('三档巡逻走位', () => {
     guard.setPatrolTarget(0, map());
     guard.position = { ...PATROL_WAYPOINTS[0] };
     guard.path = [];
-    guard.update(1 / 60, map());
+    guard.movePatrol(1 / 60, map());
     expect(guard.pauseRemaining).toBe(0);
   });
 
@@ -50,7 +50,7 @@ describe('三档巡逻走位', () => {
     guard.position = { ...PATROL_WAYPOINTS[0] };
     guard.path = [];
     const playerPos = { ...PLAYER_SPAWN };
-    guard.update(1 / 60, map(), playerPos);
+    guard.movePatrol(1 / 60, map(), playerPos);
     // 出生安全过滤会剔除“寻路折线穿过出生点”的候选（如西南角）；
     // 剩余安全候选 [东南角, 病房02门口] 中，猎手应选离玩家最近的病房 02 门口 (25.5,11)。
     const safeCandidates = [1, 3];
@@ -63,7 +63,7 @@ describe('三档巡逻走位', () => {
     guardB.setPatrolTarget(0, map());
     guardB.position = { ...PATROL_WAYPOINTS[0] };
     guardB.path = [];
-    guardB.update(1 / 60, map(), playerPos);
+    guardB.movePatrol(1 / 60, map(), playerPos);
     expect([0, 1, 2, 3]).toContain(guardB.targetIndex);
   });
 
@@ -73,9 +73,9 @@ describe('三档巡逻走位', () => {
     guard.setPatrolTarget(0, map());
     guard.position = { ...PATROL_WAYPOINTS[0] };
     guard.path = [];
-    guard.update(1 / 60, map());
+    guard.movePatrol(1 / 60, map());
     for (let frame = 0; frame < 240; frame++) {
-      guard.update(1 / 60, map());
+      guard.movePatrol(1 / 60, map());
       expect(distance(guard.position, PLAYER_SPAWN)).toBeGreaterThan(7);
     }
   });

@@ -11,12 +11,12 @@ describe('开局安全：任何随机分支都不会“上来就死”', () => {
       const guard = new PatrolGuard(map, rand);
       // 真实开局（reset 语义）：先向东，x 必须增大且不向玩家靠近
       const x0 = guard.position.x;
-      guard.update(1, map);
+      guard.movePatrol(1, map);
       expect(guard.position.x).toBeGreaterThan(x0);
       expect(distance(guard.position, PLAYER_SPAWN)).toBeGreaterThan(11);
       // 随机巡逻完整 5 秒：任何分支都不进抓捕半径
       for (let frame = 0; frame < 300; frame++) {
-        guard.update(1 / 60, map);
+        guard.movePatrol(1 / 60, map);
         expect(distance(guard.position, PLAYER_SPAWN)).toBeGreaterThan(1.2);
       }
       // 到达第一个路点后的后续随机段（模拟第二段起点，从各真实可达路点出发）
@@ -26,9 +26,9 @@ describe('开局安全：任何随机分支都不会“上来就死”', () => {
         g2.position = { ...origin };
         g2.targetIndex = 0;
         g2.path = [];
-        g2.update(1 / 60, map2); // 触发到达→随机选点
+        g2.movePatrol(1 / 60, map2); // 触发到达→随机选点
         for (let frame = 0; frame < 300; frame++) {
-          g2.update(1 / 60, map2);
+          g2.movePatrol(1 / 60, map2);
           if (distance(g2.position, PLAYER_SPAWN) <= 1.2) {
             throw new Error(`origin=${JSON.stringify(origin)} 5 秒内贴近出生点 (${g2.position.x.toFixed(2)},${g2.position.z.toFixed(2)})`);
           }

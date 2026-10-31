@@ -95,8 +95,7 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
       <span class="shop-summary-role">· 值班医师</span>
     </div>
     <button type="button" class="shop-summary-btn">
-      <span>关卡与干员 3D</span>
-      <span class="gear-icon">⚙</span>
+      <span>配置</span>
     </button>
   `;
   const summaryLevel = summaryBar.querySelector('.shop-summary-level') as HTMLElement;

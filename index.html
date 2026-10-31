@@ -16,6 +16,7 @@
           <div class="timer-block"><span id="timer-label">安全门通电</span><strong id="timer" class="mono">60<span>s</span></strong></div>
           <div class="toolbar">
             <button id="btn-qr" type="button" title="手机扫码直接体验" hidden>手机扫码</button>
+            <button id="btn-fullscreen" type="button" title="全屏显示">全屏</button>
             <button id="mute" type="button" aria-pressed="false" title="静音或打开声音"><kbd>M</kbd> 声音</button>
             <button id="pause" type="button" disabled title="暂停"><kbd>Esc</kbd> 暂停</button>
           </div>
@@ -28,18 +29,48 @@
         <div id="threat-pointer" class="threat-pointer" aria-hidden="true" hidden>▲</div>
         <div class="bottom-hud">
           <section class="stamina-panel" aria-label="体力"><div><span>体力</span><span id="stamina-label" class="mono">100%</span></div><div id="stamina" class="stamina-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="stamina-fill" data-stable="true"></div></div><small id="stamina-hint">按住 Shift 奔跑 · 松开恢复</small></section>
-          <section class="commands" aria-label="点击或按 1 / 2 / 3 发动值班指令">
-            <button id="command-lights" type="button" title="点亮全部顶灯与出口引导，持续 6 秒；值班员视距扩大至 12 米。12 秒冷却。"><kbd>1</kbd><div><strong>全院开灯</strong><small>你也更容易暴露</small></div><span class="command-status">可用</span><i class="cooldown-fill"></i></button>
-            <button id="command-lockdown" type="button" title="关闭最短追捕路线上的空闲防火门 5 秒；你也需要绕路。12 秒冷却。"><kbd>2</kbd><div><strong>封锁走廊</strong><small>你也需要绕路</small></div><span class="command-status">可用</span><i class="cooldown-fill"></i></button>
-            <button id="command-broadcast" type="button" title="引向远处病房 6 秒，随后警觉搜索 6 秒。先躲开视线才能引开值班员。12 秒冷却。"><kbd>3</kbd><div><strong>广播查房</strong><small>先躲开视线才能引开</small></div><span class="command-status">可用</span><i class="cooldown-fill"></i></button>
+          <section class="commands" aria-label="值班战术指令槽（可按键盘 1 / 2 / 3 或直接点击）">
+            <button id="command-lights" type="button" class="command-btn" title="全院开灯：点亮全部顶灯与出口引导，持续 6 秒；值班员视距扩大至 12 米。12 秒冷却。">
+              <kbd class="key-badge">1</kbd>
+              <div class="cmd-info">
+                <strong>全院开灯</strong>
+                <small>强光透视 · 易暴露</small>
+              </div>
+              <span class="command-status">可用</span>
+              <i class="cooldown-fill"></i>
+            </button>
+            <button id="command-lockdown" type="button" class="command-btn" title="封锁走廊：关闭追捕路线防火门 5 秒；你也需要绕路。12 秒冷却。">
+              <kbd class="key-badge">2</kbd>
+              <div class="cmd-info">
+                <strong>封锁走廊</strong>
+                <small>阻断追捕 · 需绕路</small>
+              </div>
+              <span class="command-status">可用</span>
+              <i class="cooldown-fill"></i>
+            </button>
+            <button id="command-broadcast" type="button" class="command-btn" title="广播查房：引向远处病房 6 秒，随后警觉搜索 6 秒。先躲开视线才能引开。12 秒冷却。">
+              <kbd class="key-badge">3</kbd>
+              <div class="cmd-info">
+                <strong>广播查房</strong>
+                <small>声东击西 · 警戒搜索</small>
+              </div>
+              <span class="command-status">可用</span>
+              <i class="cooldown-fill"></i>
+            </button>
           </section>
-          <div class="controls-note"><span><kbd>WASD</kbd> 移动</span><span>右键拖动 / 双指滑动转镜头</span><span><kbd>R</kbd> 结算后重开</span></div>
+          <div class="controls-note">
+            <span><kbd>WASD</kbd> 走位</span>
+            <span><kbd>Shift</kbd> 疾跑</span>
+            <span><kbd>1-3</kbd> 战术指令</span>
+            <span>右键拖动视线</span>
+          </div>
         </div>
         <div id="touch-controls" class="touch-controls" hidden>
           <div id="touch-stick" class="touch-stick" role="application" aria-label="虚拟摇杆：拖动移动，向上推前进">
             <div id="touch-thumb" class="touch-thumb"></div>
           </div>
           <div class="touch-actions">
+            <button id="touch-fullscreen" type="button" title="全屏显示">全屏</button>
             <button id="touch-sprint" type="button" aria-pressed="false">跑</button>
             <button id="touch-pause" type="button">暂停</button>
           </div>
@@ -64,8 +95,9 @@
           <h1 id="overlay-title">今晚，走出医院。</h1>
           <p id="overlay-copy" class="briefing-copy">躲开值班员，坚持 <strong class="highlight-timer">45 秒</strong> 通电逃生。</p>
           
-          <!-- 正方形按键游戏 UI -->
-          <div id="start-help" class="gamepad-guide" aria-label="操作按键指南">
+          <!-- 硬核战术按键教程 -->
+          <div id="start-help" class="gamepad-guide" aria-label="操作按键教程指南">
+            <!-- 移动操作组 -->
             <div class="key-cluster wasd-group">
               <div class="wasd-layout">
                 <div class="key-row key-row-top">
@@ -77,48 +109,75 @@
                   <span class="key-cap square-key">D</span>
                 </div>
               </div>
-              <span class="key-action-label">移动</span>
+              <span class="key-action-label">走位移动</span>
             </div>
 
             <div class="guide-divider" aria-hidden="true"></div>
 
+            <!-- 身法与视角组 -->
             <div class="key-cluster actions-group">
               <div class="action-key-item">
                 <span class="key-cap pill-key">Shift</span>
-                <span class="key-action-label">奔跑</span>
+                <span class="key-action-label">奔跑冲刺</span>
               </div>
               <div class="action-key-item">
                 <span class="key-cap mouse-key">
-                  <svg class="mouse-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <svg class="mouse-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="5" y="2" width="14" height="20" rx="7"></rect>
                     <line x1="12" y1="6" x2="12" y2="10"></line>
-                    <path d="M12 2v8h7" fill="rgba(56, 189, 248, 0.45)"></path>
+                    <path d="M12 2v8h7" fill="rgba(255, 255, 255, 0.25)"></path>
                   </svg>
                   右键拖动
                 </span>
-                <span class="key-action-label">旋转视角</span>
+                <span class="key-action-label">环顾视线</span>
+              </div>
+            </div>
+
+            <div class="guide-divider" aria-hidden="true"></div>
+
+            <!-- 1 2 3 战术技能指令组 -->
+            <div class="key-cluster tactical-group">
+              <div class="tactical-col">
+                <div class="tactical-keys-row">
+                  <span class="key-cap square-key num-key">1</span>
+                  <span class="key-cap square-key num-key">2</span>
+                  <span class="key-cap square-key num-key">3</span>
+                </div>
+                <div class="tactical-meta">
+                  <span class="key-action-label">战术指令槽 (开灯·封门·广播)</span>
+                </div>
               </div>
             </div>
 
             <div id="touch-help" class="touch-hint-pill" hidden>
-              <span>触控模式：左下虚拟摇杆移动 · 右侧奔跑</span>
+              <span>触控模式：左下虚拟摇杆移动 · 右侧奔跑与指令槽</span>
             </div>
           </div>
 
-          <div id="difficulty-picker" class="difficulty-picker" aria-label="选择值班难度">
-            <button type="button" class="difficulty-card" data-difficulty="intern">
-              <strong>★☆☆ 一星难度</strong>
-              <small>反应慢半拍 · 视距较近</small>
-            </button>
-            <button type="button" class="difficulty-card" data-difficulty="standard">
-              <strong>★★☆ 二星难度</strong>
-              <small>熟悉楼层 · 正常巡查速度</small>
-            </button>
-            <button type="button" class="difficulty-card" data-difficulty="graveyard" data-locked="true">
-              <strong>★★★ 三星难度 <svg class="lock-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></strong>
-              <small>耳聪目明 · 守备极严</small>
-              <em class="lock-hint">通关二星难度解锁</em>
-            </button>
+          <div class="difficulty-picker-container">
+            <div class="diff-header-row">
+              <span class="diff-label-title">难度：<strong id="diff-current-badge">标准</strong></span>
+            </div>
+            <div id="difficulty-picker" class="difficulty-picker" aria-label="选择值班难度">
+              <button type="button" class="difficulty-card" data-difficulty="intern" title="见习">
+                <span class="diff-level-text">见习</span>
+                <span class="diff-level-sub">慢速巡查</span>
+              </button>
+              <button type="button" class="difficulty-card" data-difficulty="standard" title="标准">
+                <span class="diff-level-text">标准</span>
+                <span class="diff-level-sub">常规速度</span>
+              </button>
+              <button type="button" class="difficulty-card" data-difficulty="graveyard" data-locked="true" title="高危">
+                <div class="diff-card-inner">
+                  <span class="diff-level-text">高危</span>
+                  <svg class="diff-lock-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </div>
+                <span class="diff-level-sub">严密守备</span>
+              </button>
+            </div>
           </div>
 
           <!-- 战备选择：轻量状态摘要胶囊，点击弹出独立 3D 动作整备舱 -->
@@ -167,7 +226,7 @@
               <span class="badge-mini">Excalidraw 演示</span>
             </div>
             <div class="modal-actions">
-              <a href="/pitch.html" target="_blank" class="btn-subtle" title="新标签页独立全屏">独立全屏 ↗</a>
+              <a href="/PPT_20261031_查房_3D心理微恐解密游戏路演_本地演示.html" target="_blank" class="btn-subtle" title="新标签页独立全屏">独立全屏 ↗</a>
               <button class="modal-close" data-close-modal title="关闭">×</button>
             </div>
           </div>

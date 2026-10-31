@@ -70,9 +70,11 @@ export class PatrolGuard {
     for (let index = 0; index < PATROL_WAYPOINTS.length; index += 1) {
       if (index === this.targetIndex) continue;
       if (map.findPath(this.position, PATROL_WAYPOINTS[index], GUARD_RADIUS).length === 0) continue;
-      // 用实际寻路结果判定是否碾过出生点：检查整条折线的每一段（含拐点间拉直线段），不只看拐点。
-      const path = map.findPath(this.position, PATROL_WAYPOINTS[index], GUARD_RADIUS);
-      if (this.pathNearSpawn(this.position, path)) continue;
+      // 开局保护窗内才避开出生点走廊：窗口关闭后恢复全图巡逻，否则值班员被锁死在东南半区。
+      if (this.openingProtection) {
+        const path = map.findPath(this.position, PATROL_WAYPOINTS[index], GUARD_RADIUS);
+        if (this.pathNearSpawn(this.position, path)) continue;
+      }
       candidates.push(index);
     }
     // 猎手倾向：以一定概率选“离玩家最近的可达路点”，主动压向玩家所在的半区。
@@ -122,9 +124,12 @@ export class PatrolGuard {
   pauseRemaining = 0;
   private pauseFacing = 0;
   private pauseClock = 0;
+  /** 开局保护窗：true 时选路避开出生点走廊（防“上来就死”）；10 秒后由 Warden 关闭，恢复全图巡逻。 */
+  openingProtection = true;
 
-  update(dt: number, map: HospitalMap, playerPos?: Point): void {
+  movePatrol(dt: number, map: HospitalMap, playerPos?: Point, opts?: { openingProtected?: boolean }): void {
     if (map.revision !== this.revision) this.replan(map);
+    if (opts?.openingProtected !== undefined) this.openingProtection = opts.openingProtected;
     // 路点停留：按档位站立张望（朝向缓摆），期间不移动；被追逐时 Warden 不会进入本方法。
     if (this.pauseRemaining > 0) {
       this.pauseRemaining = Math.max(0, this.pauseRemaining - dt);
@@ -294,9 +299,11 @@ export class Warden extends PatrolGuard {
   graceImmunity = false;
   private graceRemaining = 0;
 
-  override update(dt: number, map: HospitalMap, playerOrPos?: Player | Point, sightRange?: number): void {
+  update(dt: number, map: HospitalMap, playerOrPos?: Player | Point, sightRange?: number, opts?: { openingProtected?: boolean }): void {
     const player = playerOrPos instanceof Player ? playerOrPos : undefined;
     this.pathTimer += dt;
+    // 开局保护窗：由调用方按游玩时长传入（elapsed < 10s 为 true），超窗自动恢复全图巡逻。
+    if (opts?.openingProtected !== undefined) this.openingProtection = opts.openingProtected;
     if (this.graceRemaining > 0) this.graceRemaining = Math.max(0, this.graceRemaining - dt);
     else this.graceImmunity = false;
     const visible = !!player && this.perception && this.canSeePlayer(map, player, sightRange);
@@ -329,7 +336,7 @@ export class Warden extends PatrolGuard {
     }
     if (map.revision !== this.routeRevision) this.replan(map);
     if (this.mode === 'patrol') {
-      super.update(dt, map, this.perception ? player?.position : undefined);
+      this.movePatrol(dt, map, this.perception ? player?.position : undefined, { openingProtected });
       return;
     }
 

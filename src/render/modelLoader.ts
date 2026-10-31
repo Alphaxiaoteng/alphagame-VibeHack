@@ -105,8 +105,21 @@ export class ModelLoaderService {
       scale = target.targetWidth / size.x;
     }
 
-    // 针对特型物品进行微调适配
+    // 针对特型物品进行微调适配与长轴自适应旋转对齐
     if (category === 'bed') {
+      // 若原始模型长轴沿 Z 轴而目标长轴沿 X 轴，先让模型绕 Y 轴旋转 90 度以对齐长轴
+      if (size.z > size.x * 1.3) {
+        group.rotation.y = Math.PI / 2;
+        group.updateMatrixWorld(true);
+        const reBbox = new THREE.Box3().setFromObject(group);
+        const reSize = reBbox.getSize(new THREE.Vector3());
+        size.copy(reSize);
+      }
+      const scaleX = target.targetWidth ? target.targetWidth / size.x : scale;
+      const scaleY = target.targetHeight ? target.targetHeight / size.y : scale;
+      const scaleZ = target.targetDepth ? target.targetDepth / size.z : scale;
+      scale = Math.min(scaleX, scaleY, scaleZ);
+    } else if (category === 'wheelchair') {
       const scaleX = target.targetWidth ? target.targetWidth / size.x : scale;
       const scaleY = target.targetHeight ? target.targetHeight / size.y : scale;
       const scaleZ = target.targetDepth ? target.targetDepth / size.z : scale;

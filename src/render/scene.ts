@@ -117,8 +117,8 @@ export class HospitalRenderer {
       // 脚底吸附到 Y = 0，中心对齐
       const center = bbox.getCenter(new THREE.Vector3());
       model.position.set(-center.x * scale, -bbox.min.y * scale, -center.z * scale);
-      // 游戏内 guardRig 统一以本地 +X 为面朝前进方向，Tripo 角色旋转 -Math.PI / 2 对齐到 +X
-      model.rotation.y = -Math.PI / 2;
+      // 游戏内 guardRig 统一以本地 +X 为面朝前进方向，Tripo 角色旋转 +Math.PI / 2 正面迎向前进方向
+      model.rotation.y = Math.PI / 2;
 
       model.traverse((child) => {
         if (child instanceof THREE.Mesh) {
@@ -200,6 +200,43 @@ export class HospitalRenderer {
     );
 
     this.scene.add(cartGroup);
+  }
+
+  /** 异步加载并接入 Tripo 生成的高精 3D 医用轮椅（放置于西南病房外墙转角，极度写实且不挡走廊主道） */
+  private loadWheelchair(): void {
+    const chairGroup = new THREE.Group();
+    // 紧贴西南走廊凹角墙边 (x=4.8, z=11.2, 略微斜向 yaw=0.35)，不挡走廊中轴巡查路线
+    chairGroup.position.set(4.8, 0, 11.2);
+    chairGroup.rotation.y = 0.35;
+
+    const loader = new GLTFLoader();
+    loader.load(
+      '/models/wheelchair.glb',
+      (gltf) => {
+        const model = gltf.scene;
+        const bbox = new THREE.Box3().setFromObject(model);
+        const size = bbox.getSize(new THREE.Vector3());
+        const targetHeight = 0.92; // 真实标准医用轮椅高度 0.92m
+        const scale = targetHeight / Math.max(size.y, 0.001);
+        model.scale.setScalar(scale);
+
+        const center = bbox.getCenter(new THREE.Vector3());
+        model.position.set(-center.x * scale, -bbox.min.y * scale, -center.z * scale);
+
+        model.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+        chairGroup.add(model);
+        console.log('Tripo 3D 医用轮椅成功装配至场景！');
+      },
+      undefined,
+      (err) => console.warn('Wheelchair model loading fallback:', err)
+    );
+
+    this.scene.add(chairGroup);
   }
 
   public applyTheme(): void {
@@ -310,6 +347,8 @@ export class HospitalRenderer {
     this.loadAnimatedWarden();
     // 异步加载 Tripo 导出的高精 3D 医用抢救推车（贴北墙放置，零阻挡通道）
     this.loadCrashCart();
+    // 异步加载 Tripo 导出的高精 3D 医用轮椅（贴西南墙角放置，零阻挡通道）
+    this.loadWheelchair();
   }
 
   sync(game: RoundsGame, dt: number): void {
@@ -348,6 +387,12 @@ export class HospitalRenderer {
     }
     this.playerYaw = this.dampFacing(this.playerYaw, -game.player.facing, dt);
     this.guardYaw = this.dampFacing(this.guardYaw, -game.guard.facing, dt);
+    // 被抓住时：值班员必须绝对正面面对玩家镜头，彻底消除背身抓人 BUG
+    if (game.phase === 'lost') {
+      const dx = game.player.position.x - game.guard.position.x;
+      const dz = game.player.position.z - game.guard.position.z;
+      this.guardYaw = -Math.atan2(dz, dx);
+    }
     this.playerRig.rotation.y = this.playerYaw;
     this.guardRig.rotation.y = this.guardYaw;
     this.previousPlayer = { ...game.player.position };
@@ -1077,7 +1122,8 @@ export class HospitalRenderer {
     const sheet = clothMaterial(0xd6e2d7);
     const shell = new THREE.MeshStandardMaterial({ color:0xe1e8df,roughness:0.55,metalness:0.15 });
     const vialColors = [0xd5e8e7,0xdce6c9,0xc7d5df,0xe3cfb4].map(color => new THREE.MeshStandardMaterial({ color, roughness:0.35 }));
-    for (const rect of FURNITURE_RECTS) {
+    // 仅遍历前 4 个家具矩形 (2张推床 + 2个药品柜)，后 3 个屏风由 buildScreens() 专属渲染，避免屏风与家具重叠
+    for (const rect of FURNITURE_RECTS.slice(0, 4)) {
       const w = rect.maxX-rect.minX, d = rect.maxZ-rect.minZ;
       const cx = (rect.minX+rect.maxX)/2, cz = (rect.minZ+rect.maxZ)/2;
       if (w > 1.5) {

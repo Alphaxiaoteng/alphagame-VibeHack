@@ -268,9 +268,9 @@ describe('临时路点巡逻（不是第二阶段感知 AI）', () => {
     const map = new HospitalMap();
     // rand=0 时随机选点总是落在候选首位（下一个环序点），保持与固定环序相同的可复现期望。
     const guard = new PatrolGuard(map, () => 0);
-    guard.update(1, map);
+    guard.movePatrol(1, map);
     expect(guard.position.x).toBeGreaterThan(GUARD_SPAWN.x);
-    for (let frame = 0; frame < 120; frame++) guard.update(1 / 60, map);
+    for (let frame = 0; frame < 120; frame++) guard.movePatrol(1 / 60, map);
     expect(guard.position.z).toBeGreaterThan(8);
     expect(guard.position.x).toBeLessThanOrEqual(25.6);
   });
@@ -282,7 +282,7 @@ describe('临时路点巡逻（不是第二阶段感知 AI）', () => {
     // 直接放到路点 0 上并清空路径，下一帧 update 触发随机选点。
     guard.position = { ...PATROL_WAYPOINTS[0] };
     guard.path = [];
-    guard.update(1 / 60, map);
+    guard.movePatrol(1 / 60, map);
     expect(guard.targetIndex).not.toBe(0);
     expect(guard.targetIndex).toBe(PATROL_WAYPOINTS.length - 1);
     expect(guard.path.length).toBeGreaterThan(0);
@@ -291,7 +291,7 @@ describe('临时路点巡逻（不是第二阶段感知 AI）', () => {
     guardB.setPatrolTarget(2, map);
     guardB.position = { ...PATROL_WAYPOINTS[2] };
     guardB.path = [];
-    guardB.update(1 / 60, map);
+    guardB.movePatrol(1 / 60, map);
     expect(guardB.targetIndex).not.toBe(2);
     // 2→0 的最短折线沿北走廊穿过出生点保护圈，被过滤；rand=0 落在首个安全候选。
     expect(guardB.targetIndex).toBe(1);
@@ -303,12 +303,12 @@ describe('临时路点巡逻（不是第二阶段感知 AI）', () => {
     for (let leg = 0; leg < 6; leg++) {
       guard.position = { ...PATROL_WAYPOINTS[guard.targetIndex] };
       guard.path = [];
-      guard.update(1 / 60, map);
+      guard.movePatrol(1 / 60, map);
       // 随机选点可能出现远路点往返：用累计移动量断言“持续在走”，净位移不再适用。
       let traveled = 0;
       for (let frame = 0; frame < 900; frame++) {
         const before = { ...guard.position };
-        guard.update(1 / 60, map);
+        guard.movePatrol(1 / 60, map);
         traveled += distance(before, guard.position);
         expect(map.canOccupy(guard.position, GUARD_RADIUS)).toBe(true);
         expect(distance(before, guard.position)).toBeLessThanOrEqual(PATROL_SPEED / 60 + 0.001);
@@ -325,12 +325,12 @@ describe('临时路点巡逻（不是第二阶段感知 AI）', () => {
     guard.setPatrolTarget(0, map);
     expect(guard.path.every(point => Math.abs(point.z - 4.5) < 0.1)).toBe(true);
     map.setDoor('A', true);
-    guard.update(1 / 60, map);
+    guard.movePatrol(1 / 60, map);
     expect(guard.path.some(point => point.z >= 16.5)).toBe(true);
     const start = { ...guard.position };
     for (let frame = 0; frame < 900; frame++) {
       const before = { ...guard.position };
-      guard.update(1 / 60, map);
+      guard.movePatrol(1 / 60, map);
       expect(map.canOccupy(guard.position, GUARD_RADIUS)).toBe(true);
       expect(distance(before, guard.position)).toBeLessThanOrEqual(PATROL_SPEED / 60 + 0.001);
     }

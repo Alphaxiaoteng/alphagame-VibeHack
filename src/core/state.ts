@@ -142,7 +142,7 @@ export class RoundsGame {
     this.updateCommands(dt);
     this.player.update(dt, input, this.map);
     const previousMode = this.guard.mode;
-    this.guard.update(dt, this.map, this.player, this.sightRange);
+    this.guard.update(dt, this.map, this.player, this.sightRange, { openingProtected: this.elapsed < 10 });
     if (this.guard.mode !== previousMode) {
       this.events.push({ type: 'guardChanged', message: {
         patrol: '巡查恢复，留意走廊里的脚步',
