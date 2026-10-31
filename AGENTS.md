@@ -33,3 +33,17 @@
 - **凭据双轨注入规范（严禁代码硬编码）**：
   - **专用 CLI 工具（如 Tripo CLI）**：使用官方受控凭据系统存储（如 `~/.tripo/config.json`，权限 `0600`，由 `tripo login` 隔离维护）。
   - **业务代码与运行时 API（如 硅基流动 / 智谱）**：通过本地项目环境文件 `.env.local`（已在 `.gitignore` 阻断提交）注入 `process.env`，绝不随 Git 仓库提交。
+
+---
+
+## 4. 部署与现场试玩 (Deploy & Demo)
+
+- **公网地址**：<https://alphaxiaoteng.github.io/midnight-duty/>（GitHub Pages；`Alphaxiaoteng/midnight-duty` 只存构建产物，源码仓库保持私有）。
+- **重新部署**：`npm run deploy` — 构建 `dist/`、推送并打印二维码，首次生效约 1 分钟。
+- **现场兜底（不依赖外网）**：终端 A 跑 `npm run serve:lan`，终端 B 跑 `npm run qr:lan` 打印局域网二维码，手机连同一 Wi-Fi 或热点扫码进入。
+- **打包约束**：`vite.config.ts` 使用 `base: './'`，同一份 `dist/` 同时适配 Pages 子路径与局域网直连。
+- **二维码物料**：`npm run qr:png` 生成 `assets/art/ui/qr-deploy.png`，可直接贴进路演 PPT 与小红书笔记。
+
+## 5. 进度同步纪律
+
+- **文档即真相源**：每完成一个可验收节点（验证通过、修复落地、部署完成、试玩反馈收集），当次随手同步进 `IMPLEMENTATION_STATUS.md` 与 `README.md` 的对应数字与记录；交接只引用文档与行号，不贴大段内容刷屏。
