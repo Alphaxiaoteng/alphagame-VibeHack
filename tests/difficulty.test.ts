@@ -52,11 +52,39 @@ describe('三档难度', () => {
     }
   });
 
-  it('难度数值层层递进：视距、速度、搜索随档位单调增加', () => {
+  it('三档逃生限时严格分层：简单 30s、中 45s、难 60s', () => {
+    expect(DIFFICULTIES.intern.timeLimit).toBe(30);
+    expect(DIFFICULTIES.standard.timeLimit).toBe(45);
+    expect(DIFFICULTIES.graveyard.timeLimit).toBe(60);
+
+    // 简单难度 30 秒通电
+    const gIntern = new RoundsGame({ perception: false });
+    gIntern.setDifficulty('intern');
+    gIntern.start();
+    gIntern.player.position = { x: 12, z: 6.5 };
+    expect(gIntern.remaining).toBe(30);
+    advance(gIntern, 29);
+    expect(gIntern.exitUnlocked).toBe(false);
+    advance(gIntern, 1);
+    expect(gIntern.exitUnlocked).toBe(true);
+
+    // 极难难度 45 秒仍未通电，需坚持 60 秒
+    const gHard = new RoundsGame({ perception: false });
+    gHard.setDifficulty('graveyard');
+    gHard.start();
+    gHard.player.position = { x: 12, z: 6.5 };
+    expect(gHard.remaining).toBe(60);
+    advance(gHard, 45);
+    expect(gHard.exitUnlocked).toBe(false);
+    advance(gHard, 15);
+    expect(gHard.exitUnlocked).toBe(true);
+  });
+
+  it('难度数值层层递进：视距、速度、搜索与限时随档位单调增加', () => {
     const intern = DIFFICULTIES.intern;
     const standard = DIFFICULTIES.standard;
     const graveyard = DIFFICULTIES.graveyard;
-    for (const key of ['sightRange', 'hearingRange', 'chaseSpeed', 'patrolSpeed', 'searchSeconds', 'alertSearchSeconds'] as const) {
+    for (const key of ['timeLimit', 'sightRange', 'hearingRange', 'chaseSpeed', 'patrolSpeed', 'searchSeconds', 'alertSearchSeconds'] as const) {
       expect(intern[key]).toBeLessThan(standard[key]);
       expect(standard[key]).toBeLessThan(graveyard[key]);
     }

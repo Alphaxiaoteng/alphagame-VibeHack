@@ -36,6 +36,7 @@ export const MAX_STEP = 0.1;
 /** 值班员调参基准 = 二星（标准）档。各难度只写与基准的差异项，缺省回落基准；
  *  调平衡 / 加新档只动这里和 DIFFICULTY_OVERRIDES，不散落在代码各处。 */
 export const BASE_TUNING = {
+  timeLimit: 45,
   sightRange: 8,
   litSightRange: 12,
   hearingRange: 7,
@@ -44,7 +45,7 @@ export const BASE_TUNING = {
   searchSeconds: 4,
   alertSearchSeconds: 6,
   graceSeconds: 6,
-  /** 到达巡逻路点后的停留扫视秒数（一星档最长，给玩家窗口） */
+  /** 到达巡逻路点后的停留扫视秒数（一星档最长，给���家窗口） */
   pauseSeconds: 0.7,
   /** 猎手倾向 0..1：到达后选“离玩家最近可达路点”的概率（三星档主动压向玩家半区） */
   huntBias: 0.2,
@@ -58,19 +59,23 @@ const DIFFICULTY_NAMES: Record<DifficultyId, string> = {
   graveyard: '极难',
 };
 const DIFFICULTY_BRIEFS: Record<DifficultyId, string> = {
-  intern: '值班员走得慢 · 看得近',
-  standard: '值班员正常巡逻',
-  graveyard: '值班员更快 · 看得更远',
+  intern: '限时 30s · 值班员走得慢 · 看得近',
+  standard: '限时 45s · 值班员正常巡逻',
+  graveyard: '限时 60s · 值班员更快 · 看得更远',
 };
 const DIFFICULTY_OVERRIDES: Record<DifficultyId, TuningOverrides> = {
   intern: {
+    timeLimit: 30,
     sightRange: 6.5, litSightRange: 10, hearingRange: 5.5,
     chaseSpeed: 3.9, patrolSpeed: 2.4,
     searchSeconds: 3, alertSearchSeconds: 4.5, graceSeconds: 8,
     pauseSeconds: 2.0, huntBias: 0,
   },
-  standard: {},
+  standard: {
+    timeLimit: 45,
+  },
   graveyard: {
+    timeLimit: 60,
     sightRange: 9.5, litSightRange: 14, hearingRange: 9,
     chaseSpeed: 4.5, patrolSpeed: 3.2,
     searchSeconds: 5, alertSearchSeconds: 7.5, graceSeconds: 3,
@@ -174,6 +179,8 @@ export interface DifficultyPreset {
   name: string;
   /** 一句话说明，开始卡片副标题 */
   brief: string;
+  /** 本关卡逃生限时（秒） */
+  timeLimit: number;
   sightRange: number;
   litSightRange: number;
   hearingRange: number;

@@ -78,6 +78,7 @@ export class RoundsGame {
   constructor(options: { perception?: boolean; difficulty?: DifficultyId; rand?: () => number } = {}) {
     this.guard = new Warden(this.map, options.perception ?? true, options.rand);
     if (options.difficulty) this.setDifficulty(options.difficulty);
+    else this.rules.timeLimit = this.guard.tuning.timeLimit;
   }
 
   applyLevelRules(rules: RoundRules): void {
@@ -103,6 +104,7 @@ export class RoundsGame {
     if (this.phase === 'playing' || this.phase === 'paused') return false;
     this.guard.tuning = DIFFICULTIES[id];
     this.guard.customPatrolSpeed = undefined;
+    this.rules.timeLimit = this.guard.tuning.timeLimit;
     return true;
   }
 
@@ -267,7 +269,7 @@ export class RoundsGame {
 
   private announceTime(): void {
     const left = this.remaining;
-    if (!this.warned30 && left <= 30) {
+    if (!this.warned30 && this.rules.timeLimit > 30 && left <= 30) {
       this.warned30 = true;
       this.events.push({ type: 'warning30' });
     }

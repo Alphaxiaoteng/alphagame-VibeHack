@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import './style.css';
 import { AudioEngine, VOICE_URLS } from './audio/audioEngine';
-import { COMMANDS, COMMAND_COOLDOWN, COMMAND_IDS, DIFFICULTIES, DOORS, EXIT_POINT, FURNITURE_RECTS, GUARD_RADIUS, PLAYER_RADIUS, TIME_LIMIT, WALKABLE_RECTS } from './core/config';
+import { COMMANDS, COMMAND_COOLDOWN, COMMAND_IDS, DIFFICULTIES, DOORS, EXIT_POINT, FURNITURE_RECTS, GUARD_RADIUS, PLAYER_RADIUS, WALKABLE_RECTS } from './core/config';
 import type { CommandId, DifficultyId, DoorId, PlayerInput, Point } from './core/config';
 import { dangerWindow, pauseAfterBackground } from './core/lifecycle';
 import { appendRecord, createLocalStore, readRecords } from './core/gameLog';
@@ -265,8 +265,17 @@ function boot(): void {
 
   const difficultyCards = [...document.querySelectorAll<HTMLButtonElement>('.difficulty-card')];
   function renderDifficultyCards(): void {
+    const preset = DIFFICULTIES[selectedDifficulty];
     const badge = document.getElementById('diff-current-badge');
-    if (badge) badge.textContent = DIFFICULTIES[selectedDifficulty].name;
+    if (badge) badge.textContent = preset.name;
+    const overlayCopy = document.getElementById('overlay-copy');
+    if (overlayCopy) {
+      overlayCopy.innerHTML = `屏息潜行 <strong class="highlight-timer">${preset.timeLimit} 秒</strong>，走出医院。`;
+    }
+    const introSub = document.querySelector('.intro-sub');
+    if (introSub) {
+      introSub.innerHTML = `坚持 <strong>${preset.timeLimit} 秒</strong>，待东侧安全门通电后离开医院。`;
+    }
     for (const card of difficultyCards) {
       const id = card.dataset.difficulty as DifficultyId;
       card.dataset.selected = String(id === selectedDifficulty);
@@ -578,13 +587,14 @@ function boot(): void {
         : game.commandsUsed === 1
         ? '一击改写路线 · 成功突围'
         : '掌控全院规则 · 成功脱身';
-      const diffName = game.difficulty.id === 'intern' ? '见习' : game.difficulty.id === 'standard' ? '标准' : '高危';
+      const diffName = DIFFICULTIES[game.difficulty.id]?.name || '中';
+      const timeLimitSec = game.difficulty.timeLimit;
       const unlockPill = unlockNotice
         ? `<div class="stat-pill"><span class="stat-label">解锁</span><strong class="stat-value">${unlockNotice.replace('已解锁：', '')}</strong></div>`
         : '';
       copy.innerHTML = `
         <div class="result-stats">
-          <div class="stat-pill"><span class="stat-label">用时</span><strong class="stat-value">45.0s</strong></div>
+          <div class="stat-pill"><span class="stat-label">用时</span><strong class="stat-value">${timeLimitSec.toFixed(1)}s</strong></div>
           <div class="stat-pill"><span class="stat-label">指令</span><strong class="stat-value">${game.commandsUsed}次</strong></div>
           <div class="stat-pill"><span class="stat-label">难度</span><strong class="stat-value">${diffName}</strong></div>${unlockPill}
         </div>
@@ -596,7 +606,7 @@ function boot(): void {
       kicker.textContent = '巡查截获 · 行动中断';
       title.textContent = '被值班员抓住。';
       const held = Math.floor(game.elapsed);
-      const remainingSec = Math.max(0, Math.floor(TIME_LIMIT - held));
+      const remainingSec = Math.max(0, Math.floor(game.difficulty.timeLimit - held));
       const tip = held < 15 ? '先看清巡查路线再行动' : '通电前切忌奔跑 · 留好体力';
       copy.innerHTML = `
         <div class="result-stats">
