@@ -4,7 +4,7 @@ import { RoundsGame } from '../src/core/state';
 import { HospitalMap, distance } from '../src/core/map';
 import { Player } from '../src/core/player';
 import { PatrolGuard } from '../src/core/warden';
-import type { PlayerInput } from '../src/core/config';
+import type { PlayerInput, Point } from '../src/core/config';
 
 const walk: PlayerInput = { ...NO_INPUT, forward: 1 };
 const run: PlayerInput = { ...walk, sprint: true };
@@ -275,26 +275,53 @@ describe('临时路点巡逻（不是第二阶段感知 AI）', () => {
     expect(guard.position.x).toBeLessThanOrEqual(25.6);
   });
 
-  it('随机巡逻：到达路点后不重复当前点，选点由随机源决定', () => {
+  it('随机巡逻：到达路点后不重复当前点，且候选经安全过滤', () => {
+    // 镜像实现规则：min-hop ≥10 m 防震荡 + 开局保护窗内避开出生点走廊
+    const safeCandidates = (map: HospitalMap, from: Point, currentIndex: number): number[] => {
+      const result: number[] = [];
+      for (let index = 0; index < PATROL_WAYPOINTS.length; index++) {
+        if (index === currentIndex) continue;
+        if (distance(PATROL_WAYPOINTS[index], PATROL_WAYPOINTS[currentIndex]) < 10) continue;
+        const path = map.findPath(from, PATROL_WAYPOINTS[index], GUARD_RADIUS);
+        if (path.length === 0) continue;
+        let prev = from, nearSpawn = false;
+        for (const pt of path) {
+          const abx = pt.x - prev.x, abz = pt.z - prev.z;
+          const lenSq = abx * abx + abz * abz;
+          let t = 0;
+          if (lenSq > 1e-9) t = Math.max(0, Math.min(1, ((10 - prev.x) * abx + (4.5 - prev.z) * abz) / lenSq));
+          const cx = prev.x + abx * t - 10, cz = prev.z + abz * t - 4.5;
+          if (Math.hypot(cx, cz) < 3) { nearSpawn = true; break; }
+          prev = pt;
+        }
+        if (!nearSpawn) result.push(index);
+      }
+      return result;
+    };
+
     const map = new HospitalMap();
+    // 从东北角出发（rand=0.99 → 取最后一个安全候选）
     const guard = new PatrolGuard(map, () => 0.99);
     guard.setPatrolTarget(0, map);
-    // 直接放到路点 0 上并清空路径，下一帧 update 触发随机选点。
     guard.position = { ...PATROL_WAYPOINTS[0] };
     guard.path = [];
     guard.movePatrol(1 / 60, map);
+    const safe0 = safeCandidates(map, PATROL_WAYPOINTS[0], 0);
+    expect(safe0).not.toContain(0);
+    expect(safe0).toContain(1); // 东南角 (25.5,17.5) 总是安全
     expect(guard.targetIndex).not.toBe(0);
-    expect(guard.targetIndex).toBe(PATROL_WAYPOINTS.length - 1);
     expect(guard.path.length).toBeGreaterThan(0);
 
+    // 从西南角出发（rand=0 → 取第一个安全候选）
     const guardB = new PatrolGuard(map, () => 0);
     guardB.setPatrolTarget(2, map);
     guardB.position = { ...PATROL_WAYPOINTS[2] };
     guardB.path = [];
     guardB.movePatrol(1 / 60, map);
+    const safe2 = safeCandidates(map, PATROL_WAYPOINTS[2], 2);
+    expect(safe2).not.toContain(2);
+    expect(safe2).not.toContain(0); // 出生保护：通往东北角的路被过滤
     expect(guardB.targetIndex).not.toBe(2);
-    // 2→0 的最短折线沿北走廊穿过出生点保护圈，被过滤；rand=0 落在首个安全候选。
-    expect(guardB.targetIndex).toBe(1);
   });
 
   it('随机巡逻不穿墙、不传送，长距离移动持续合法', () => {

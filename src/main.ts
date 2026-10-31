@@ -4,7 +4,7 @@ import { AudioEngine, VOICE_URLS } from './audio/audioEngine';
 import { COMMANDS, COMMAND_COOLDOWN, COMMAND_IDS, DIFFICULTIES, DOORS, EXIT_POINT, FURNITURE_RECTS, GUARD_RADIUS, PLAYER_RADIUS, TIME_LIMIT, WALKABLE_RECTS } from './core/config';
 import type { CommandId, DifficultyId, DoorId, PlayerInput, Point } from './core/config';
 import { dangerWindow, pauseAfterBackground } from './core/lifecycle';
-import { appendRecord, createLocalStore, formatRecord, formatSummary, readRecords } from './core/gameLog';
+import { appendRecord, createLocalStore, readRecords } from './core/gameLog';
 import type { RoundRecord } from './core/gameLog';
 import { distance } from './core/map';
 import { RoundsGame } from './core/state';
@@ -302,27 +302,8 @@ function boot(): void {
     try { logStore?.save(logRecords); } catch { /* 存档失败只影响跨会话，不影响本局 */ }
   }
 
-  function renderShiftLog(phase: Phase): void {
-    if (logRecords.length === 0) {
-      shiftLog.hidden = true;
-      return;
-    }
-    const summary = formatSummary(logRecords);
-    if (phase === 'start') {
-      const last = logRecords[logRecords.length - 1];
-      shiftLog.hidden = false;
-      shiftLog.innerHTML = `<span class="log-title">值班日志</span><br>${summary}<br>上次：${formatRecord(last)}`;
-      return;
-    }
-    if (phase === 'won' || phase === 'lost') {
-      const recent = logRecords.slice(-3).reverse();
-      const items = recent
-        .map(record => `<li class="${record.result}"><span class="mono">#${record.index}</span><span>${formatRecord(record).replace(/^第 \d+ 局 · /, '')}</span></li>`)
-        .join('');
-      shiftLog.hidden = false;
-      shiftLog.innerHTML = `<span class="log-title">值班日志 · ${summary}</span><ul>${items}</ul>`;
-      return;
-    }
+  function renderShiftLog(_phase: Phase): void {
+    // 研发本地做日志仅用于底层调试优化，发布版界面绝对不显示给玩家
     shiftLog.hidden = true;
   }
 

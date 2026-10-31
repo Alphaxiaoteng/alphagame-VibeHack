@@ -10,6 +10,17 @@ import type { HospitalMap } from './map';
  * 不感知、不追逐、不搜索，只负责「沿外圈走 + 近身抓人时不能穿门」。
  * 第二阶段会用正式的感知与寻路 AI 替换本类，导航与碰撞数据已经共用 HospitalMap。
  */
+/** 猎手选点（纯函数）：在候选里选离玩家最近的可达路点。 */
+export function pickHuntTarget(candidates: readonly number[], waypoints: readonly Point[], playerPos: Point): number {
+  let best = candidates[0];
+  let bestDist = Infinity;
+  for (const index of candidates) {
+    const d = distance(waypoints[index], playerPos);
+    if (d < bestDist) { bestDist = d; best = index; }
+  }
+  return best;
+}
+
 export class PatrolGuard {
   position: Point = { ...GUARD_SPAWN };
   path: Point[] = [];
@@ -69,6 +80,8 @@ export class PatrolGuard {
     const candidates: number[] = [];
     for (let index = 0; index < PATROL_WAYPOINTS.length; index += 1) {
       if (index === this.targetIndex) continue;
+      // 强制跨区：与当前路点直线距离 ≥10 m，防止相邻路点来回震荡（否则值班员在一个角打转）。
+      if (distance(PATROL_WAYPOINTS[index], PATROL_WAYPOINTS[this.targetIndex]) < 10) continue;
       if (map.findPath(this.position, PATROL_WAYPOINTS[index], GUARD_RADIUS).length === 0) continue;
       // 开局保护窗内才避开出生点走廊：窗口关闭后恢复全图巡逻，否则值班员被锁死在东南半区。
       if (this.openingProtection) {
@@ -79,13 +92,7 @@ export class PatrolGuard {
     }
     // 猎手倾向：以一定概率选“离玩家最近的可达路点”，主动压向玩家所在的半区。
     if (playerPos && this.tuning.huntBias > 0 && candidates.length > 0 && this.rand() < this.tuning.huntBias) {
-      let best = candidates[0];
-      let bestDist = Infinity;
-      for (const index of candidates) {
-        const d = distance(PATROL_WAYPOINTS[index], playerPos);
-        if (d < bestDist) { bestDist = d; best = index; }
-      }
-      return best;
+      return pickHuntTarget(candidates, PATROL_WAYPOINTS, playerPos);
     }
     if (candidates.length === 0) {
       const fallback: number[] = [];

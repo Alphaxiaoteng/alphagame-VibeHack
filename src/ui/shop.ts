@@ -240,7 +240,8 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
       coverImage.alt = `${currentLevel?.name ?? '科室'} 封面`;
     }
     coverTitle.textContent = `${currentLevel?.index ?? ''} ${currentLevel?.name ?? ''}`;
-    coverSubtitle.textContent = `${currentLevel?.ward ?? ''} · 限时 ${currentLevel?.rules.timeLimit ?? 45}s · 速度 ${currentLevel?.rules.patrolSpeed ?? 2.8}m/s`;
+    const diffBadgeText = document.getElementById('diff-current-badge')?.textContent || '中';
+    coverSubtitle.textContent = `难度：${diffBadgeText}`;
     coverBadge.textContent = levelLocked ? '待解锁 · $0.99 买断' : (currentLevel?.free ? '免费开放' : '已解锁');
     coverBadge.classList.toggle('locked', levelLocked);
     coverBadge.classList.toggle('free', !levelLocked && !!currentLevel?.free);
