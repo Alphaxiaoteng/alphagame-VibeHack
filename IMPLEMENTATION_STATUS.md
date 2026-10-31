@@ -80,7 +80,7 @@
 - 08:08 / 08:12 基线复验两次全绿：`npm run test` 7 文件 70 测试通过、`npm run typecheck`、`npm run build`（23 modules transformed；业务入口 61.03 kB / gzip 22.33 kB，three 572.38 kB / gzip 143.03 kB）均 Exit 0。
 - 设置体检：`src/core/config.ts` 调参与 README 宣称数值逐项一致（视距 8/12 m、听觉 7 m、体力 3 s/6 s、指令 6/5/6 s、冷却 12 s），难度调整按纪律推迟到陌生玩家试玩数据之后；`vite.config.ts`、`tsconfig.json` 无需改动；移除 src/ 与 scripts/ 零引用的 `openai`、`dotenv` 依赖后复验仍全绿，包体数字不变。
 - 源码入库：全部实现、测试、工具链与文档按逻辑分块提交（核心逻辑 / 渲染 / 音频 / 入口装配 / 测试 / 构建工具链 / 文档与过程记录），`.agents/` 三阶段 polish 记录一并归档。
-- 待办：推送 origin、`npm run deploy` 更新公网构建、陌生玩家试玩、3 分钟路演脚本；重新部署完成前，公网地址仍可能指向旧构建。
+- 推送 origin：源码提交随本记录一并推送（2026-10-31 08:13）；公网部署按现场决策推迟，待陌生玩家试玩修复后、17:00 冻结前统一执行 `npm run deploy` 并验证公网版本；在那之前公网地址仍指向旧构建。
 
 ## 启动与下一步
 
