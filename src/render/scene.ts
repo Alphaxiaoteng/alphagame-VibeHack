@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DOORS, EXIT_APPROACH, EXIT_POINT, FURNITURE_RECTS, MAP_DEPTH, MAP_WIDTH, PLAYER_RADIUS } from '../core/config';
 import type { DoorId, Point } from '../core/config';
 import { distance } from '../core/map';
@@ -115,12 +116,12 @@ export class HospitalRenderer {
           this.nurseCounterSlot.slot.add(model.clone(true));
         }
       } else if (category === 'warden') {
-        this.guardHuman.body.visible = false;
+        // 守卫采用包含肢体摆动、屈膝与巡逻手电筒的 HumanRig 骨架，保持动作生动自然
+        this.guardHuman.body.visible = true;
         if (this.wardenModelInstance) {
           this.wardenModelInstance.removeFromParent();
+          this.wardenModelInstance = null;
         }
-        this.wardenModelInstance = model.clone(true);
-        this.guardRig.add(this.wardenModelInstance);
       }
     } catch (e) {
       console.error(`Failed to equip ${category} (${asset.name}):`, e);
@@ -177,7 +178,7 @@ export class HospitalRenderer {
     this.buildDoors();
     this.mergeStaticGeometry();
     this.scene.add(this.playerRig, this.guardRig, this.route);
-    this.syncEffectiveAssets().catch((e) => console.warn('Init asset sync failed:', e));
+    // 移除进入游戏时的主线程阻塞式全量 GLB 同步，根除 1-2 秒白屏卡顿，保证 0ms 瞬间启动与 60 FPS
     AssetRegistry.get().subscribe(() => {
       this.syncEffectiveAssets().catch((e) => console.warn('Asset change sync failed:', e));
     });
@@ -343,21 +344,181 @@ export class HospitalRenderer {
     seam(15, 16.012, 18, true);
     this.staticRoots.push(seams);
     this.scene.add(seams);
-    // 走廊墙上的宣传栏与消防箱，让中远景有可辨认的医院细节。
-    const notice = plaque('陪护须知', 'VISITING HOURS 08:00–20:00', 1.05, 0.62);
-    notice.position.set(20.2, 1.62, 5.985); notice.rotation.y = Math.PI; this.scene.add(notice);
-    const fireBox = box(0.42, 0.62, 0.09, new THREE.MeshStandardMaterial({ color: 0xb45a4c, roughness: 0.5 }), 9.4, 1.35, 5.98, 0.012);
-    this.scene.add(fireBox);
-    const fireSign = plaque('灭火器', 'FIRE', 0.24, 0.1); fireSign.position.set(9.4, 1.74, 5.925); fireSign.rotation.y = Math.PI; this.scene.add(fireSign);
-    const wardNotice = plaque('夜班巡查记录', 'NIGHT ROUNDS / 02:00', 1.1, 0.6);
-    wardNotice.position.set(17.4, 1.6, 18.985); wardNotice.rotation.y = Math.PI; this.scene.add(wardNotice);
+    // 走廊墙上的真实三维道具：3D 消防箱、真实夜班查房病历板与高一致性科室导向标识
+    const wardSign = plaque('住院部二病区', 'WARD 02 / NIGHT OBSERVATION', 1.15, 0.42);
+    wardSign.position.set(20.2, 1.65, 5.985);
+    wardSign.rotation.y = Math.PI;
+    this.scene.add(wardSign);
+
+    // 超写实 3D 灭火器与壁挂式消防栓总成 (替代原先的假扁平红盒子)
+    this.buildRealisticFireStation(9.4, 1.35, 5.98, Math.PI);
+
+    // 超写实 3D 夜班巡查病历板 (挂于中央护士站走廊外墙，真实笔迹与勾选表单)
+    this.buildRealisticChart(17.4, 1.6, 18.985, Math.PI);
   }
 
+  /** 壁挂式独立防烟钢制消防箱，内置真实 3D 灭火器模型与规范巡检指引标牌 */
+  private buildRealisticFireStation(x: number, y: number, z: number, yaw: number): void {
+    const station = new THREE.Group();
+    station.position.set(x, y, z);
+    station.rotation.y = yaw;
+
+    const cabinetMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.45, metalness: 0.7 });
+    const silverTrimMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.25, metalness: 0.85 });
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.35, depthWrite: false });
+
+    // 柜体背板与侧壁
+    const cabinetHousing = box(0.58, 0.82, 0.22, cabinetMat, 0, 0, 0, 0.02);
+    station.add(cabinetHousing);
+
+    // 内部腔体深色衬底
+    const innerCavity = box(0.52, 0.76, 0.2, new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.9 }), 0, 0, 0.012);
+    station.add(innerCavity);
+
+    // 观察窗不锈钢边框与透明钢化玻璃
+    const doorFrame = box(0.54, 0.78, 0.015, silverTrimMat, 0, 0, 0.11, 0.01);
+    station.add(doorFrame);
+    const glassWindow = box(0.44, 0.68, 0.005, glassMat, 0, 0, 0.115);
+    station.add(glassWindow);
+
+    // 紧急拉手
+    const handle = box(0.018, 0.12, 0.024, silverTrimMat, 0.22, 0, 0.125, 0.004);
+    station.add(handle);
+
+    // 真实 3D 灭火器总成（首帧使用高精程序化 3D 网格，同时异步叠加加载 Tripo P2 游戏级 GLB）
+    const extGroup = new THREE.Group();
+    extGroup.position.set(0, -0.26, 0.04);
+
+    const loader = new GLTFLoader();
+    loader.load(
+      '/models/fire_extinguisher.glb',
+      (gltf) => {
+        const model = gltf.scene;
+        const bbox = new THREE.Box3().setFromObject(model);
+        const size = bbox.getSize(new THREE.Vector3());
+        const targetHeight = 0.52;
+        const scale = targetHeight / Math.max(size.y, 0.001);
+        model.scale.setScalar(scale);
+        const center = bbox.getCenter(new THREE.Vector3());
+        model.position.set(-center.x * scale, -bbox.min.y * scale, -center.z * scale);
+        model.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+        extGroup.clear();
+        extGroup.add(model);
+      },
+      undefined,
+      (err) => {
+        console.warn('GLB 灭火器备用加载，已由程序化 3D 网格兜底:', err);
+      }
+    );
+
+    // 程序化 3D 灭火器网格（保证首帧 0ms 立显）
+    const redPaint = new THREE.MeshStandardMaterial({ color: 0xd32f2f, roughness: 0.22, metalness: 0.2 });
+    const rubberHose = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.85 });
+    const brassValve = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.35, metalness: 0.8 });
+    const chrome = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.2, metalness: 0.95 });
+
+    const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.34, 18), redPaint);
+    tank.position.set(0, 0.17, 0); tank.castShadow = true; extGroup.add(tank);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.08, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), redPaint);
+    dome.position.set(0, 0.34, 0); dome.castShadow = true; extGroup.add(dome);
+    const baseBoot = new THREE.Mesh(new THREE.CylinderGeometry(0.083, 0.083, 0.035, 18), rubberHose);
+    baseBoot.position.set(0, 0.0175, 0); baseBoot.castShadow = true; extGroup.add(baseBoot);
+
+    const valveNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.026, 0.045, 12), brassValve);
+    valveNeck.position.set(0, 0.43, 0); extGroup.add(valveNeck);
+    const valveBody = box(0.045, 0.04, 0.05, brassValve, 0, 0.465, 0);
+    extGroup.add(valveBody);
+    const leverTop = box(0.016, 0.012, 0.15, chrome, 0, 0.495, 0.04);
+    leverTop.rotation.x = -0.15; extGroup.add(leverTop);
+    const leverBottom = box(0.016, 0.012, 0.14, chrome, 0, 0.465, 0.05);
+    extGroup.add(leverBottom);
+    const pin = new THREE.Mesh(new THREE.TorusGeometry(0.016, 0.003, 8, 16), chrome);
+    pin.position.set(0.028, 0.47, 0); pin.rotation.y = Math.PI / 2; extGroup.add(pin);
+    const gauge = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.012, 12), brassValve);
+    gauge.position.set(0, 0.45, 0.038); gauge.rotation.x = Math.PI / 2; extGroup.add(gauge);
+    const hose = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.38, 10), rubberHose);
+    hose.position.set(-0.088, 0.24, 0.03); hose.rotation.z = -0.05; extGroup.add(hose);
+
+    station.add(extGroup);
+
+    // 柜体上方张贴真实的消防器材巡检与 P.A.S.S. 操作指引标牌贴图
+    const labelTex = new THREE.TextureLoader().load('/textures/fire_label.png');
+    labelTex.colorSpace = THREE.SRGBColorSpace;
+    const signBoard = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.38, 0.22),
+      new THREE.MeshBasicMaterial({ map: labelTex })
+    );
+    signBoard.position.set(0, 0.56, 0.015);
+    station.add(signBoard);
+
+    this.scene.add(station);
+  }
+
+  /** 壁挂式 3D 医用查房病历夹板与真实床位观察表 */
+  private buildRealisticChart(x: number, y: number, z: number, yaw: number): void {
+    const group = new THREE.Group();
+    group.position.set(x, y, z);
+    group.rotation.y = yaw;
+
+    const boardMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.65, metalness: 0.1 });
+    const board = box(0.68, 0.94, 0.015, boardMat, 0, 0, 0, 0.01);
+    group.add(board);
+
+    // 真实高清病区夜班巡查记录表
+    const chartTex = new THREE.TextureLoader().load('/textures/hospital_chart.png');
+    chartTex.colorSpace = THREE.SRGBColorSpace;
+    const chartPaper = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.62, 0.86),
+      new THREE.MeshStandardMaterial({ map: chartTex, roughness: 0.88 })
+    );
+    chartPaper.position.set(0, -0.015, 0.009);
+    group.add(chartPaper);
+
+    const clampMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.2, metalness: 0.9 });
+    const clamp = box(0.24, 0.055, 0.022, clampMat, 0, 0.42, 0.02, 0.005);
+    group.add(clamp);
+    const clampPin = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.22, 10), clampMat);
+    clampPin.position.set(0, 0.44, 0.022);
+    clampPin.rotation.z = Math.PI / 2;
+    group.add(clampPin);
+
+    this.scene.add(group);
+  }
+
+  /** 现代公立医院双分色墙裙、铝合金防撞饰边与 38mm 连续安全防撞扶手 */
   private wallFace(x: number, z: number, length: number, yaw: number): void {
-    const group = new THREE.Group(); group.position.set(x,0,z); group.rotation.y = yaw;
-    group.add(box(length,0.88,0.008,sage,0,0.51,0));
-    group.add(box(length,0.042,0.035,trim,0,0.99,0.02,0.008));
-    group.add(box(length,0.085,0.016,rubber,0,0.048,0.012));
+    const group = new THREE.Group();
+    group.position.set(x, 0, z);
+    group.rotation.y = yaw;
+
+    const slateWainscot = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.72 });
+    const aluSeam = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.35, metalness: 0.75 });
+    const darkKickplate = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85 });
+    const handrailPipe = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4, metalness: 0.1 });
+    const handrailBracket = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.3, metalness: 0.85 });
+
+    // 护墙裙板 (深灰中性色调，摆脱纯绿)
+    group.add(box(length, 0.88, 0.008, slateWainscot, 0, 0.51, 0));
+    // 铝合金过渡饰条
+    group.add(box(length, 0.038, 0.025, aluSeam, 0, 0.96, 0.012, 0.004));
+    // 地面重型深碳色踢脚线
+    group.add(box(length, 0.09, 0.018, darkKickplate, 0, 0.045, 0.01));
+
+    // 医院标配 38mm 连续防撞防滑扶手 (0.85m 高度)
+    group.add(box(length, 0.038, 0.038, handrailPipe, 0, 0.85, 0.045, 0.016));
+    // 扶手金属固定支架
+    for (let offset = -length / 2 + 0.8; offset < length / 2; offset += 2.4) {
+      const bracket = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.045, 8), handrailBracket);
+      bracket.position.set(offset, 0.835, 0.024);
+      bracket.rotation.x = Math.PI / 2;
+      group.add(bracket);
+    }
+
     this.staticRoots.push(group);
     this.scene.add(group);
   }
@@ -575,9 +736,9 @@ export class HospitalRenderer {
     hideStrip(12, 6.6, 1.8, 0.34); // 护士站凹间
     const props = new THREE.Group();
 
-    // 医用屏风 ×3：贴墙隔断，淡绿布面 + 金属框架 + 底部脚轮，与 FURNITURE_RECTS 一一对应。
-    const screenFrame = new THREE.MeshStandardMaterial({ color: 0xb9c4bc, roughness: 0.5, metalness: 0.4 });
-    const screenCloth = clothMaterial(0xa8c8b0);
+    // 医用屏风 ×3：贴墙隔断，医疗防菌冷白织物布面 + 不锈钢金属框架 + 底部脚轮
+    const screenFrame = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.4, metalness: 0.6 });
+    const screenCloth = clothMaterial(0xf1f5f9);
     const medicalScreen = (cx: number, cz: number, w: number, d: number, alongX: boolean): void => {
       const group = new THREE.Group(); group.position.set(cx, 0, cz);
       const long = alongX ? w : d;

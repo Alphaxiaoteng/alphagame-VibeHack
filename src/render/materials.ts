@@ -1,7 +1,11 @@
 import * as THREE from 'three';
 
 /** 本地确定性材质，不依赖 CDN；颜色贴图用 sRGB，粗糙度/凹凸贴图用线性空间。 */
-export function paintTexture(size: number, draw: (ctx: CanvasRenderingContext2D) => void, color = true): THREE.CanvasTexture {
+export function paintTexture(
+  size: number,
+  draw: (ctx: CanvasRenderingContext2D) => void,
+  color = true
+): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
@@ -22,69 +26,176 @@ function grain(ctx: CanvasRenderingContext2D, size: number, amount: number, seed
     state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
     const y = state % size;
     const alpha = 0.035 + (state % 7) / 160;
-    ctx.fillStyle = `rgba(${i % 2 ? '255,255,255' : '72,75,68'},${alpha})`;
+    ctx.fillStyle = `rgba(${i % 2 ? '255,255,255' : '90,95,102'},${alpha})`;
     ctx.fillRect(x, y, 1, 1);
   }
 }
 
+/**
+ * 真实公立医院地面：
+ * 采用 600×600 无缝抛光医疗 PVC 水磨石地坪。
+ * 浅灰中性色调，微小石英斑点，中等粗糙度（0.38）呈现医用地板蜡的柔和高光倒影。
+ */
 export function tileMaterial(): THREE.MeshStandardMaterial {
-  const albedo = paintTexture(512, ctx => {
-    ctx.fillStyle = '#dedfd8';
+  const albedo = paintTexture(512, (ctx) => {
+    ctx.fillStyle = '#d8dce0';
     ctx.fillRect(0, 0, 512, 512);
-    for (let z = 0; z < 2; z++) for (let x = 0; x < 2; x++) {
-      ctx.fillStyle = ['#e0e0d9', '#d8dbd5', '#ddded7', '#dadcd5'][z * 2 + x];
-      ctx.fillRect(x * 256 + 2, z * 256 + 2, 252, 252);
-      ctx.strokeStyle = '#c4c9c1';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x * 256, z * 256, 256, 256);
-      ctx.strokeStyle = '#f0eee6';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(x * 256 + 3, z * 256 + 3, 250, 250);
+    for (let z = 0; z < 2; z++) {
+      for (let x = 0; x < 2; x++) {
+        // 大块水磨石色阶
+        ctx.fillStyle = ['#e1e5e8', '#dadfe3', '#dce0e4', '#d6dbdf'][z * 2 + x];
+        ctx.fillRect(x * 256 + 2, z * 256 + 2, 252, 252);
+        // 极细拼缝
+        ctx.strokeStyle = '#bec5cb';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x * 256, z * 256, 256, 256);
+        // 微弱高光边
+        ctx.strokeStyle = '#f3f6f8';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x * 256 + 2, z * 256 + 2, 252, 252);
+      }
     }
-    grain(ctx, 512, 32000, 72);
+    // 水磨石微小石英骨料颗粒
+    grain(ctx, 512, 28000, 88);
   });
-  const height = paintTexture(512, ctx => {
-    ctx.fillStyle = '#d8d8d8'; ctx.fillRect(0, 0, 512, 512);
-    ctx.strokeStyle = '#666666'; ctx.lineWidth = 4;
-    for (let z = 0; z < 2; z++) for (let x = 0; x < 2; x++) ctx.strokeRect(x * 256, z * 256, 256, 256);
-    grain(ctx, 512, 10000, 72);
-  }, false);
-  const roughness = paintTexture(512, ctx => {
-    ctx.fillStyle = '#b5b5b5'; ctx.fillRect(0, 0, 512, 512);
-    grain(ctx, 512, 16000, 135);
-  }, false);
-  for (const texture of [albedo, height, roughness]) texture.repeat.set(30 / 1.2, 22 / 1.2);
-  return new THREE.MeshStandardMaterial({ map: albedo, bumpMap: height, bumpScale: 0.014, roughnessMap: roughness, roughness: 0.72, metalness: 0.04 });
+
+  const height = paintTexture(
+    512,
+    (ctx) => {
+      ctx.fillStyle = '#dddddd';
+      ctx.fillRect(0, 0, 512, 512);
+      ctx.strokeStyle = '#777777';
+      ctx.lineWidth = 3;
+      for (let z = 0; z < 2; z++) {
+        for (let x = 0; x < 2; x++) {
+          ctx.strokeRect(x * 256, z * 256, 256, 256);
+        }
+      }
+      grain(ctx, 512, 8000, 88);
+    },
+    false
+  );
+
+  const roughness = paintTexture(
+    512,
+    (ctx) => {
+      // 医疗地板蜡质感：基础粗糙度适中偏低，高光细腻
+      ctx.fillStyle = '#666666';
+      ctx.fillRect(0, 0, 512, 512);
+      grain(ctx, 512, 12000, 150);
+    },
+    false
+  );
+
+  for (const texture of [albedo, height, roughness]) {
+    texture.repeat.set(30 / 1.2, 22 / 1.2);
+  }
+
+  return new THREE.MeshStandardMaterial({
+    map: albedo,
+    bumpMap: height,
+    bumpScale: 0.008,
+    roughnessMap: roughness,
+    roughness: 0.38,
+    metalness: 0.08
+  });
 }
 
+/**
+ * 真实公立医院墙面：
+ * 告别单一绿。采用标准三甲医院上下双分色：
+ * 上部（1.0m 以上）：哑光暖白抗菌乳胶漆（#f4f3ef）
+ * 下部（1.0m 以下）：中性浅灰防撞裙板（#d2d7dc）与铝合金防撞过渡带
+ */
 export function plasterMaterial(): THREE.MeshStandardMaterial {
-  const texture = paintTexture(256, ctx => {
-    ctx.fillStyle = '#e9e8e0'; ctx.fillRect(0, 0, 256, 256);
-    grain(ctx, 256, 19000, 231);
+  const texture = paintTexture(512, (ctx) => {
+    // 基础暖白
+    ctx.fillStyle = '#f5f4ef';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // 下部 1/3 防撞护墙板颜色（浅暖灰）
+    ctx.fillStyle = '#d5dadf';
+    ctx.fillRect(0, 340, 512, 172);
+
+    // 防撞过渡分界线（深灰铝合金条）
+    ctx.fillStyle = '#9ca3af';
+    ctx.fillRect(0, 335, 512, 6);
+    ctx.fillStyle = '#4b5563';
+    ctx.fillRect(0, 341, 512, 2);
+
+    grain(ctx, 512, 16000, 312);
   });
-  const height = paintTexture(256, ctx => {
-    ctx.fillStyle = '#aaaaaa'; ctx.fillRect(0, 0, 256, 256);
-    grain(ctx, 256, 28000, 231);
-  }, false);
-  return new THREE.MeshStandardMaterial({ map: texture, bumpMap: height, bumpScale: 0.006, roughness: 0.88 });
+
+  const height = paintTexture(
+    512,
+    (ctx) => {
+      ctx.fillStyle = '#bbbbbb';
+      ctx.fillRect(0, 0, 512, 512);
+      ctx.fillStyle = '#888888';
+      ctx.fillRect(0, 335, 512, 8);
+      grain(ctx, 512, 18000, 312);
+    },
+    false
+  );
+
+  return new THREE.MeshStandardMaterial({
+    map: texture,
+    bumpMap: height,
+    bumpScale: 0.005,
+    roughness: 0.78
+  });
 }
 
+/**
+ * 现代医院天花板：
+ * 600×600 嵌入式防尘吸音铝扣板网格，纯净冷白，带有微弱倒角边框。
+ */
 export function ceilingMaterial(): THREE.MeshStandardMaterial {
-  const texture = paintTexture(512, ctx => {
-    ctx.fillStyle = '#eeeee7'; ctx.fillRect(0, 0, 512, 512);
-    grain(ctx, 512, 17000, 120);
-    ctx.strokeStyle = '#c9cdc6'; ctx.lineWidth = 4;
-    for (let x = 0; x < 2; x++) for (let z = 0; z < 2; z++) ctx.strokeRect(x * 256, z * 256, 256, 256);
+  const texture = paintTexture(512, (ctx) => {
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(0, 0, 512, 512);
+    grain(ctx, 512, 12000, 199);
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 3;
+    for (let x = 0; x < 2; x++) {
+      for (let z = 0; z < 2; z++) {
+        ctx.strokeRect(x * 256, z * 256, 256, 256);
+      }
+    }
   });
   texture.repeat.set(15, 11);
-  return new THREE.MeshStandardMaterial({ map: texture, roughness: 0.94, side: THREE.DoubleSide });
+  return new THREE.MeshStandardMaterial({
+    map: texture,
+    roughness: 0.88,
+    side: THREE.DoubleSide
+  });
 }
 
 export function clothMaterial(color: number): THREE.MeshStandardMaterial {
-  const weave = paintTexture(128, ctx => {
-    ctx.fillStyle = '#a0a0a0'; ctx.fillRect(0, 0, 128, 128);
-    ctx.strokeStyle = '#808080'; ctx.lineWidth = 1;
-    for (let i = 0; i < 128; i += 4) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 128); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(128, i); ctx.stroke(); }
-  }, false);
-  return new THREE.MeshStandardMaterial({ color, roughness: 0.93, bumpMap: weave, bumpScale: 0.0025 });
+  const weave = paintTexture(
+    128,
+    (ctx) => {
+      ctx.fillStyle = '#b0b0b0';
+      ctx.fillRect(0, 0, 128, 128);
+      ctx.strokeStyle = '#909090';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 128; i += 4) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, 128);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(128, i);
+        ctx.stroke();
+      }
+    },
+    false
+  );
+  return new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.85,
+    bumpMap: weave,
+    bumpScale: 0.0025
+  });
 }

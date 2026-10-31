@@ -14,25 +14,29 @@ function mesh(geometry: THREE.BufferGeometry, material: THREE.Material, x: numbe
 export class HumanRig {
   readonly group = new THREE.Group();
   readonly body = new THREE.Group();
+  readonly isWarden: boolean;
   private readonly arms: THREE.Group[] = [];
   private readonly elbows: THREE.Group[] = [];
   private readonly legs: THREE.Group[] = [];
   private readonly knees: THREE.Group[] = [];
+  readonly flashlightSpot: THREE.SpotLight | null = null;
   private stride = 0;
   private weight = 0;
 
   constructor(warden: boolean) {
-    const skin = new THREE.MeshStandardMaterial({ color: 0xd6b395, roughness: 0.78 });
-    const hair = new THREE.MeshStandardMaterial({ color: warden ? 0x39332c : 0x272522, roughness: 0.95 });
-    const shirt = clothMaterial(warden ? 0x4f6a75 : 0x2f7d70);
-    const pants = clothMaterial(warden ? 0x1f2c35 : 0x22363b);
-    const shoes = new THREE.MeshStandardMaterial({ color: 0x202623, roughness: 0.68 });
-    const badge = new THREE.MeshStandardMaterial({ color: 0xe9ece1, roughness: 0.5 });
+    this.isWarden = warden;
+    const skin = new THREE.MeshStandardMaterial({ color: warden ? 0xc8aa90 : 0xd6b395, roughness: 0.78 });
+    const hair = new THREE.MeshStandardMaterial({ color: warden ? 0x18181b : 0x272522, roughness: 0.95 });
+    // 守卫/查房值班员采用深色战术医院制服（墨黑长裤 + 深碳灰勤务上衣）
+    const shirt = clothMaterial(warden ? 0x1e293b : 0x2f7d70);
+    const pants = clothMaterial(warden ? 0x0f172a : 0x22363b);
+    const shoes = new THREE.MeshStandardMaterial({ color: warden ? 0x111827 : 0x202623, roughness: 0.5, metalness: 0.2 });
+    const badge = new THREE.MeshStandardMaterial({ color: warden ? 0x38bdf8 : 0xe9ece1, roughness: 0.4, metalness: 0.6 });
     // 解剖模型本地朝 +z，转为游戏统一的 +x 朝向。
     this.body.rotation.y = Math.PI / 2;
     this.group.add(this.body);
 
-    const torso = mesh(new THREE.CylinderGeometry(0.188, 0.135, 0.43, 18), shirt, 0, 1.14, 0);
+    const torso = mesh(new THREE.CylinderGeometry(0.19, 0.14, 0.44, 18), shirt, 0, 1.14, 0);
     torso.scale.z = 0.66;
     this.body.add(torso);
     const pelvis = mesh(new RoundedBoxGeometry(0.285, 0.19, 0.19, 2, 0.045), pants, 0, 0.875, 0);
@@ -47,7 +51,7 @@ export class HumanRig {
     const nose = mesh(new THREE.SphereGeometry(1, 10, 8), skin, 0, 1.568, 0.098);
     nose.scale.set(0.02, 0.022, 0.027);
     this.body.add(nose);
-    const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x413e34, roughness: 0.65 });
+    const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.65 });
     for (const side of [-1, 1]) {
       const ear = mesh(new THREE.SphereGeometry(1, 10, 8), skin, side * 0.092, 1.574, 0.005);
       ear.scale.set(0.016, 0.03, 0.022); this.body.add(ear);
@@ -57,7 +61,7 @@ export class HumanRig {
     const pocket = mesh(new RoundedBoxGeometry(0.075, 0.09, 0.014, 2, 0.004), shirt, -0.09, 1.21, 0.124);
     this.body.add(pocket);
     this.body.add(mesh(new THREE.BoxGeometry(0.046, 0.055, 0.012), badge, -0.09, 1.23, 0.137));
-    const strap = new THREE.MeshStandardMaterial({ color: 0x30464a, roughness: 0.85 });
+    const strap = new THREE.MeshStandardMaterial({ color: warden ? 0x1e293b : 0x30464a, roughness: 0.85 });
     this.body.add(mesh(new THREE.BoxGeometry(0.017, 0.19, 0.013), strap, 0.047, 1.28, 0.125));
     this.body.add(mesh(new THREE.BoxGeometry(0.015, 0.19, 0.013), strap, -0.047, 1.28, 0.125));
 
@@ -77,6 +81,38 @@ export class HumanRig {
       knee.add(mesh(new RoundedBoxGeometry(0.105, 0.085, 0.25, 2, 0.025), shoes, 0, -0.44, 0.066));
       leg.add(knee); this.body.add(leg); this.legs.push(leg); this.knees.push(knee);
     }
+
+    // 守卫右手配备战术巡逻手电筒与动态前向聚光灯
+    if (warden && this.elbows.length > 1) {
+      const rightElbow = this.elbows[1];
+      const flashlight = new THREE.Group();
+      flashlight.position.set(0, -0.32, 0.06);
+      flashlight.rotation.x = Math.PI / 2;
+
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.35, metalness: 0.85 });
+      const bezelMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.2, metalness: 0.95 });
+      const lensMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff8db, emissiveIntensity: 1.8, roughness: 0.1 });
+
+      const handleMesh = mesh(new THREE.CylinderGeometry(0.016, 0.018, 0.16, 12), bodyMat, 0, 0, 0);
+      flashlight.add(handleMesh);
+      const bezelMesh = mesh(new THREE.CylinderGeometry(0.026, 0.02, 0.04, 12), bezelMat, 0, 0.09, 0);
+      flashlight.add(bezelMesh);
+      const lensMesh = mesh(new THREE.CylinderGeometry(0.023, 0.023, 0.005, 12), lensMat, 0, 0.11, 0);
+      flashlight.add(lensMesh);
+
+      // 动态夜巡光束
+      const spot = new THREE.SpotLight(0xfff5d6, 3.8, 16, Math.PI / 6.5, 0.35, 1.2);
+      spot.position.set(0, 0.12, 0);
+      const spotTarget = new THREE.Object3D();
+      spotTarget.position.set(0, 8, 0);
+      flashlight.add(spot);
+      flashlight.add(spotTarget);
+      spot.target = spotTarget;
+      this.flashlightSpot = spot;
+
+      rightElbow.add(flashlight);
+    }
+
     this.group.name = warden ? 'human-warden' : 'human-player';
   }
 
@@ -93,6 +129,13 @@ export class HumanRig {
       this.arms[i].rotation.x = -swing * amplitude * 0.9;
       this.elbows[i].rotation.x = -(running ? 0.65 : 0.16) * this.weight;
     }
+
+    // 守卫手持手电筒时，右手前臂向前抬起照亮前方路径
+    if (this.isWarden && this.elbows[1]) {
+      this.elbows[1].rotation.x = -0.55 - (running ? 0.25 : 0.08) * this.weight;
+      this.arms[1].rotation.x = -0.15 + (this.arms[1].rotation.x * 0.4);
+    }
+
     this.body.position.y = Math.abs(Math.sin(this.stride)) * (running ? 0.035 : 0.015) * this.weight;
   }
 
