@@ -17,6 +17,7 @@
     "qr:png": "node scripts/qr-png.mjs"
   },
   "dependencies": {
+    "@waffo/pancake-ts": "^0.27.0",
     "three": "^0.187.0"
   },
   "devDependencies": {

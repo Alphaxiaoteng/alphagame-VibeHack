@@ -111,4 +111,24 @@ export const COMMANDS = {
   broadcast: { key: '3', name: '广播查房', duration: 6, cost: '之后搜查更严' },
 } as const;
 export const COMMAND_COOLDOWN = 12;
+
+/**
+ * 一局的可调规则。关卡之间只差这几个数字，地图几何与碰撞保持不变，
+ * 因此关卡配置可以整体替换而不触碰导航与渲染。
+ */
+export interface RoundRules {
+  /** 安全门通电倒计时（秒） */
+  timeLimit: number;
+  /** 值班指令冷却（秒） */
+  commandCooldown: number;
+  /** 值班员巡逻速度（米/秒） */
+  patrolSpeed: number;
+}
+
+/** 默认规则＝01 住院部：不传 rules 时行为与关卡化之前完全一致。 */
+export const DEFAULT_RULES: RoundRules = {
+  timeLimit: TIME_LIMIT,
+  commandCooldown: COMMAND_COOLDOWN,
+  patrolSpeed: PATROL_SPEED,
+};
 export const WARD_TARGETS: readonly Point[] = [{ x: 4.5, z: 11 }, { x: 25.5, z: 11 }];

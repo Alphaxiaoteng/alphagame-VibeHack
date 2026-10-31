@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import './style.css';
 import { AudioEngine, VOICE_URLS } from './audio/audioEngine';
-import { COMMANDS, COMMAND_COOLDOWN, COMMAND_IDS, DOORS, EXIT_POINT, FURNITURE_RECTS, GUARD_RADIUS, PLAYER_RADIUS, WALKABLE_RECTS } from './core/config';
+import { COMMANDS, COMMAND_IDS, DOORS, EXIT_POINT, FURNITURE_RECTS, GUARD_RADIUS, PLAYER_RADIUS, WALKABLE_RECTS } from './core/config';
 import type { CommandId, DoorId, PlayerInput, Point } from './core/config';
 import { dangerWindow, pauseAfterBackground } from './core/lifecycle';
 import { distance } from './core/map';
@@ -361,7 +361,7 @@ function boot(): void {
       const label = state.reason || '可用';
       const status = button.querySelector('.command-status')!;
       if (status.textContent !== label) status.textContent = label;
-      const progress = Math.round((game.activeEffect?.id === id ? game.activeEffect.remaining / COMMANDS[id].duration : state.cooldown / COMMAND_COOLDOWN) * 50) / 50;
+      const progress = Math.round((game.activeEffect?.id === id ? game.activeEffect.remaining / COMMANDS[id].duration : state.cooldown / game.rules.commandCooldown) * 50) / 50;
       if (button.dataset.progress !== String(progress)) {
         button.dataset.progress = String(progress);
         button.style.setProperty('--progress', `${progress * 100}%`);

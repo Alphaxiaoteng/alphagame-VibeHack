@@ -14,6 +14,8 @@ export class PatrolGuard {
   path: Point[] = [];
   targetIndex = 0;
   facing = 0;
+  /** 巡逻速度（米/秒）：由关卡规则注入，默认等于 01 住院部。 */
+  patrolSpeed: number = PATROL_SPEED;
   private revision = -1;
 
   constructor(map: HospitalMap, private readonly rand: () => number = Math.random) {
@@ -63,7 +65,7 @@ export class PatrolGuard {
 
   update(dt: number, map: HospitalMap): void {
     if (map.revision !== this.revision) this.replan(map);
-    let budget = PATROL_SPEED * dt;
+    let budget = this.patrolSpeed * dt;
     let hops = 0;
     while (budget > 1e-6 && hops < 8) {
       hops += 1;
@@ -128,8 +130,9 @@ export class Warden extends PatrolGuard {
   private searchScan = 0;
   private searchBaseFacing = 0;
 
-  constructor(map: HospitalMap, readonly perception = true) {
+  constructor(map: HospitalMap, readonly perception = true, patrolSpeed = PATROL_SPEED) {
     super(map);
+    this.patrolSpeed = patrolSpeed;
   }
 
   override reset(map: HospitalMap): void {
@@ -241,7 +244,7 @@ export class Warden extends PatrolGuard {
     }
 
     const before = { ...this.position };
-    let budget = (this.mode === 'chase' ? CHASE_SPEED : PATROL_SPEED) * dt;
+    let budget = (this.mode === 'chase' ? CHASE_SPEED : this.patrolSpeed) * dt;
     for (let hop = 0; budget > 1e-6 && this.path.length > 0 && hop < 12; hop++) {
       const point = this.path[0];
       const gap = distance(this.position, point);
