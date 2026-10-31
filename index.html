@@ -162,26 +162,26 @@
 
           <div class="difficulty-picker-container">
             <div class="diff-header-row">
-              <span class="diff-label-title">难度：<strong id="diff-current-badge">标准</strong></span>
+              <span class="diff-label-title">难度：<strong id="diff-current-badge">中</strong></span>
             </div>
             <div id="difficulty-picker" class="difficulty-picker" aria-label="选择值班难度">
-              <button type="button" class="difficulty-card" data-difficulty="intern" title="见习">
-                <span class="diff-level-text">见习</span>
-                <span class="diff-level-sub">慢速巡查</span>
+              <button type="button" class="difficulty-card" data-difficulty="intern" title="简单">
+                <span class="diff-stars">★☆☆</span>
+                <span class="diff-level-text">简单</span>
               </button>
-              <button type="button" class="difficulty-card" data-difficulty="standard" title="标准">
-                <span class="diff-level-text">标准</span>
-                <span class="diff-level-sub">常规速度</span>
+              <button type="button" class="difficulty-card" data-difficulty="standard" title="中">
+                <span class="diff-stars">★★☆</span>
+                <span class="diff-level-text">中</span>
               </button>
-              <button type="button" class="difficulty-card" data-difficulty="graveyard" data-locked="true" title="高危">
+              <button type="button" class="difficulty-card" data-difficulty="graveyard" data-locked="true" title="极难">
                 <div class="diff-card-inner">
-                  <span class="diff-level-text">高危</span>
-                  <svg class="diff-lock-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <span class="diff-stars">★★★</span>
+                  <span class="diff-level-text">极难</span>
+                  <svg class="diff-lock-icon" viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                   </svg>
                 </div>
-                <span class="diff-level-sub">严密守备</span>
               </button>
             </div>
           </div>
