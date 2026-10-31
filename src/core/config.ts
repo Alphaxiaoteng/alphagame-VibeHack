@@ -44,6 +44,10 @@ export const BASE_TUNING = {
   searchSeconds: 4,
   alertSearchSeconds: 6,
   graceSeconds: 6,
+  /** 到达巡逻路点后的停留扫视秒数（一星档最长，给玩家窗口） */
+  pauseSeconds: 0.7,
+  /** 猎手倾向 0..1：到达后选“离玩家最近可达路点”的概率（三星档主动压向玩家半区） */
+  huntBias: 0.2,
 } as const;
 
 type TuningOverrides = Partial<{ [K in keyof typeof BASE_TUNING]: number }>;
@@ -63,12 +67,14 @@ const DIFFICULTY_OVERRIDES: Record<DifficultyId, TuningOverrides> = {
     sightRange: 6.5, litSightRange: 10, hearingRange: 5.5,
     chaseSpeed: 3.9, patrolSpeed: 2.4,
     searchSeconds: 3, alertSearchSeconds: 4.5, graceSeconds: 8,
+    pauseSeconds: 2.0, huntBias: 0,
   },
   standard: {},
   graveyard: {
     sightRange: 9.5, litSightRange: 14, hearingRange: 9,
     chaseSpeed: 4.5, patrolSpeed: 3.2,
     searchSeconds: 5, alertSearchSeconds: 7.5, graceSeconds: 3,
+    pauseSeconds: 0, huntBias: 0.6,
   },
 };
 
@@ -168,6 +174,9 @@ export interface DifficultyPreset {
   searchSeconds: number;
   alertSearchSeconds: number;
   graceSeconds: number;
+  pauseSeconds: number;
+  /** 0..1 猎手倾向 */
+  huntBias: number;
 }
 
 export const DIFFICULTY_ORDER: readonly DifficultyId[] = ['intern', 'standard', 'graveyard'];

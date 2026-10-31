@@ -1,6 +1,6 @@
 import { DIFFICULTIES, GUARD_RADIUS, GUARD_SPAWN, PATROL_WAYPOINTS, PLAYER_SPAWN, SPAWN_SAFE_RADIUS } from './config';
 import type { DifficultyPreset } from './config';
-import type { Player } from './player';
+import { Player } from './player';
 import type { Point } from './config';
 import { distance, moveCircle } from './map';
 import type { HospitalMap } from './map';
@@ -58,7 +58,7 @@ export class PatrolGuard {
   /** 到达路点后随机挑下一个：不重复当前点，只从当前可达的路点里选，路线不再固定成环。
    *  排除“直线方向穿过出生点保护圈”的候选：对角线路（如东上→西南）的最短路会沿北走廊
    *  穿过玩家出生点，造成开局即死；绕行成本由值班员自己承担（寻路自动走南走廊）。 */
-  private pickNextWaypoint(map: HospitalMap): number {
+  private pickNextWaypoint(map: HospitalMap, playerPos?: Point): number {
     const candidates: number[] = [];
     for (let index = 0; index < PATROL_WAYPOINTS.length; index += 1) {
       if (index === this.targetIndex) continue;
@@ -67,6 +67,16 @@ export class PatrolGuard {
       const path = map.findPath(this.position, PATROL_WAYPOINTS[index], GUARD_RADIUS);
       if (this.pathNearSpawn(this.position, path)) continue;
       candidates.push(index);
+    }
+    // 猎手倾向：以一定概率选“离玩家最近的可达路点”，主动压向玩家所在的半区。
+    if (playerPos && this.tuning.huntBias > 0 && candidates.length > 0 && this.rand() < this.tuning.huntBias) {
+      let best = candidates[0];
+      let bestDist = Infinity;
+      for (const index of candidates) {
+        const d = distance(PATROL_WAYPOINTS[index], playerPos);
+        if (d < bestDist) { bestDist = d; best = index; }
+      }
+      return best;
     }
     if (candidates.length === 0) {
       const fallback: number[] = [];
@@ -101,8 +111,20 @@ export class PatrolGuard {
     return Math.hypot(cx, cz) < SPAWN_SAFE_RADIUS;
   }
 
-  update(dt: number, map: HospitalMap): void {
+  /** 路点停留扫视：一星档到点后站着张望，给玩家更大的行动窗口。 */
+  pauseRemaining = 0;
+  private pauseFacing = 0;
+  private pauseClock = 0;
+
+  update(dt: number, map: HospitalMap, playerPos?: Point): void {
     if (map.revision !== this.revision) this.replan(map);
+    // 路点停留：按档位站立张望（朝向缓摆），期间不移动；被追逐时 Warden 不会进入本方法。
+    if (this.pauseRemaining > 0) {
+      this.pauseRemaining = Math.max(0, this.pauseRemaining - dt);
+      this.pauseClock += dt;
+      this.facing = this.pauseFacing + Math.sin(this.pauseClock * 1.7) * 0.5;
+      return;
+    }
     let budget = this.tuning.patrolSpeed * dt;
     let hops = 0;
     while (budget > 1e-6 && hops < 8) {
@@ -110,9 +132,16 @@ export class PatrolGuard {
       const target = this.path[0];
       if (!target) {
         const previous = this.targetIndex;
-        this.targetIndex = this.pickNextWaypoint(map);
+        this.targetIndex = this.pickNextWaypoint(map, playerPos);
         this.replan(map);
         if (this.path.length === 0 || this.targetIndex === previous) break;
+        // 按档位停留扫视后再出发（±30% 随机化，节奏不机械）。
+        if (this.tuning.pauseSeconds > 0) {
+          this.pauseRemaining = this.tuning.pauseSeconds * (0.8 + this.rand() * 0.6);
+          this.pauseFacing = this.facing;
+          this.pauseClock = 0;
+          return;
+        }
         continue;
       }
       const remaining = distance(this.position, target);
@@ -258,7 +287,8 @@ export class Warden extends PatrolGuard {
   graceImmunity = false;
   private graceRemaining = 0;
 
-  override update(dt: number, map: HospitalMap, player?: Player, sightRange?: number): void {
+  override update(dt: number, map: HospitalMap, playerOrPos?: Player | Point, sightRange?: number): void {
+    const player = playerOrPos instanceof Player ? playerOrPos : undefined;
     this.pathTimer += dt;
     if (this.graceRemaining > 0) this.graceRemaining = Math.max(0, this.graceRemaining - dt);
     else this.graceImmunity = false;
@@ -292,7 +322,7 @@ export class Warden extends PatrolGuard {
     }
     if (map.revision !== this.routeRevision) this.replan(map);
     if (this.mode === 'patrol') {
-      super.update(dt, map);
+      super.update(dt, map, this.perception ? player?.position : undefined);
       return;
     }
 
