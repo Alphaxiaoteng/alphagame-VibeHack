@@ -209,7 +209,7 @@ export class RoundsGame {
     this.events.push({ type: 'commandStarted', command: id, message: {
       lights: '全院开灯 · 出口路线亮起，但值班员看得更远',
       lockdown: `防火门 ${effect.door ?? ''} 关闭 · 双方都需要绕路`,
-      broadcast: '病房广播响起 · 值班员前往核查，之后搜查更严',
+      broadcast: `病房广播响起 · 值班员正赶往${(effect.target?.x ?? 15) > 15 ? '东' : '西'}侧病房核查，之后搜查更严`,
     }[id] });
     return true;
   }

@@ -73,6 +73,9 @@ describe('三条指令是真实规则，不是禁用按钮', () => {
     game.guard.position = { x: 22, z: 4.5 };
     expect(game.useCommand('broadcast')).toBe(true);
     expect(game.activeEffect?.target).toEqual({ x: 25.5, z: 11 });
+    // 方向必须写进反馈：玩家在西侧时广播会把值班员引向东侧（逃生路方向），不能让他蒙在鼓里。
+    const started = game.drainEvents().find(event => event.type === 'commandStarted');
+    expect(started?.message).toContain('东侧');
     expect(game.guard.mode).toBe('broadcast');
     advance(game, 6);
     expect(game.activeEffect).toBeNull();

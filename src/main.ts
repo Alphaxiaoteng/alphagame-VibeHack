@@ -75,6 +75,7 @@ function boot(): void {
   const effectTime = element('effect-time');
   const effectFill = element('effect-fill');
   const danger = element('danger');
+  const threatPointer = element('threat-pointer');
   const minimap = element<HTMLCanvasElement>('minimap');
   const mapContext = minimap.getContext('2d');
   const mapNote = element('map-note');
@@ -305,6 +306,23 @@ function boot(): void {
     mapNote.textContent = game.exitUnlocked ? '东侧安全门已通电 · 绿灯为逃生路线' : game.lightsOn ? `开灯定位：值班员在${corridor(game.guard.position)}` : '绿点：你 · 东侧：安全门';
   }
 
+  /** 追逐时画面外看不到威胁来源：一枚低强度红色箭头绕屏幕中心指向值班员方位，其余状态隐藏。 */
+  function updateThreatPointer(): void {
+    const chasing = game.phase === 'playing' && game.guard.mode === 'chase';
+    if (!chasing) {
+      if (!threatPointer.hidden) threatPointer.hidden = true;
+      return;
+    }
+    const dx = game.guard.position.x - game.player.position.x;
+    const dz = game.guard.position.z - game.player.position.z;
+    const bearing = Math.atan2(dz, dx) - follow.yaw;
+    const radius = Math.min(window.innerWidth, window.innerHeight) * 0.34;
+    const x = Math.sin(bearing) * radius;
+    const y = -Math.cos(bearing) * radius;
+    threatPointer.hidden = false;
+    threatPointer.style.transform = `translate(calc(-50% + ${x.toFixed(1)}px), calc(-50% + ${y.toFixed(1)}px)) rotate(${(bearing * 180 / Math.PI).toFixed(1)}deg)`;
+  }
+
   function updateUI(): void {
     if (previousPhase === game.phase && game.elapsed >= uiTime && game.elapsed - uiTime < 0.07) return;
     uiTime = game.elapsed;
@@ -316,7 +334,7 @@ function boot(): void {
       patrol: '巡查中 · 走路安静，奔跑会被听见',
       chase: '被发现！转过墙角，或用 2 封锁追捕路线',
       search: '正在搜索 · 先躲开视线，再用 3 广播引开',
-      broadcast: '广播核查中 · 值班员正在前往病房',
+      broadcast: `广播核查中 · 值班员正赶往${(game.activeEffect?.target?.x ?? 15) > 15 ? '东' : '西'}侧病房`,
     }[game.guard.mode];
     danger.hidden = game.elapsed >= dangerUntil || game.phase !== 'playing';
     danger.dataset.on = String(!danger.hidden);
@@ -692,6 +710,7 @@ function boot(): void {
     hospital.playerHuman.setOpacity(cameraGap < 1.4 ? 0.25 : 1);
     renderer.render(hospital.scene, follow.camera);
     updateUI();
+    updateThreatPointer();
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

@@ -73,6 +73,8 @@ body[data-phase="start"] .hud { display: none; }
 .map-panel small { display: block; margin-top: 5px; font-size: 9px; color: #55654f; }
 .danger { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 90px 12px #a9564a5c; opacity: 0; transition: opacity .2s; }
 .danger[data-on="true"] { opacity: 1; }
+/* 追逐中画面外的追捕者方向指示：低强度红箭头绕屏幕中心指向威胁方位，只在 chase 期间显示。 */
+.threat-pointer { position: fixed; left: 50%; top: 50%; z-index: 2; color: #b45447; font-size: 22px; line-height: 1; pointer-events: none; opacity: .9; filter: drop-shadow(0 2px 6px #7c3c3245); }
 .touch-controls { position: absolute; left: 20px; right: 20px; bottom: 18px; display: flex; align-items: flex-end; justify-content: space-between; pointer-events: none; }
 .touch-stick { position: relative; width: 132px; height: 132px; border-radius: 50%; background: #edf2e7a6; border: 1px solid #9fb3a3; pointer-events: auto; touch-action: none; box-shadow: 0 4px 18px #243a2e1f; }
 .touch-thumb { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; background: #4f7d61d9; box-shadow: 0 2px 10px #243a2e33; }
