@@ -60,6 +60,16 @@
 
 ---
 
+## 商业化闭环与 Waffo 全球支付集成
+
+本项目完整集成了 **Waffo Pancake** 跨境数字商品收单方案，实现了从试玩导流到微额买断的商业化闭环：
+
+| Waffo 收银台 · 特许核销单实机界面 | 商业架构与变现设计 |
+| :---: | :--- |
+| ![Waffo 收银台实机](docs/screenshots/compressed/08_waffo_checkout.jpg) | **1. 关卡买断与微交易设计**<br/>- **见习关卡（30s）**：免费试玩，降低冷启动门槛，作为社交裂变漏斗。<br/>- **高危病区与外观（\$0.99）**：单章微额买断制，提供更强 AI 压迫感关卡与专属病房护士装扮。<br/><br/>**2. 沉浸式收银台（零外部重定向）**<br/>- 针对游戏微恐背景定制「复古病历特许单」UI，保持游戏代入感。<br/>- 在线实机收银台直连：[http://124.220.198.243/rounds/demo-checkout.html](http://124.220.198.243/rounds/demo-checkout.html)<br/><br/>**3. 工业级服务端工程规范（`src/server/waffo.ts`）**<br/>- **会话签发**：基于 `@waffo/pancake-ts` 调用 Checkout Session API。<br/>- **异步回调核销**：独立接收 `/api/waffo/webhook`，严格校验 `X-Waffo-Signature` 请求头防重放攻击。<br/>- **账本一致性**：自动更新本地持久化账本（Ledger），经 Vitest 单元测试全覆盖。 |
+
+---
+
 ## 本地运行与构建
 
 环境要求：Node.js 22.12+，支持 WebGL 2 的现代浏览器。
