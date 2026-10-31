@@ -7,6 +7,5 @@
     "AssetStore": {
       "httpUrl": "https://assetstore-mcp.u3d.cn/mcp"
     }
-  },
-  "model": "codely-core"
+  }
 }
