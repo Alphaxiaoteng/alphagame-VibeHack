@@ -185,7 +185,7 @@ export class PatrolGuard {
       if (distance(this.position, target) < 1e-6) {
         this.path.shift();
         if (this.path.length === 0) {
-          this.targetIndex = this.pickNextWaypoint(map);
+          this.targetIndex = this.pickNextWaypoint(map, playerPos);
           this.replan(map);
         }
       }

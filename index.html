@@ -340,21 +340,105 @@
         </div>
       </div>
 
-      <!-- 路演 PPT 弹窗 -->
-      <div id="pitch-modal" class="modal-layer" hidden aria-modal="true" role="dialog" aria-label="项目路演 PPT">
+      <!-- 游戏介绍与极简教程弹窗 (支持极简图文与路演幻灯片切换) -->
+      <div id="pitch-modal" class="modal-layer" hidden aria-modal="true" role="dialog" aria-label="游戏介绍与极简教程">
         <div class="modal-backdrop" data-close-modal></div>
         <div class="modal-card pitch-card">
           <div class="modal-head">
             <div class="pitch-title-block">
-              <strong>《查房》项目路演幻灯片</strong>
-              <span class="badge-mini">Excalidraw 演示</span>
+              <strong>《查房》游戏介绍 · 极简教程</strong>
+              <div class="modal-tab-nav" role="tablist">
+                <button type="button" id="tab-btn-guide" class="modal-tab-btn active" role="tab" aria-selected="true">玩法教程</button>
+                <button type="button" id="tab-btn-deck" class="modal-tab-btn" role="tab" aria-selected="false">路演幻灯片</button>
+              </div>
             </div>
             <div class="modal-actions">
-              <a href="/PPT_20261031_查房_3D心理微恐解密游戏路演_本地演示.html" target="_blank" class="btn-subtle" title="新标签页独立全屏">独立全屏 ↗</a>
+              <a href="/pitch" target="_blank" class="btn-subtle" title="新标签页全屏演示">独立全屏 ↗</a>
               <button class="modal-close" data-close-modal title="关闭">×</button>
             </div>
           </div>
-          <div class="pitch-frame-wrapper">
+
+          <!-- 极简表述 教程面 (默认展示，极速直出，零延迟，完全适配手机与电脑) -->
+          <div id="pitch-guide-pane" class="pitch-guide-wrapper">
+            <div class="guide-grid">
+              <!-- 卡片 1: 核心逃生目标 -->
+              <div class="guide-card">
+                <div class="guide-card-head">
+                  <span class="guide-index mono">01</span>
+                  <h3>核心逃生目标</h3>
+                </div>
+                <p class="guide-text">
+                  你被困在夜间断电的封闭住院部。值班员手提马灯在走廊内循环巡查。<br />
+                  <strong>坚持存活至备用电源充满</strong>（实习 30s · 标准 45s · 资深 60s），东侧安全大门将自动通电弹开；<strong>走向东侧安全门迎向晨光</strong>即可通关撤离。
+                </p>
+              </div>
+
+              <!-- 卡片 2: 潜行与避险法则 -->
+              <div class="guide-card">
+                <div class="guide-card-head">
+                  <span class="guide-index mono">02</span>
+                  <h3>潜行与避险法则</h3>
+                </div>
+                <ul class="guide-list">
+                  <li><strong>正常走路绝对静音</strong>：正常走位（WASD / 虚拟摇杆）无声，不会引来巡查；只有<strong>按住奔跑</strong>会产生急促脚步声吸引猎人赶来。</li>
+                  <li><strong>规避正面对视</strong>：猎人前方有扇形手电视锥。直线逃跑必被抓住，必须<strong>立刻转弯进病房、药房或借屏风切断视线</strong>。</li>
+                  <li><strong>体力节奏控制</strong>：奔跑消耗体力条，耗尽将进入 2 秒喘息减速惩罚，切忌盲目长途奔跑。</li>
+                </ul>
+              </div>
+
+              <!-- 卡片 3: 三大改写指令 -->
+              <div class="guide-card">
+                <div class="guide-card-head">
+                  <span class="guide-index mono">03</span>
+                  <h3>三大改写指令（12s 独立冷却）</h3>
+                </div>
+                <div class="guide-cmd-grid">
+                  <div class="guide-cmd-item">
+                    <span class="cmd-tag stamp-red">1 全院开灯</span>
+                    <strong>强光透视</strong>
+                    <p>全院顶灯通电 6 秒，地图雷达与小箭头透视猎人实时位置与行进路线；猎人视距随之扩大，需躲入暗处。</p>
+                  </div>
+                  <div class="guide-cmd-item">
+                    <span class="cmd-tag">2 封锁走廊</span>
+                    <strong>物理阻断</strong>
+                    <p>紧急降下中庭防火卷帘门 5 秒，阻断当前追捕通道，强制猎人绕远路，瞬间拉开 10 米以上安全身位。</p>
+                  </div>
+                  <div class="guide-cmd-item">
+                    <span class="cmd-tag">3 广播查房</span>
+                    <strong>声东击西</strong>
+                    <p>假借医院内线广播诱导猎人转向远处病房核查 6 秒。必须在脱离直视后使用才能成功引开。</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 卡片 4: 双端操作极简对照 -->
+              <div class="guide-card">
+                <div class="guide-card-head">
+                  <span class="guide-index mono">04</span>
+                  <h3>双端操作极简对照</h3>
+                </div>
+                <div class="guide-ctrl-row">
+                  <div class="guide-ctrl-col">
+                    <strong class="col-title">电脑桌面端</strong>
+                    <p><kbd>WASD</kbd> 走位 · <kbd>Shift</kbd> 疾跑 · <kbd>1 / 2 / 3</kbd> 指令 · <kbd>右键拖动</kbd> 视角 · <kbd>Esc</kbd> 暂停</p>
+                  </div>
+                  <div class="guide-ctrl-col">
+                    <strong class="col-title">手机触控端</strong>
+                    <p><strong>左下摇杆</strong> 移动 · <strong>右下跑键</strong> 疾跑 · <strong>底部按键</strong> 技能 · <strong>右屏拖动</strong> 视角 · <strong>左上按钮</strong> 全屏</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 底部链接条 -->
+            <div class="guide-footer-bar">
+              <span class="guide-hint">如需了解游戏立项背景、经济系统与商业路演架构：</span>
+              <button type="button" id="guide-switch-to-deck" class="guide-deck-btn">切换查看项目路演幻灯片 (PPT) →</button>
+            </div>
+          </div>
+
+          <!-- 路演 PPT 页面 (按需加载，指向 /pitch，支持独立全屏) -->
+          <div id="pitch-deck-pane" class="pitch-frame-wrapper" hidden>
             <iframe id="pitch-iframe" src="about:blank" title="查房路演 PPT 播放器" loading="lazy"></iframe>
           </div>
         </div>

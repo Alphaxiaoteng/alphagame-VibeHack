@@ -867,14 +867,37 @@ function boot(): void {
     mute.setAttribute('aria-pressed', String(muted));
   });
 
-  // 手机扫码弹窗与路演 PPT 交互
+  // 手机扫码弹窗与游戏介绍/教程/路演 PPT 交互
   const qrModal = document.getElementById('qr-modal');
   const pitchModal = document.getElementById('pitch-modal');
   const pitchIframe = document.getElementById('pitch-iframe') as HTMLIFrameElement | null;
+  const tabBtnGuide = document.getElementById('tab-btn-guide') as HTMLButtonElement | null;
+  const tabBtnDeck = document.getElementById('tab-btn-deck') as HTMLButtonElement | null;
+  const guidePane = document.getElementById('pitch-guide-pane');
+  const deckPane = document.getElementById('pitch-deck-pane');
+  const guideSwitchToDeck = document.getElementById('guide-switch-to-deck') as HTMLButtonElement | null;
   const btnQr = document.getElementById('btn-qr') as HTMLButtonElement | null;
   const btnPitch = document.getElementById('btn-pitch') as HTMLButtonElement | null;
   const briefingQr = document.getElementById('briefing-qr') as HTMLButtonElement | null;
   const briefingPitch = document.getElementById('briefing-pitch') as HTMLButtonElement | null;
+
+  function setPitchTab(tab: 'guide' | 'deck'): void {
+    if (tabBtnGuide) {
+      tabBtnGuide.classList.toggle('active', tab === 'guide');
+      tabBtnGuide.setAttribute('aria-selected', String(tab === 'guide'));
+    }
+    if (tabBtnDeck) {
+      tabBtnDeck.classList.toggle('active', tab === 'deck');
+      tabBtnDeck.setAttribute('aria-selected', String(tab === 'deck'));
+    }
+    if (guidePane) guidePane.hidden = tab !== 'guide';
+    if (deckPane) {
+      deckPane.hidden = tab !== 'deck';
+      if (tab === 'deck' && pitchIframe && (!pitchIframe.src || pitchIframe.src === 'about:blank' || pitchIframe.src.endsWith('about:blank'))) {
+        pitchIframe.src = '/pitch';
+      }
+    }
+  }
 
   function openQrModal(): void {
     if (qrModal) qrModal.hidden = false;
@@ -882,9 +905,7 @@ function boot(): void {
   function openPitchModal(): void {
     if (pitchModal) {
       pitchModal.hidden = false;
-      if (pitchIframe && (!pitchIframe.src || pitchIframe.src === 'about:blank' || pitchIframe.src.endsWith('about:blank'))) {
-        pitchIframe.src = '/PPT_20261031_查房_3D心理微恐解密游戏路演_本地演示.html';
-      }
+      setPitchTab('guide'); // 默认展示极简玩法教程与规则，零延迟无 404
     }
   }
   function closeAllModals(): void {
@@ -892,6 +913,9 @@ function boot(): void {
     if (pitchModal) pitchModal.hidden = true;
   }
 
+  if (tabBtnGuide) press(tabBtnGuide, () => setPitchTab('guide'));
+  if (tabBtnDeck) press(tabBtnDeck, () => setPitchTab('deck'));
+  if (guideSwitchToDeck) press(guideSwitchToDeck, () => setPitchTab('deck'));
   if (btnQr) press(btnQr, openQrModal);
   if (briefingQr) press(briefingQr, openQrModal);
   if (btnPitch) press(btnPitch, openPitchModal);
