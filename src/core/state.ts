@@ -127,7 +127,7 @@ export class RoundsGame {
     if (this.guard.mode !== previousMode) {
       this.events.push({ type: 'guardChanged', message: {
         patrol: '巡查恢复，留意走廊里的脚步',
-        chase: '被发现了！转过墙角或封门拉开距离',
+        chase: '被发现了！转进病房、药房或屏风后，或封门拉开距离',
         search: '已丢失你的踪迹，正在搜索最后发现的位置',
         broadcast: '值班员正前往病房核查广播',
       }[this.guard.mode] });

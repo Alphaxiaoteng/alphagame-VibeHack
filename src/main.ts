@@ -4,12 +4,13 @@ import { AudioEngine, VOICE_URLS } from './audio/audioEngine';
 import { COMMANDS, COMMAND_COOLDOWN, COMMAND_IDS, DOORS, EXIT_POINT, FURNITURE_RECTS, GUARD_RADIUS, PLAYER_RADIUS, TIME_LIMIT, WALKABLE_RECTS } from './core/config';
 import type { CommandId, DoorId, PlayerInput, Point } from './core/config';
 import { dangerWindow, pauseAfterBackground } from './core/lifecycle';
+import { appendRecord, createLocalStore, formatRecord, formatSummary, readRecords } from './core/gameLog';
+import type { RoundRecord } from './core/gameLog';
 import { distance } from './core/map';
 import { RoundsGame } from './core/state';
 import type { GameEvent, Phase } from './core/state';
 import { FirstPersonCamera } from './render/camera';
 import { HospitalRenderer } from './render/scene';
-import { AssetManagerModal } from './render/assetManagerModal';
 import { SPRINT_EXHAUSTED_BELOW, isTap, sprintEngaged, stickAxes, touchControlsVisible } from './render/touch';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
@@ -36,13 +37,6 @@ function boot(): void {
   const audio = new AudioEngine();
   const hospital = new HospitalRenderer();
   const follow = new FirstPersonCamera();
-  const assetModal = new AssetManagerModal({
-    onPauseRequest: (shouldPause) => {
-      if (shouldPause && game.phase === 'running') {
-        game.pause();
-      }
-    }
-  });
   // 第一人称：玩家模型不再出镜，只保留值班员。
   hospital.playerRig.visible = false;
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -72,6 +66,7 @@ function boot(): void {
   const kicker = element('overlay-kicker');
   const help = element('start-help');
   const footnote = element('overlay-footnote');
+  const shiftLog = element('shift-log');
   const primary = element<HTMLButtonElement>('primary');
   const pause = element<HTMLButtonElement>('pause');
   const mute = element<HTMLButtonElement>('mute');
@@ -221,6 +216,40 @@ function boot(): void {
     canvas.focus({ preventScroll: true });
   }
 
+  // ── 值班日志：跨会话的逐局记录 ─────────────────────────────
+  const logStore = createLocalStore();
+  let logRecords: RoundRecord[] = readRecords(logStore);
+
+  function recordRound(result: 'won' | 'lost'): void {
+    const updated = appendRecord(logRecords, result, game.elapsed, game.commandsUsed);
+    logRecords = updated.records;
+    try { logStore?.save(logRecords); } catch { /* 存档失败只影响跨会话，不影响本局 */ }
+  }
+
+  function renderShiftLog(phase: Phase): void {
+    if (logRecords.length === 0) {
+      shiftLog.hidden = true;
+      return;
+    }
+    const summary = formatSummary(logRecords);
+    if (phase === 'start') {
+      const last = logRecords[logRecords.length - 1];
+      shiftLog.hidden = false;
+      shiftLog.innerHTML = `<span class="log-title">值班日志</span><br>${summary}<br>上次：${formatRecord(last)}`;
+      return;
+    }
+    if (phase === 'won' || phase === 'lost') {
+      const recent = logRecords.slice(-3).reverse();
+      const items = recent
+        .map(record => `<li class="${record.result}"><span class="mono">#${record.index}</span><span>${formatRecord(record).replace(/^第 \d+ 局 · /, '')}</span></li>`)
+        .join('');
+      shiftLog.hidden = false;
+      shiftLog.innerHTML = `<span class="log-title">值班日志 · ${summary}</span><ul>${items}</ul>`;
+      return;
+    }
+    shiftLog.hidden = true;
+  }
+
   function handleEvent(event: GameEvent): void {
     switch (event.type) {
       case 'started': break; // beginRound 已在用户手势内启动声音
@@ -271,11 +300,13 @@ function boot(): void {
         clearInput();
         audio.stopRound();
         audio.voice('caught');
+        recordRound('lost');
         break;
       case 'won':
         clearInput();
         audio.stopRound();
         audio.chime();
+        recordRound('won');
         break;
     }
     // 触控设备没有 R 键：结算后给一个屏上「再来一次」。
@@ -441,6 +472,7 @@ function boot(): void {
     previousPhase = game.phase;
     document.body.dataset.phase = game.phase;
     overlay.hidden = game.phase === 'playing';
+    renderShiftLog(game.phase);
     pause.disabled = game.phase !== 'playing' && game.phase !== 'paused';
     pause.innerHTML = game.phase === 'paused' ? '继续 <kbd>Esc</kbd>' : '暂停 <kbd>Esc</kbd>';
     help.hidden = game.phase !== 'start';
@@ -715,7 +747,7 @@ function boot(): void {
       forceContextLoss() { renderer.forceContextLoss(); },
       forceContextRestore() { renderer.forceContextRestore(); },
     };
-    Object.assign(window, { __ROUNDS_GAME__: game, __ROUNDS_DEBUG__: controls });
+    Object.assign(window, { __ROUNDS_GAME__: game, __ROUNDS_DEBUG__: controls, __ROUNDS_HOSPITAL__: hospital });
   }
 
   function frame(now: number): void {

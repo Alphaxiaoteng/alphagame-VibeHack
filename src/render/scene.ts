@@ -8,6 +8,8 @@ import type { RoundsGame } from '../core/state';
 import { HumanRig } from './character';
 import { ceilingMaterial, clothMaterial, plasterMaterial, tileMaterial } from './materials';
 import { AssetRegistry } from '../core/assetRegistry';
+import type { AssetCategory, AssetEntry } from '../core/assetRegistry';
+import { ModelLoaderService } from './modelLoader';
 
 const HEIGHT = 2.8;
 const metal = new THREE.MeshStandardMaterial({ color: 0xb7bec0, roughness: 0.36, metalness: 0.65 });
@@ -67,6 +69,8 @@ export class HospitalRenderer {
   private readonly doors = new Map<DoorId, { panel: THREE.Mesh; progress: number }>();
   private readonly wardLamps: { lamp: THREE.Mesh; light: THREE.PointLight; point: Point }[] = [];
   private readonly route = new THREE.Group();
+  /** 静态地面导引条：安全门通电后让位给动态路线箭头。 */
+  private readonly guideStrips: THREE.Mesh[] = [];
   private readonly ambient = new THREE.HemisphereLight(0xf4f6ef, 0x7c8883, 1.05);
   private readonly key = new THREE.DirectionalLight(0xf9fbf1, 1.15);
   /** 开灯效果 0→1 的混合值：实现“啪一下亮起”的短过渡，同时让环境光让位形成光池节奏。 */
@@ -80,11 +84,63 @@ export class HospitalRenderer {
     return current + delta * (1 - Math.exp(-14 * Math.max(0, dt)));
   }
 
+  readonly bedSlots: Array<{ slot: THREE.Group; procedural: THREE.Group }> = [];
+  readonly cabinetSlots: Array<{ slot: THREE.Group; procedural: THREE.Group }> = [];
+  nurseCounterSlot: { slot: THREE.Group; procedural: THREE.Group } | null = null;
+  private wardenModelInstance: THREE.Group | null = null;
+
   public applyTheme(): void {
     const theme = AssetRegistry.get().getActiveTheme();
     this.scene.background = new THREE.Color(theme.wallColor);
     this.ambient.color.set(theme.wallColor);
     this.ambient.groundColor.set(theme.floorColor);
+  }
+
+  public async equipAsset(category: AssetCategory, asset: AssetEntry): Promise<void> {
+    try {
+      const model = await ModelLoaderService.get().loadNormalizedModel(asset.glbUrl, category);
+      if (category === 'bed') {
+        for (const b of this.bedSlots) {
+          b.slot.clear();
+          b.slot.add(model.clone(true));
+        }
+      } else if (category === 'cabinet') {
+        for (const c of this.cabinetSlots) {
+          c.slot.clear();
+          c.slot.add(model.clone(true));
+        }
+      } else if (category === 'nurse_counter') {
+        if (this.nurseCounterSlot) {
+          this.nurseCounterSlot.slot.clear();
+          this.nurseCounterSlot.slot.add(model.clone(true));
+        }
+      } else if (category === 'warden') {
+        this.guardHuman.body.visible = false;
+        if (this.wardenModelInstance) {
+          this.wardenModelInstance.removeFromParent();
+        }
+        this.wardenModelInstance = model.clone(true);
+        this.guardRig.add(this.wardenModelInstance);
+      }
+    } catch (e) {
+      console.error(`Failed to equip ${category} (${asset.name}):`, e);
+      throw e;
+    }
+  }
+
+  public async syncEffectiveAssets(): Promise<void> {
+    const registry = AssetRegistry.get();
+    const categories: AssetCategory[] = ['bed', 'cabinet', 'nurse_counter', 'warden'];
+    for (const cat of categories) {
+      try {
+        const asset = registry.getEffectiveAsset(cat);
+        if (asset) {
+          await this.equipAsset(cat, asset);
+        }
+      } catch (e) {
+        console.warn('Sync asset failed:', cat, e);
+      }
+    }
   }
   private readonly routeMaterial = new THREE.MeshBasicMaterial({ color: 0x2fa765, transparent: true, opacity: 0.95, depthWrite: false });
   private readonly arrowGeometry: THREE.ShapeGeometry;
@@ -121,6 +177,10 @@ export class HospitalRenderer {
     this.buildDoors();
     this.mergeStaticGeometry();
     this.scene.add(this.playerRig, this.guardRig, this.route);
+    this.syncEffectiveAssets().catch((e) => console.warn('Init asset sync failed:', e));
+    AssetRegistry.get().subscribe(() => {
+      this.syncEffectiveAssets().catch((e) => console.warn('Asset change sync failed:', e));
+    });
     this.searchRing = new THREE.Mesh(
       new THREE.RingGeometry(0.62, 0.74, 40),
       new THREE.MeshBasicMaterial({ color: 0xb67a52, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }),
@@ -201,6 +261,7 @@ export class HospitalRenderer {
     if (showRoute && (!this.routeVisible || this.routeRevision !== game.map.revision || game.elapsed - this.routeUpdate >= 0.35 || restarted)) this.updateRoute(game);
     this.route.visible = showRoute;
     this.routeVisible = showRoute;
+    for (const strip of this.guideStrips) strip.visible = !game.exitUnlocked;
 
     const searching = game.guard.mode === 'search' || game.guard.mode === 'broadcast';
     const marker = game.guard.targetPoint ?? game.guard.position;
@@ -395,7 +456,7 @@ export class HospitalRenderer {
     const pharmacySign = plaque('药房', 'PHARMACY / 配药窗口', 1.16, 0.37, true); pharmacySign.position.set(0, 2.47, 0.018); pharmacyCasings.add(pharmacySign);
     this.scene.add(pharmacyCasings);
     // 凹间内的配药台与层架：贴北墙，深度 0.35 m 落在玩家碰撞半径之外。
-    const counterGroup = new THREE.Group(); counterGroup.position.set(20, 0, 15.18);
+    const counterGroup = new THREE.Group();
     counterGroup.add(box(2.3, 0.9, 0.35, sage, 0, 0.45, 0, 0.012));
     counterGroup.add(box(2.34, 0.04, 0.38, trim, 0, 0.92, 0));
     const counterSign = plaque('取药窗口', 'MEDICATION PICKUP', 0.7, 0.2); counterSign.position.set(0, 1.62, 0.012); counterSign.rotation.y = Math.PI; counterGroup.add(counterSign);
@@ -404,8 +465,10 @@ export class HospitalRenderer {
       const vial = box(0.05, 0.11, 0.05, new THREE.MeshStandardMaterial({ color: vials[i % 4], roughness: 0.35 }), -0.9 + i * 0.36, 1.0, 0.02, 0.008);
       counterGroup.add(vial);
     }
-    this.staticRoots.push(counterGroup);
-    this.scene.add(counterGroup);
+    const counterSlot = new THREE.Group(); counterSlot.position.set(20, 0, 15.18);
+    counterSlot.add(counterGroup);
+    this.nurseCounterSlot = { slot: counterSlot, procedural: counterGroup };
+    this.scene.add(counterSlot);
     const directions = plaque('住院部 01    → 安全门', 'INPATIENT DEPARTMENT / EAST EXIT',2.35,0.56,true);
     directions.position.set(9.2,2.1,3.01); this.scene.add(directions);
     const south = plaque('← 病房 01     安全门 →','SOUTH CORRIDOR',2.15,0.51,true);
@@ -449,10 +512,12 @@ export class HospitalRenderer {
           for (const x of [-0.91,-0.4,0.4,0.91]) bed.add(tube(new THREE.Vector3(x,0.53,z),new THREE.Vector3(x,0.9,z),0.019));
         }
         bed.add(box(1.16,0.035,0.78,sheet,0.33,0.751,0,0.012));
-        this.staticRoots.push(bed);
-        this.scene.add(bed);
+        const bedSlot = new THREE.Group(); bedSlot.position.set(cx,0,cz);
+        bedSlot.add(bed);
+        this.bedSlots.push({ slot: bedSlot, procedural: bed });
+        this.scene.add(bedSlot);
       } else {
-        const cabinet = new THREE.Group(); cabinet.position.set(cx,0,cz); cabinet.rotation.y = cx<15 ? Math.PI/2 : -Math.PI/2;
+        const cabinet = new THREE.Group();
         cabinet.add(box(1,0.08,1,shell,0,0.14,0)); cabinet.add(box(1,0.07,1,shell,0,1.82,0));
         cabinet.add(box(1,1.65,0.04,shell,0,0.96,-0.48));
         for (const side of [-1,1]) {
@@ -470,8 +535,11 @@ export class HospitalRenderer {
         cabinet.add(box(0.02,1.6,0.03,metal,0,1.01,0.48));
         cabinet.add(box(0.025,0.19,0.04,metal,0.058,1.0,0.49));
         const label = plaque('药品柜','MEDICINE',0.57,0.14); label.position.set(0,1.73,0.502); cabinet.add(label);
-        this.staticRoots.push(cabinet);
-        this.scene.add(cabinet);
+        const cabSlot = new THREE.Group(); cabSlot.position.set(cx,0,cz);
+        cabSlot.rotation.y = cx<15 ? Math.PI/2 : -Math.PI/2;
+        cabSlot.add(cabinet);
+        this.cabinetSlots.push({ slot: cabSlot, procedural: cabinet });
+        this.scene.add(cabSlot);
         const blocker = box(w,1.85,d,new THREE.MeshBasicMaterial({ visible:false }),cx,0.925,cz);
         this.blockers.push(blocker); this.scene.add(blocker);
       }
@@ -491,9 +559,10 @@ export class HospitalRenderer {
     const guide = new THREE.MeshStandardMaterial({ color: 0x86a891, roughness: 0.85 });
 
     // 地面导引条：出生点 → 北走廊 → 东走廊 → 安全门，第一次游玩也能顺着绿线找到门。
+    // 安全门通电后隐藏：动态路线箭头会按玩家实时位置与门状态指路，静态条继续亮着会与它打架。
     const stripA = box(13.4, 0.004, 0.14, guide, 17.9, 0.0065, 3.78);
     const stripB = box(0.14, 0.004, 7.2, guide, 24.55, 0.0065, 7.35);
-    for (const strip of [stripA, stripB]) { strip.castShadow = false; strip.receiveShadow = true; this.scene.add(strip); }
+    for (const strip of [stripA, stripB]) { strip.castShadow = false; strip.receiveShadow = true; this.scene.add(strip); this.guideStrips.push(strip); }
     // 躲避指示：病房 / 药房 / 护士站门口横贴一条浅绿地面标记，第一眼看出“这里能躲”。
     const hideMark = new THREE.MeshStandardMaterial({ color: 0x9dbfa8, roughness: 0.88 });
     const hideStrip = (x: number, z: number, w: number, d: number): void => {
@@ -709,7 +778,10 @@ export class HospitalRenderer {
       for (let at=1.1;at<length;at+=1.25) {
         const arrow=new THREE.Mesh(this.arrowGeometry,this.routeMaterial);
         arrow.position.set(start.x+(point.x-start.x)*at/length,0.017,start.z+(point.z-start.z)*at/length);
-        arrow.rotation.set(-Math.PI/2,0,Math.atan2(point.x-start.x,-(point.z-start.z)));
+        // 推导：rotation.x=-π/2 后，箭头尖端的世界方向 = (-sinφ, 0, -cosφ)。
+        // 要让尖端指向线段方向 (dx̂, dẑ)，必须 φ = atan2(-dx, -dz)；
+        // 旧公式 atan2(dx, -dz) 让东西向恰好反向 π（南北向碰巧正确），逃生箭头因此指回玩家。
+        arrow.rotation.set(-Math.PI/2,0,Math.atan2(-(point.x-start.x),-(point.z-start.z)));
         this.route.add(arrow);
       }
       start=point;

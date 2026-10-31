@@ -78,6 +78,7 @@ export const WALKABLE_RECTS: readonly Rect[] = [
   // 与走廊重叠 1.0 m ≥ 2×碰撞半径：canOccupy 要求圆完整落在单一矩形内，重叠不足会在接缝出现死区。
   { minX: 5.0, maxX: 8.6, minZ: 9.7, maxZ: 12.3 }, // 病房 01（西侧）
   { minX: 21.4, maxX: 25.0, minZ: 9.7, maxZ: 12.3 }, // 病房 02（东侧）
+  { minX: 18.7, maxX: 21.3, minZ: 15.0, maxZ: 17.0 }, // 药房（南走廊北侧，重叠 1.0 m）
 ];
 
 /** 大型掩体：只靠墙摆放，保证走廊净宽 2 m */
@@ -86,6 +87,10 @@ export const FURNITURE_RECTS: readonly Rect[] = [
   { minX: 10, maxX: 12, minZ: 16, maxZ: 17 }, // 南走廊推床
   { minX: 3, maxX: 4, minZ: 9, maxZ: 10 }, // 西走廊药柜
   { minX: 26, maxX: 27, minZ: 13, maxZ: 14 }, // 东走廊药柜
+  // 医用屏风：贴墙伸出的隔断，挡视线形成“贴缝走位”的博弈；各留 ≥1.2 m 绕行缝。
+  { minX: 26.0, maxX: 27.0, minZ: 6.5, maxZ: 8.3 }, // 东走廊屏风（西缝 2 m 绕行）
+  { minX: 5.5, maxX: 7.5, minZ: 17.2, maxZ: 19.0 }, // 南走廊屏风（北缝 1.2 m 绕行，与推床完全错开）
+  { minX: 3.0, maxX: 4.8, minZ: 13.5, maxZ: 15.5 }, // 西走廊屏风（东缝绕行）
 ];
 
 export const DOOR_IDS: readonly DoorId[] = ['A', 'B'];

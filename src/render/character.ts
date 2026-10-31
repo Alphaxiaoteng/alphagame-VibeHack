@@ -13,7 +13,7 @@ function mesh(geometry: THREE.BufferGeometry, material: THREE.Material, x: numbe
 /** 约 1.75 m 的人体比例，衣裤、四肢关节、鞋与胸牌均为真实网格；非胶囊碰撞体外观。 */
 export class HumanRig {
   readonly group = new THREE.Group();
-  private readonly body = new THREE.Group();
+  readonly body = new THREE.Group();
   private readonly arms: THREE.Group[] = [];
   private readonly elbows: THREE.Group[] = [];
   private readonly legs: THREE.Group[] = [];

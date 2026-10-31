@@ -47,6 +47,30 @@ describe('医院碰撞与导航使用同一地图', () => {
     expect(map.canOccupy(end, PLAYER_RADIUS)).toBe(true);
   });
 
+  it('药房凹间可躲：站得住、南走廊可达、北墙挡人', () => {
+    const map = new HospitalMap();
+    expect(map.canOccupy({ x: 20, z: 15.8 }, PLAYER_RADIUS)).toBe(true);
+    expect(map.canOccupy({ x: 19.4, z: 16.4 }, PLAYER_RADIUS)).toBe(true);
+    expect(map.canOccupy({ x: 20, z: 14.2 }, PLAYER_RADIUS)).toBe(false);
+    expectUsablePath(map, { x: 15, z: 17.5 }, { x: 20, z: 15.8 });
+  });
+
+  it('医用屏风挡视线也挡人，绕行缝仍可通过', () => {
+    const map = new HospitalMap();
+    // 东走廊屏风 (26.0–27.0, 6.5–8.3)：站不进去
+    expect(map.canOccupy({ x: 26.5, z: 7.4 }, PLAYER_RADIUS)).toBe(false);
+    // 挡东西向视线：屏风两侧互不可见
+    expect(map.hasLineOfSight({ x: 24.6, z: 7.4 }, { x: 27.6, z: 7.4 })).toBe(false);
+    // 绕行缝（x 24–26）畅通：北端到南端可达
+    expectUsablePath(map, { x: 25, z: 5.5 }, { x: 25, z: 9.5 });
+    // 南走廊屏风 (5.5–7.5, 17.2–19.0) 挡视线
+    expect(map.hasLineOfSight({ x: 4.4, z: 18.1 }, { x: 8.6, z: 18.1 })).toBe(false);
+    expectUsablePath(map, { x: 3.6, z: 16.6 }, { x: 9.4, z: 18.4 });
+    // 西走廊屏风 (3.0–4.8, 13.5–15.5) 挡视线
+    expect(map.hasLineOfSight({ x: 2.6, z: 14.5 }, { x: 5.6, z: 14.5 })).toBe(false);
+    expectUsablePath(map, { x: 4.2, z: 12.2 }, { x: 4.2, z: 16.8 });
+  });
+
   it('大幅移动也不能穿过中央墙体或外墙', () => {
     const map = new HospitalMap();
     const inner = moveCircle({ x: 4.5, z: 8 }, { x: 100, z: 0 }, PLAYER_RADIUS, map);
