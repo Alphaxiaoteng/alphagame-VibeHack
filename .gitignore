@@ -8,3 +8,6 @@ build/
 .env.*
 !.env.example
 tripo-out/
+# Tripo 3D 生成中间产物：模型体积达数十 MB 且未被游戏引用，不入库
+.tripo/
+assets/art/models/*.glb

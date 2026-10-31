@@ -29,6 +29,24 @@ describe('医院碰撞与导航使用同一地图', () => {
     expect(map.canOccupy({ x: 19, z: 5.5 }, PLAYER_RADIUS)).toBe(false);
   });
 
+  it('病房凹间可以躲进去：两间病房站得住、从走廊可达、后墙挡人', () => {
+    const map = new HospitalMap();
+    // 凹间中心与贴墙位置可站
+    expect(map.canOccupy({ x: 7.3, z: 11 }, PLAYER_RADIUS)).toBe(true);
+    expect(map.canOccupy({ x: 8.25, z: 10.5 }, PLAYER_RADIUS)).toBe(true);
+    expect(map.canOccupy({ x: 22.7, z: 11.8 }, PLAYER_RADIUS)).toBe(true);
+    // 凹间背后的中央建筑实体依旧不可进入
+    expect(map.canOccupy({ x: 9.5, z: 11 }, PLAYER_RADIUS)).toBe(false);
+    expect(map.canOccupy({ x: 20.5, z: 11 }, PLAYER_RADIUS)).toBe(false);
+    // 从走廊能走进凹间（值班员追捕也能跟进，不是玩家的无敌点）
+    expectUsablePath(map, { x: 4.5, z: 11 }, { x: 7.3, z: 11 });
+    expectUsablePath(map, { x: 25.5, z: 11 }, { x: 22.7, z: 11 });
+    // 向东冲出凹间深度会被后墙挡住
+    const end = moveCircle({ x: 7.3, z: 11 }, { x: 10, z: 0 }, PLAYER_RADIUS, map);
+    expect(end.x).toBeLessThanOrEqual(8.251);
+    expect(map.canOccupy(end, PLAYER_RADIUS)).toBe(true);
+  });
+
   it('大幅移动也不能穿过中央墙体或外墙', () => {
     const map = new HospitalMap();
     const inner = moveCircle({ x: 4.5, z: 8 }, { x: 100, z: 0 }, PLAYER_RADIUS, map);

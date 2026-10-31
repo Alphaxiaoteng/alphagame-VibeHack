@@ -16,7 +16,7 @@ export class PatrolGuard {
   facing = 0;
   private revision = -1;
 
-  constructor(map: HospitalMap) {
+  constructor(map: HospitalMap, private readonly rand: () => number = Math.random) {
     this.replan(map);
   }
 
@@ -50,6 +50,17 @@ export class PatrolGuard {
     this.revision = map.revision;
   }
 
+  /** 到达路点后随机挑下一个：不重复当前点，只从当前可达的路点里选，路线不再固定成环。 */
+  private pickNextWaypoint(map: HospitalMap): number {
+    const candidates: number[] = [];
+    for (let index = 0; index < PATROL_WAYPOINTS.length; index += 1) {
+      if (index === this.targetIndex) continue;
+      if (map.findPath(this.position, PATROL_WAYPOINTS[index], GUARD_RADIUS).length > 0) candidates.push(index);
+    }
+    if (candidates.length === 0) return (this.targetIndex + 1) % PATROL_WAYPOINTS.length;
+    return candidates[Math.min(candidates.length - 1, Math.floor(this.rand() * candidates.length))];
+  }
+
   update(dt: number, map: HospitalMap): void {
     if (map.revision !== this.revision) this.replan(map);
     let budget = PATROL_SPEED * dt;
@@ -59,7 +70,7 @@ export class PatrolGuard {
       const target = this.path[0];
       if (!target) {
         const previous = this.targetIndex;
-        this.targetIndex = (this.targetIndex + 1) % PATROL_WAYPOINTS.length;
+        this.targetIndex = this.pickNextWaypoint(map);
         this.replan(map);
         if (this.path.length === 0 || this.targetIndex === previous) break;
         continue;
@@ -86,7 +97,7 @@ export class PatrolGuard {
       if (distance(this.position, target) < 1e-6) {
         this.path.shift();
         if (this.path.length === 0) {
-          this.targetIndex = (this.targetIndex + 1) % PATROL_WAYPOINTS.length;
+          this.targetIndex = this.pickNextWaypoint(map);
           this.replan(map);
         }
       }

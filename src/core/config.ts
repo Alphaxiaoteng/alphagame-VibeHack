@@ -52,11 +52,14 @@ export const EXIT_TRIGGER_RADIUS = 1.0;
 /** 玩家能站到的、最贴近安全门的合法位置 */
 export const EXIT_APPROACH: Point = { x: 26.5, z: 11 };
 
+/** 巡逻路点池：四角 + 两间病房门口。到达后随机挑下一个可达点，不再按固定环序走。 */
 export const PATROL_WAYPOINTS: readonly Point[] = [
   { x: 25, z: 4.5 },
   { x: 25.5, z: 17.5 },
   { x: 4.5, z: 17.5 },
   { x: 4.5, z: 4.5 },
+  { x: 4.5, z: 11 },
+  { x: 25.5, z: 11 },
 ];
 
 /**
@@ -69,6 +72,9 @@ export const WALKABLE_RECTS: readonly Rect[] = [
   { minX: 3, maxX: 6, minZ: 3, maxZ: 19 }, // 西走廊
   { minX: 24, maxX: 27, minZ: 3, maxZ: 19 }, // 东走廊
   { minX: 11, maxX: 13, minZ: 5, maxZ: 7.2 }, // 护士站浅凹间
+  // 病房凹间：从走廊向中央建筑凹进 2.6 m，玩家可以躲进去断视线；与走廊重叠 0.5 m 防缝隙。
+  { minX: 5.5, maxX: 8.6, minZ: 9.7, maxZ: 12.3 }, // 病房 01（西侧）
+  { minX: 21.4, maxX: 24.5, minZ: 9.7, maxZ: 12.3 }, // 病房 02（东侧）
 ];
 
 /** 大型掩体：只靠墙摆放，保证走廊净宽 2 m */

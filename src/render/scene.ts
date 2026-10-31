@@ -221,8 +221,15 @@ export class HospitalRenderer {
     const walls = [
       [30, HEIGHT, 0.25, 15, HEIGHT / 2, 2.875], [30, HEIGHT, 0.25, 15, HEIGHT / 2, 19.125],
       [0.25, HEIGHT, 16, 2.875, HEIGHT / 2, 11], [0.25, HEIGHT, 16, 27.125, HEIGHT / 2, 11],
-      [5, HEIGHT, 10, 8.5, HEIGHT / 2, 11], [11, HEIGHT, 10, 18.5, HEIGHT / 2, 11],
+      // 中央建筑两块实体：病房凹间（z 9.7–12.3）从走廊侧挖开口，实体按上下两段保留。
+      [5, HEIGHT, 3.7, 8.5, HEIGHT / 2, 7.85], [5, HEIGHT, 3.7, 8.5, HEIGHT / 2, 14.15],
+      [11, HEIGHT, 3.7, 18.5, HEIGHT / 2, 7.85], [11, HEIGHT, 3.7, 18.5, HEIGHT / 2, 14.15],
       [2, HEIGHT, 8.8, 12, HEIGHT / 2, 11.6],
+      // 病房凹间的侧墙与后墙：厚度 0.25，全部落在不可行走区，不产生新的视觉/碰撞错位。
+      [2.6, HEIGHT, 0.25, 7.3, HEIGHT / 2, 9.575], [2.6, HEIGHT, 0.25, 7.3, HEIGHT / 2, 12.425],
+      [0.25, HEIGHT, 2.85, 8.475, HEIGHT / 2, 11],
+      [2.6, HEIGHT, 0.25, 22.7, HEIGHT / 2, 9.575], [2.6, HEIGHT, 0.25, 22.7, HEIGHT / 2, 12.425],
+      [0.25, HEIGHT, 2.85, 21.525, HEIGHT / 2, 11],
     ];
     for (const [w,h,d,x,y,z] of walls) {
       const wall = box(w,h,d,plaster,x,y,z); this.scene.add(wall); this.blockers.push(wall);
@@ -231,7 +238,14 @@ export class HospitalRenderer {
     this.wallFace(15,3.003,24,0); this.wallFace(15,18.997,24,Math.PI);
     this.wallFace(3.003,11,16,Math.PI/2); this.wallFace(26.997,11,16,-Math.PI/2);
     this.wallFace(8.5,5.997,5,Math.PI); this.wallFace(18.5,5.997,11,Math.PI);
-    this.wallFace(15,16.003,18,0); this.wallFace(5.997,11,10,-Math.PI/2); this.wallFace(24.003,11,10,Math.PI/2);
+    this.wallFace(15,16.003,18,0);
+    // 西/东走廊内墙带在病房凹间处断开，凹间自身三面补齐墙裙。
+    this.wallFace(5.997,7.85,3.7,-Math.PI/2); this.wallFace(5.997,14.15,3.7,-Math.PI/2);
+    this.wallFace(24.003,7.85,3.7,Math.PI/2); this.wallFace(24.003,14.15,3.7,Math.PI/2);
+    this.wallFace(7.3,9.697,2.6,Math.PI); this.wallFace(7.3,12.303,2.6,0);
+    this.wallFace(8.473,11,2.6,-Math.PI/2);
+    this.wallFace(22.7,9.697,2.6,Math.PI); this.wallFace(22.7,12.303,2.6,0);
+    this.wallFace(21.527,11,2.6,Math.PI/2);
     this.wallFace(12,7.197,2,Math.PI);
     // 每 3 m 的竖向墙板缝：让长走廊有真实尺度，而不是一整面灰墙。
     const seamMaterial = new THREE.MeshStandardMaterial({ color: 0xd8ddd3, roughness: 0.9 });
@@ -367,17 +381,14 @@ export class HospitalRenderer {
     south.position.set(18.2,2.17,18.99); south.rotation.y = Math.PI; this.scene.add(south);
 
     for (const [x,yaw,number,point] of [[5.98,-Math.PI/2,'01',{x:4.5,z:11}],[24.02,Math.PI/2,'02',{x:25.5,z:11}]] as const) {
+      // 病房现在是真正的凹间：门面只保留门套（横楣 + 边框 + 号码牌），不再有封死开口的木板与玻璃。
       const group = new THREE.Group(); group.position.set(x,0,11); group.rotation.y = yaw;
-      const wood = new THREE.MeshStandardMaterial({ color:0x98b3a4,roughness:0.72 });
-      group.add(box(1.52,2.17,0.016,wood,0,1.085,0));
-      group.add(box(1.64,0.1,0.06,trim,0,2.18,0.006));
-      for (const side of [-1,1]) group.add(box(0.07,2.2,0.06,trim,side*0.8,1.1,0.006));
-      group.add(box(0.29,0.55,0.03,glass,-0.32,1.6,0.02));
-      group.add(box(0.14,0.03,0.025,metal,0.49,1.02,0.028));
+      group.add(box(2.72,0.1,0.06,trim,0,2.18,0.006));
+      for (const side of [-1,1]) group.add(box(0.07,2.2,0.06,trim,side*1.31,1.1,0.006));
       const sign = plaque(`病房 ${number}`, 'WARD / 呼叫中心',1.16,0.37,true); sign.position.set(0,2.47,0.018); group.add(sign);
       const lampMat = new THREE.MeshStandardMaterial({ color:0xf0dca0,emissive:0xe9c981,emissiveIntensity:0.05,roughness:0.3 });
-      const lamp = box(0.19,0.09,0.06,lampMat,0.65,2.47,0.027,0.018); group.add(lamp);
-      const call = plaque('呼叫','CALL',0.16,0.15); call.position.set(0.94,1.3,0.018); group.add(call);
+      const lamp = box(0.19,0.09,0.06,lampMat,1.18,2.47,0.027,0.018); group.add(lamp);
+      const call = plaque('呼叫','CALL',0.16,0.15); call.position.set(1.18,1.3,0.018); group.add(call);
       this.scene.add(group);
       const light = new THREE.PointLight(0xffd890,0,5,2); light.position.set(point.x,2.0,point.z);
       this.scene.add(light); this.wardLamps.push({ lamp,light,point });
@@ -502,9 +513,9 @@ export class HospitalRenderer {
       group.add(bag);
       props.add(group);
     };
-    ivStand(5.8, 10.15, 0);
-    ivStand(5.8, 11.85, Math.PI);
-    ivStand(24.2, 10.3, 0);
+    ivStand(5.8, 8.9, 0);
+    ivStand(5.8, 13.1, Math.PI);
+    ivStand(24.2, 13.1, 0);
 
     // 洗手液 ×2：病房门侧墙面。
     for (const [x, z, flip] of [[5.955, 9.35, 1], [24.045, 12.6, -1]] as const) {

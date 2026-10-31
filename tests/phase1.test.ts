@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EXIT_APPROACH, GUARD_RADIUS, GUARD_SPAWN, NO_INPUT, PATROL_SPEED, PLAYER_SPAWN, TIME_LIMIT } from '../src/core/config';
+import { EXIT_APPROACH, GUARD_RADIUS, GUARD_SPAWN, NO_INPUT, PATROL_SPEED, PATROL_WAYPOINTS, PLAYER_SPAWN, TIME_LIMIT } from '../src/core/config';
 import { RoundsGame } from '../src/core/state';
 import { HospitalMap, distance } from '../src/core/map';
 import { Player } from '../src/core/player';
@@ -266,12 +266,52 @@ describe('临时路点巡逻（不是第二阶段感知 AI）', () => {
     expect(game.phase).toBe('playing');
 
     const map = new HospitalMap();
-    const guard = new PatrolGuard(map);
+    // rand=0 时随机选点总是落在候选首位（下一个环序点），保持与固定环序相同的可复现期望。
+    const guard = new PatrolGuard(map, () => 0);
     guard.update(1, map);
     expect(guard.position.x).toBeGreaterThan(GUARD_SPAWN.x);
     for (let frame = 0; frame < 120; frame++) guard.update(1 / 60, map);
     expect(guard.position.z).toBeGreaterThan(8);
     expect(guard.position.x).toBeLessThanOrEqual(25.6);
+  });
+
+  it('随机巡逻：到达路点后不重复当前点，选点由随机源决定', () => {
+    const map = new HospitalMap();
+    const guard = new PatrolGuard(map, () => 0.99);
+    guard.setPatrolTarget(0, map);
+    // 直接放到路点 0 上并清空路径，下一帧 update 触发随机选点。
+    guard.position = { ...PATROL_WAYPOINTS[0] };
+    guard.path = [];
+    guard.update(1 / 60, map);
+    expect(guard.targetIndex).not.toBe(0);
+    expect(guard.targetIndex).toBe(PATROL_WAYPOINTS.length - 1);
+    expect(guard.path.length).toBeGreaterThan(0);
+
+    const guardB = new PatrolGuard(map, () => 0);
+    guardB.setPatrolTarget(2, map);
+    guardB.position = { ...PATROL_WAYPOINTS[2] };
+    guardB.path = [];
+    guardB.update(1 / 60, map);
+    expect(guardB.targetIndex).not.toBe(2);
+    expect(guardB.targetIndex).toBe(0);
+  });
+
+  it('随机巡逻不穿墙、不传送，长距离移动持续合法', () => {
+    const map = new HospitalMap();
+    const guard = new PatrolGuard(map, Math.random);
+    for (let leg = 0; leg < 6; leg++) {
+      guard.position = { ...PATROL_WAYPOINTS[guard.targetIndex] };
+      guard.path = [];
+      guard.update(1 / 60, map);
+      const start = { ...guard.position };
+      for (let frame = 0; frame < 900; frame++) {
+        const before = { ...guard.position };
+        guard.update(1 / 60, map);
+        expect(map.canOccupy(guard.position, GUARD_RADIUS)).toBe(true);
+        expect(distance(before, guard.position)).toBeLessThanOrEqual(PATROL_SPEED / 60 + 0.001);
+      }
+      expect(distance(start, guard.position)).toBeGreaterThan(4);
+    }
   });
 
   it('动态关门马上重算路线，持续移动且不穿门、不传送', () => {
