@@ -38,19 +38,19 @@ function grain(ctx: CanvasRenderingContext2D, size: number, amount: number, seed
  */
 export function tileMaterial(): THREE.MeshStandardMaterial {
   const albedo = paintTexture(512, (ctx) => {
-    ctx.fillStyle = '#d8dce0';
+    ctx.fillStyle = '#56646e';
     ctx.fillRect(0, 0, 512, 512);
     for (let z = 0; z < 2; z++) {
       for (let x = 0; x < 2; x++) {
-        // 大块水磨石色阶
-        ctx.fillStyle = ['#e1e5e8', '#dadfe3', '#dce0e4', '#d6dbdf'][z * 2 + x];
+        // 深夜住院部冷青灰水磨石色阶（对齐主封面 04:00 AM 湿润反光地面质感，兼具清晰路感）
+        ctx.fillStyle = ['#5e6d78', '#566570', '#5a6974', '#52606b'][z * 2 + x];
         ctx.fillRect(x * 256 + 2, z * 256 + 2, 252, 252);
         // 极细拼缝
-        ctx.strokeStyle = '#bec5cb';
+        ctx.strokeStyle = '#3b4750';
         ctx.lineWidth = 2;
         ctx.strokeRect(x * 256, z * 256, 256, 256);
         // 微弱高光边
-        ctx.strokeStyle = '#f3f6f8';
+        ctx.strokeStyle = '#70808c';
         ctx.lineWidth = 1;
         ctx.strokeRect(x * 256 + 2, z * 256 + 2, 252, 252);
       }
@@ -79,8 +79,8 @@ export function tileMaterial(): THREE.MeshStandardMaterial {
   const roughness = paintTexture(
     512,
     (ctx) => {
-      // 医疗地板蜡质感：基础粗糙度适中偏低，高光细腻
-      ctx.fillStyle = '#666666';
+      // 深夜打蜡水磨石地面：适度镜面反射，承接值班员手电光束与走廊顶灯倒影
+      ctx.fillStyle = '#42484d';
       ctx.fillRect(0, 0, 512, 512);
       grain(ctx, 512, 12000, 150);
     },
@@ -96,31 +96,30 @@ export function tileMaterial(): THREE.MeshStandardMaterial {
     bumpMap: height,
     bumpScale: 0.008,
     roughnessMap: roughness,
-    roughness: 0.38,
-    metalness: 0.08
+    roughness: 0.22,
+    metalness: 0.18
   });
 }
 
 /**
- * 真实公立医院墙面：
- * 告别单一绿。采用标准三甲医院上下双分色：
- * 上部（1.0m 以上）：哑光暖白抗菌乳胶漆（#f4f3ef）
- * 下部（1.0m 以下）：中性浅灰防撞裙板（#d2d7dc）与铝合金防撞过渡带
+ * 真实公立医院墙面（深夜冷调电影感分级）：
+ * 上部（1.0m 以上）：冷灰青雾面抗菌墙漆（压暗刺眼白光，保留空间轮廓）
+ * 下部（1.0m 以下）：深板岩防撞裙板与金属防撞带
  */
 export function plasterMaterial(): THREE.MeshStandardMaterial {
   const texture = paintTexture(512, (ctx) => {
-    // 基础暖白
-    ctx.fillStyle = '#f5f4ef';
+    // 上部冷青灰（彻底告别白昼泛白，还原封面 04:00 AM 暗调走廊质感）
+    ctx.fillStyle = '#6c7c85';
     ctx.fillRect(0, 0, 512, 512);
 
-    // 下部 1/3 防撞护墙板颜色（浅暖灰）
-    ctx.fillStyle = '#d5dadf';
+    // 下部 1/3 防撞护墙板颜色（深冷灰板岩）
+    ctx.fillStyle = '#47555e';
     ctx.fillRect(0, 340, 512, 172);
 
     // 防撞过渡分界线（深灰铝合金条）
-    ctx.fillStyle = '#9ca3af';
+    ctx.fillStyle = '#36424a';
     ctx.fillRect(0, 335, 512, 6);
-    ctx.fillStyle = '#4b5563';
+    ctx.fillStyle = '#1f272c';
     ctx.fillRect(0, 341, 512, 2);
 
     grain(ctx, 512, 16000, 312);
@@ -148,14 +147,14 @@ export function plasterMaterial(): THREE.MeshStandardMaterial {
 
 /**
  * 现代医院天花板：
- * 600×600 嵌入式防尘吸音铝扣板网格，纯净冷白，带有微弱倒角边框。
+ * 600×600 嵌入式防尘吸音铝扣板网格，深夜压暗色调，避免顶棚泛白。
  */
 export function ceilingMaterial(): THREE.MeshStandardMaterial {
   const texture = paintTexture(512, (ctx) => {
-    ctx.fillStyle = '#f8fafc';
+    ctx.fillStyle = '#4e5c64';
     ctx.fillRect(0, 0, 512, 512);
     grain(ctx, 512, 12000, 199);
-    ctx.strokeStyle = '#cbd5e1';
+    ctx.strokeStyle = '#354148';
     ctx.lineWidth = 3;
     for (let x = 0; x < 2; x++) {
       for (let z = 0; z < 2; z++) {

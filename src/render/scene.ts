@@ -73,8 +73,11 @@ export class HospitalRenderer {
   private readonly route = new THREE.Group();
   /** 静态地面导引条：安全门通电后让位给动态路线箭头。 */
   private readonly guideStrips: THREE.Mesh[] = [];
-  private readonly ambient = new THREE.HemisphereLight(0xf4f6ef, 0x7c8883, 1.05);
-  private readonly key = new THREE.DirectionalLight(0xf9fbf1, 1.15);
+  private readonly ambient = new THREE.HemisphereLight(0x6e8c98, 0x1e2c34, 0.38);
+  private readonly key = new THREE.DirectionalLight(0x88a8b5, 0.34);
+  /** 玩家近身环境适应微光与值班员轮廓顶光：压暗走廊过曝亮度的同时，确保近景路况与远景人物清晰可见 */
+  private readonly playerAuraLight = new THREE.PointLight(0xb8d4e0, 2.4, 10.5, 1.35);
+  private readonly guardRimLight = new THREE.PointLight(0xe0f2fe, 5.5, 6.5, 1.2);
   /** 开灯效果 0→1 的混合值：实现“啪一下亮起”的短过渡，同时让环境光让位形成光池节奏。 */
   private lightsBlend = 0;
   /** 模型转身的角阻尼状态：逻辑 facing 保持瞬时，模型平滑扫过换向而不是瞬移。 */
@@ -145,11 +148,11 @@ export class HospitalRenderer {
         }
       }
 
-      // 战术巡逻手电筒动态前向光束
-      const spot = new THREE.SpotLight(0xfff5d6, 4.2, 18, Math.PI / 6.5, 0.35, 1.2);
+      // 战术巡逻手电筒动态前向光束（强化冷暖对比与地面光锥）
+      const spot = new THREE.SpotLight(0xfff5d6, 14.0, 22, Math.PI / 5.5, 0.32, 1.0);
       spot.position.set(0.2, 1.15, 0.1);
       const spotTarget = new THREE.Object3D();
-      spotTarget.position.set(8.0, 0.2, 0); // 前向投射到走廊地面
+      spotTarget.position.set(8.5, 0.15, 0); // 前向投射到走廊地面
       this.guardRig.add(spot);
       this.guardRig.add(spotTarget);
       spot.target = spotTarget;
@@ -240,10 +243,10 @@ export class HospitalRenderer {
   }
 
   public applyTheme(): void {
-    const theme = AssetRegistry.get().getActiveTheme();
-    this.scene.background = new THREE.Color(theme.wallColor);
-    this.ambient.color.set(theme.wallColor);
-    this.ambient.groundColor.set(theme.floorColor);
+    // 统一锁定为 04:00 AM 深夜住院部冷青暗调电影级光影（杜绝白昼泛白，贴合主视觉封面）
+    this.scene.background = new THREE.Color(0x0c141a);
+    this.ambient.color.setHex(0x6e8c98);
+    this.ambient.groundColor.setHex(0x1e2c34);
   }
 
   public async equipAsset(category: AssetCategory, asset: AssetEntry): Promise<void> {
@@ -326,7 +329,11 @@ export class HospitalRenderer {
     this.buildProps();
     this.buildDoors();
     this.mergeStaticGeometry();
-    this.scene.add(this.playerRig, this.guardRig, this.route);
+    this.guardRimLight.position.set(0, 1.95, 0);
+    this.guardRig.add(this.guardRimLight);
+    this.playerAuraLight.position.set(15, 1.65, 11);
+    this.scene.add(this.playerRig, this.guardRig, this.route, this.playerAuraLight);
+    this.scene.fog = new THREE.FogExp2(0x162229, 0.016);
     // 注册资产热切换监听
     AssetRegistry.get().subscribe(() => {
       this.syncEffectiveAssets().catch((e) => console.warn('Asset change sync failed:', e));
@@ -380,6 +387,7 @@ export class HospitalRenderer {
       this.guardHuman.animate(guardMeters < 1 ? guardMeters : 0, dt, game.guard.mode === 'chase');
     }
     this.playerRig.position.set(game.player.position.x, 0, game.player.position.z);
+    this.playerAuraLight.position.set(game.player.position.x, 1.65, game.player.position.z);
     this.guardRig.position.set(game.guard.position.x, 0, game.guard.position.z);
     if (restarted) {
       this.playerYaw = -game.player.facing;
@@ -420,11 +428,14 @@ export class HospitalRenderer {
     };
     for (let i = 0; i < this.lamps.length; i++) {
       const factor = i === 1 || i === 12 ? flicker(i * 2.7) : 1;
-      this.lamps[i].intensity = (8.5 + lit * 13.5) * factor;
+      this.lamps[i].intensity = (2.8 + lit * 14.5) * factor;
     }
-    this.diffuserMaterial.emissiveIntensity = 0.55 + lit * 2.65;
-    this.ambient.intensity = 1.05 - lit * 0.55;
-    this.key.intensity = 1.15 - lit * 0.4;
+    this.diffuserMaterial.emissiveIntensity = 0.32 + lit * 2.85;
+    this.ambient.intensity = 0.38 + lit * 0.42;
+    this.key.intensity = 0.34 + lit * 0.36;
+    if (this.scene.fog instanceof THREE.FogExp2) {
+      this.scene.fog.density = 0.018 - lit * 0.010;
+    }
     for (const ward of this.wardLamps) {
       const target = game.activeEffect?.id === 'broadcast' ? game.activeEffect.target : null;
       const active = !!target && target.x === ward.point.x && target.z === ward.point.z;

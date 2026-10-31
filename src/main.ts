@@ -48,17 +48,17 @@ function boot(): void {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1;
+  renderer.toneMappingExposure = 0.72;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const canvas = renderer.domElement;
   canvas.tabIndex = 0;
   canvas.setAttribute('aria-label', '医院走廊，WASD 移动，按住鼠标右键转动镜头');
   element('scene').appendChild(canvas);
-  // 环境反射：室内低强度，让金属、玻璃与地面有真实的高光层次，烘焙一次后零运行时成本。
+  // 环境反射：深夜住院部低强度冷调反射，让水磨石地面与金属推车呈现细腻手电高光，拒绝全图泛白。
   const pmrem = new THREE.PMREMGenerator(renderer);
   hospital.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  hospital.scene.environmentIntensity = 0.3;
+  hospital.scene.environmentIntensity = 0.12;
   pmrem.dispose();
 
   const timer = element('timer');
@@ -386,47 +386,72 @@ function boot(): void {
     if (!ctx) return;
     const s = 6, x0 = 10, z0 = 7;
     ctx.clearRect(0, 0, 200, 146);
-    ctx.fillStyle = '#a9b6a4'; ctx.fillRect(0, 0, 200, 146);
+    // 深夜战术蓝图底色（对齐主视觉冷灰黑夜视风格）
+    ctx.fillStyle = '#070b10';
+    ctx.fillRect(0, 0, 200, 146);
     for (const rect of WALKABLE_RECTS) {
-      ctx.fillStyle = '#f0f4e9';
-      ctx.fillRect(x0+rect.minX*s,z0+rect.minZ*s,(rect.maxX-rect.minX)*s,(rect.maxZ-rect.minZ)*s);
+      ctx.fillStyle = '#141f29';
+      ctx.fillRect(x0 + rect.minX * s, z0 + rect.minZ * s, (rect.maxX - rect.minX) * s, (rect.maxZ - rect.minZ) * s);
     }
-    ctx.fillStyle = '#93a48d';
-    for (const rect of FURNITURE_RECTS) ctx.fillRect(x0+rect.minX*s,z0+rect.minZ*s,(rect.maxX-rect.minX)*s,(rect.maxZ-rect.minZ)*s);
+    ctx.fillStyle = '#263645';
+    for (const rect of FURNITURE_RECTS) {
+      ctx.fillRect(x0 + rect.minX * s, z0 + rect.minZ * s, (rect.maxX - rect.minX) * s, (rect.maxZ - rect.minZ) * s);
+    }
     if (game.map.closedDoor) {
-      const door = DOORS[game.map.closedDoor]; ctx.strokeStyle = '#a96255'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(x0+15*s,z0+door.minZ*s); ctx.lineTo(x0+15*s,z0+door.maxZ*s); ctx.stroke();
+      const door = DOORS[game.map.closedDoor];
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x0 + 15 * s, z0 + door.minZ * s);
+      ctx.lineTo(x0 + 15 * s, z0 + door.maxZ * s);
+      ctx.stroke();
     }
-    ctx.fillStyle = game.exitUnlocked ? '#2f9257' : '#a06b45';
-    ctx.fillRect(x0+EXIT_POINT.x*s-2,z0+EXIT_POINT.z*s-5,4,10);
+    ctx.fillStyle = game.exitUnlocked ? '#10b981' : '#d97706';
+    ctx.fillRect(x0 + EXIT_POINT.x * s - 2, z0 + EXIT_POINT.z * s - 5, 4, 10);
     if (game.exitUnlocked) {
-      ctx.fillStyle = '#eaf6ec';
+      ctx.fillStyle = '#ecfdf5';
       ctx.font = 'bold 7px sans-serif';
-      ctx.fillText('出', x0+EXIT_POINT.x*s-3.5, z0+EXIT_POINT.z*s+2.5);
+      ctx.fillText('出', x0 + EXIT_POINT.x * s - 3.5, z0 + EXIT_POINT.z * s + 2.5);
     }
     const p = game.player.position;
-    ctx.fillStyle = '#2d7967'; ctx.beginPath(); ctx.arc(x0+p.x*s,z0+p.z*s,4.2,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle = '#2d7967'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0+p.x*s,z0+p.z*s); ctx.lineTo(x0+(p.x+Math.cos(follow.yaw)*1.2)*s,z0+(p.z+Math.sin(follow.yaw)*1.2)*s); ctx.stroke();
-    // 搜索状态：黄圈标出值班员的搜索中心——玩家知道他正在翻哪里，而不是实时坐标。
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(x0 + p.x * s, z0 + p.z * s, 4.0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#7dd3fc';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x0 + p.x * s, z0 + p.z * s);
+    ctx.lineTo(x0 + (p.x + Math.cos(follow.yaw) * 1.35) * s, z0 + (p.z + Math.sin(follow.yaw) * 1.35) * s);
+    ctx.stroke();
+    // 搜索状态：琥珀圈标出值班员的搜索中心
     if (game.guard.mode === 'search' || game.guard.mode === 'broadcast') {
       const marker = game.guard.targetPoint ?? game.guard.position;
-      ctx.strokeStyle = '#b98a2f'; ctx.lineWidth = 1.6;
-      ctx.beginPath(); ctx.arc(x0+marker.x*s, z0+marker.z*s, 6.5, 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = '#b98a2f'; ctx.font = 'bold 7px sans-serif';
-      ctx.fillText('搜', x0+marker.x*s-3.5, z0+marker.z*s-8);
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(x0 + marker.x * s, z0 + marker.z * s, 6.5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = 'bold 7px sans-serif';
+      ctx.fillText('搜', x0 + marker.x * s - 3.5, z0 + marker.z * s - 8);
     }
-    // 广播诱导：目标病房绿框脉动，一眼看出他被引去哪间。
+    // 广播诱导：目标病房青绿框脉动
     if (game.activeEffect?.id === 'broadcast' && game.activeEffect.target) {
       const t = game.activeEffect.target;
-      ctx.strokeStyle = '#2f9257'; ctx.lineWidth = 1.8;
-      ctx.strokeRect(x0+t.x*s-7, z0+t.z*s-7, 14, 14);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 1.8;
+      ctx.strokeRect(x0 + t.x * s - 7, z0 + t.z * s - 7, 14, 14);
     }
-    // 值班员实时位置：开灯定位、近距离目视或正在追逐时可见。
-    if (game.lightsOn || game.guard.mode === 'chase' || (distance(p,game.guard.position)<10 && game.map.hasLineOfSight(p,game.guard.position))) {
-      ctx.fillStyle = '#a45b4c'; ctx.beginPath(); ctx.arc(x0+game.guard.position.x*s,z0+game.guard.position.z*s,4.1,0,Math.PI*2); ctx.fill();
+    // 值班员实时位置：开灯定位、近距离目视或正在追逐时可见
+    if (game.lightsOn || game.guard.mode === 'chase' || (distance(p, game.guard.position) < 10 && game.map.hasLineOfSight(p, game.guard.position))) {
+      ctx.fillStyle = '#f43f5e';
+      ctx.beginPath();
+      ctx.arc(x0 + game.guard.position.x * s, z0 + game.guard.position.z * s, 4.1, 0, Math.PI * 2);
+      ctx.fill();
     }
     corridorName.textContent = corridor(p);
-    mapNote.textContent = game.exitUnlocked ? '东侧安全门已通电 · 绿灯为逃生路线' : game.lightsOn ? `开灯定位：值班员在${corridor(game.guard.position)}` : '绿点：你 · 东侧：安全门';
+    mapNote.textContent = game.exitUnlocked ? '东侧安全门已通电 · 绿标为逃生出口' : game.lightsOn ? `开灯定位：值班员在${corridor(game.guard.position)}` : '蓝点：你 · 东侧：安全门';
   }
 
   /** 追逐时画面外看不到威胁来源：一枚低强度红色箭头绕屏幕中心指向值班员方位，其余状态隐藏。 */
@@ -535,7 +560,7 @@ function boot(): void {
     renderDifficultyCards();
     pause.disabled = game.phase !== 'playing' && game.phase !== 'paused';
     pause.innerHTML = game.phase === 'paused' ? '继续 <kbd>Esc</kbd>' : '暂停 <kbd>Esc</kbd>';
-    help.hidden = game.phase !== 'start';
+    help.hidden = true;
     if (game.phase === 'paused') {
       kicker.textContent = '时钟已冻结';
       title.textContent = '值班暂停。';
@@ -583,6 +608,66 @@ function boot(): void {
     }
   }
 
+  const introLoader = document.getElementById('intro-loader');
+  const loaderFill = document.getElementById('loader-fill');
+  const loaderCountdown = document.getElementById('loader-countdown');
+  const loaderSkip = document.getElementById('loader-skip') as HTMLButtonElement | null;
+  let introRafId = 0;
+  let introActive = false;
+
+  function finishIntroSequence(): void {
+    if (!introActive) return;
+    introActive = false;
+    if (introRafId) cancelAnimationFrame(introRafId);
+    introRafId = 0;
+    if (introLoader) introLoader.hidden = true;
+    delete document.body.dataset.intro;
+    beginRound();
+  }
+
+  function startIntroSequence(): void {
+    if (!introLoader || debug) {
+      beginRound();
+      return;
+    }
+    introActive = true;
+    document.body.dataset.intro = 'true';
+    overlay.hidden = true;
+    introLoader.hidden = false;
+    audio.chime();
+    const durationMs = 5000;
+    const startAt = performance.now();
+    const step = (now: number): void => {
+      if (!introActive) return;
+      const elapsed = Math.max(0, now - startAt);
+      const progress = Math.min(1, elapsed / durationMs);
+      const remainSec = Math.max(0, (durationMs - elapsed) / 1000);
+      if (loaderFill) loaderFill.style.transform = `scaleX(${progress.toFixed(3)})`;
+      if (loaderCountdown) loaderCountdown.textContent = `${remainSec.toFixed(1)}s`;
+      if (progress >= 1) {
+        finishIntroSequence();
+        return;
+      }
+      introRafId = requestAnimationFrame(step);
+    };
+    if (loaderFill) loaderFill.style.transform = 'scaleX(0)';
+    if (loaderCountdown) loaderCountdown.textContent = '5.0s';
+    introRafId = requestAnimationFrame(step);
+  }
+
+  if (loaderSkip) {
+    loaderSkip.addEventListener('click', () => {
+      loaderSkip.blur();
+      finishIntroSequence();
+    });
+  }
+  window.addEventListener('keydown', event => {
+    if (introActive && (event.code === 'Space' || event.code === 'Enter')) {
+      event.preventDefault();
+      finishIntroSequence();
+    }
+  });
+
   const press = (button: HTMLButtonElement, handler: () => void): void => {
     button.addEventListener('click', () => {
       handler();
@@ -590,7 +675,13 @@ function boot(): void {
     });
   };
   press(primary, () => {
+    // 手机扫码或触摸端点击开始时，自动发起全屏请求（用户显式手势上下文）
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isTouchDevice && !document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
     if (game.phase === 'paused') resumeGame();
+    else if (game.phase === 'start') startIntroSequence();
     else beginRound();
   });
   press(pause, togglePause);
@@ -634,9 +725,31 @@ function boot(): void {
   if (btnPitch) press(btnPitch, openPitchModal);
   if (briefingPitch) press(briefingPitch, openPitchModal);
 
-  // 全屏切换（支持桌面与手机浏览器全屏沉浸视界）
+  // 全屏与横屏切换（支持桌面与手机浏览器全屏沉浸视界与屏幕方向锁定）
   const btnFullscreen = document.getElementById('btn-fullscreen') as HTMLButtonElement | null;
   const touchFullscreen = document.getElementById('touch-fullscreen') as HTMLButtonElement | null;
+  const touchOrientation = document.getElementById('touch-orientation') as HTMLButtonElement | null;
+
+  async function toggleOrientation(): Promise<void> {
+    try {
+      // 现代浏览器 ScreenOrientation API
+      const screenAny = screen as any;
+      if (screenAny.orientation && screenAny.orientation.lock) {
+        const isLandscape = window.innerWidth > window.innerHeight;
+        if (!isLandscape) {
+          if (!document.fullscreenElement) {
+            await document.documentElement.requestFullscreen().catch(() => {});
+          }
+          await screenAny.orientation.lock('landscape').catch(() => {});
+        } else {
+          await screenAny.orientation.unlock?.();
+        }
+      }
+    } catch {
+      // 忽略不支持的设备
+    }
+  }
+
   function toggleFullscreen(): void {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
@@ -651,6 +764,7 @@ function boot(): void {
   }
   if (btnFullscreen) press(btnFullscreen, toggleFullscreen);
   if (touchFullscreen) press(touchFullscreen, toggleFullscreen);
+  if (touchOrientation) press(touchOrientation, () => { toggleOrientation().catch(() => {}); });
   document.addEventListener('fullscreenchange', updateFsText);
 
   document.querySelectorAll('[data-close-modal]').forEach(el => {

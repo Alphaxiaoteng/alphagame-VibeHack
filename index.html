@@ -70,6 +70,7 @@
             <div id="touch-thumb" class="touch-thumb"></div>
           </div>
           <div class="touch-actions">
+            <button id="touch-orientation" type="button" title="切换横屏/竖屏">横屏</button>
             <button id="touch-fullscreen" type="button" title="全屏显示">全屏</button>
             <button id="touch-sprint" type="button" aria-pressed="false">跑</button>
             <button id="touch-pause" type="button">暂停</button>
@@ -189,9 +190,16 @@
           </div>
 
           <div class="tactical-menu-panel">
+            <button id="primary" class="primary" type="button">
+              <span class="console-cursor" aria-hidden="true">◆</span>
+              <span class="primary-label-main">开始逃生</span>
+              <span class="arrow-icon" aria-hidden="true">ENTER WARD →</span>
+            </button>
+
             <div class="difficulty-picker-container">
               <div class="diff-header-row">
-                <span class="diff-label-title">难度：<strong id="diff-current-badge">中</strong></span>
+                <span class="diff-label-title">巡查难度</span>
+                <strong id="diff-current-badge" hidden>中</strong>
               </div>
               <div id="difficulty-picker" class="difficulty-picker" aria-label="选择值班难度">
                 <button type="button" class="difficulty-card" data-difficulty="intern" title="简单">
@@ -218,13 +226,11 @@
             <!-- 战备选择：轻量状态摘要，点击弹出独立 3D 动作整备舱 -->
             <section id="shop" class="shop" aria-label="科室与出勤人员"></section>
 
-            <button id="primary" class="primary" type="button">
-              <span>开始逃生</span>
-              <span class="arrow-icon" aria-hidden="true">ENTER WARD →</span>
-            </button>
-
             <div class="briefing-actions-secondary">
-              <button id="briefing-qr" type="button" class="subtle-link">手机扫码即玩</button>
+              <button id="briefing-qr" type="button" class="subtle-link">
+                <span class="menu-sub-label">掌机模式</span>
+                <span class="menu-sub-action">手机扫码即玩 ↗</span>
+              </button>
             </div>
           </div>
 
@@ -232,9 +238,133 @@
           <div id="shift-log" class="shift-log" hidden></div>
         </div>
       </section>
+
+      <!-- 5秒开局加载动画与战术操作教程 (点击「开始逃生」后触发) -->
+      <section id="intro-loader" class="intro-loader" hidden aria-label="潜行与战术操作指南">
+        <div class="intro-loader-backdrop"></div>
+        <div class="intro-loader-stage">
+          <header class="intro-loader-head">
+            <span class="intro-kicker">WARD II // SURVEILLANCE &amp; TACTICAL BRIEFING</span>
+            <h2 class="intro-title">行动指南 <span>HOW TO SURVIVE</span></h2>
+            <p class="intro-sub">东侧安全门将在 <strong>45 秒</strong> 后通电解锁。善用医院掩体与三大控制系统躲避值班员。</p>
+          </header>
+
+          <div class="intro-tutorial-grid">
+            <!-- 左侧：基础移动与视线 -->
+            <div class="tutorial-panel">
+              <div class="tutorial-panel-head">
+                <span class="panel-index">01</span>
+                <strong>潜行与观察</strong>
+                <small>MOVEMENT &amp; CAMERA</small>
+              </div>
+              <div class="tutorial-rows">
+                <div class="tutorial-row">
+                  <div class="tut-keys">
+                    <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
+                  </div>
+                  <div class="tut-desc">
+                    <strong>静步走位</strong>
+                    <span>常规步行完全静音，可绕入病房、药房或屏风后躲避视线</span>
+                  </div>
+                </div>
+                <div class="tutorial-row">
+                  <div class="tut-keys">
+                    <kbd class="wide">Shift</kbd>
+                  </div>
+                  <div class="tut-desc">
+                    <strong>奔跑冲刺</strong>
+                    <span>按住加速突围，但脚步声会暴露位置并持续消耗体力</span>
+                  </div>
+                </div>
+                <div class="tutorial-row">
+                  <div class="tut-keys">
+                    <kbd class="wide">鼠标右键拖动</kbd>
+                  </div>
+                  <div class="tut-desc">
+                    <strong>环视走廊</strong>
+                    <span>按住右键左右滑动，提前观察拐角与值班员手电筒光束</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右侧：1 2 3 医院战术指令 -->
+            <div class="tutorial-panel">
+              <div class="tutorial-panel-head">
+                <span class="panel-index">02</span>
+                <strong>医院控制指令</strong>
+                <small>TACTICAL KEYS · 按键 1 / 2 / 3 或点击底部按钮</small>
+              </div>
+              <div class="tutorial-rows">
+                <div class="tutorial-row">
+                  <div class="tut-keys">
+                    <kbd class="num">1</kbd>
+                  </div>
+                  <div class="tut-desc">
+                    <strong>全院开灯</strong>
+                    <span>点亮全院顶灯 6 秒并透视值班员位置，但你也会暴露在强光下</span>
+                  </div>
+                </div>
+                <div class="tutorial-row">
+                  <div class="tut-keys">
+                    <kbd class="num">2</kbd>
+                  </div>
+                  <div class="tut-desc">
+                    <strong>封锁走廊</strong>
+                    <span>落下走廊防火门 5 秒阻断追捕路线，你与值班员均需绕行</span>
+                  </div>
+                </div>
+                <div class="tutorial-row">
+                  <div class="tut-keys">
+                    <kbd class="num">3</kbd>
+                  </div>
+                  <div class="tut-desc">
+                    <strong>广播查房</strong>
+                    <span>呼叫远处病房引开值班员 6 秒（须先脱离其视线方可生效）</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <footer class="intro-loader-foot">
+            <div class="loader-progress-info">
+              <span class="loader-status-text"><i class="loader-pulse-dot"></i>正在同步住院部电力与声学传感器...</span>
+              <span id="loader-countdown" class="mono loader-time">5.0s</span>
+            </div>
+            <div class="loader-bar-track">
+              <div id="loader-fill" class="loader-bar-fill"></div>
+            </div>
+            <div class="loader-foot-actions">
+              <span class="loader-tip">提示：通电前切勿盲目奔跑，留存体力应对最后冲刺</span>
+              <button id="loader-skip" type="button" class="loader-skip-btn">立即进入病房 <kbd>Space</kbd> →</button>
+            </div>
+          </footer>
+        </div>
+      </section>
       <section id="fatal" class="fatal" role="alert" hidden><h1>画面未能启动</h1><p id="fatal-message"></p><p class="fatal-hint">请用支持 WebGL 2 的桌面浏览器，并打开硬件加速后刷新。</p></section>
       <div id="result-flash" aria-hidden="true"></div>
       <div id="escape-flare" class="escape-flare" aria-hidden="true"></div>
+
+      <!-- 手机端竖屏旋转提示层（仅在触控设备竖屏时激活） -->
+      <div id="landscape-prompt" class="landscape-prompt" hidden>
+        <div class="landscape-content">
+          <div class="rotate-phone-icon">
+            <svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="14" y="6" width="20" height="36" rx="4"></rect>
+              <line x1="22" y1="36" x2="26" y2="36"></line>
+              <path d="M38 18l6 6-6 6"></path>
+              <path d="M44 24H32"></path>
+            </svg>
+          </div>
+          <h2>请旋转至横屏游玩</h2>
+          <p>《查房》为 3D 沉浸逃生视界，横向持握可开启完整遥控摇杆与战术指令按键。</p>
+          <button type="button" id="btn-force-landscape" class="primary landscape-btn">
+            <span>进入全屏横屏</span>
+            <span class="arrow-icon">⛶</span>
+          </button>
+        </div>
+      </div>
 
       <!-- 手机扫码弹窗 -->
       <div id="qr-modal" class="modal-layer" hidden aria-modal="true" role="dialog" aria-label="手机扫码游玩">
@@ -247,7 +377,7 @@
           <div class="qr-preview-box">
             <img src="/qr-game.png" alt="游戏访问二维码" width="240" height="240" />
           </div>
-          <p class="qr-url mono">game.alphaintelligence.ltd</p>
+          <p class="qr-url mono">124.220.198.243/rounds/</p>
           <p class="qr-desc">支持 iPhone / Android 全屏触控，左下角虚拟摇杆、右侧奔跑与指令交互，无需安装客户端。</p>
         </div>
       </div>
