@@ -7,7 +7,7 @@ import { dangerWindow, pauseAfterBackground } from './core/lifecycle';
 import { distance } from './core/map';
 import { RoundsGame } from './core/state';
 import type { GameEvent, Phase } from './core/state';
-import { FollowCamera } from './render/camera';
+import { FirstPersonCamera } from './render/camera';
 import { HospitalRenderer } from './render/scene';
 import { SPRINT_EXHAUSTED_BELOW, isTap, sprintEngaged, stickAxes, touchControlsVisible } from './render/touch';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
@@ -34,7 +34,9 @@ function boot(): void {
   const game = new RoundsGame();
   const audio = new AudioEngine();
   const hospital = new HospitalRenderer();
-  const follow = new FollowCamera(hospital.blockers);
+  const follow = new FirstPersonCamera();
+  // 第一人称：玩家模型不再出镜，只保留值班员。
+  hospital.playerRig.visible = false;
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -94,16 +96,19 @@ function boot(): void {
   const touchThumb = element<HTMLElement>('touch-thumb');
   const touchSprint = element<HTMLButtonElement>('touch-sprint');
   const touchPause = element<HTMLButtonElement>('touch-pause');
+  // 验收观测用：输入管道的实时镜像，?debug=1 下经 __ROUNDS_DEBUG__.input() 读取。
+  const inputMirror = { get dragging() { return dragging; }, keysSeen: () => [...keys] };
   const hasTouch = touchControlsVisible(coarsePointer ? 'coarse' : 'fine') || navigator.maxTouchPoints > 0;
   touchLayer.hidden = !hasTouch;
   document.body.dataset.touch = String(hasTouch);
   element('touch-help').hidden = !hasTouch;
   if (hasTouch) help.querySelectorAll<HTMLElement>(':scope > div:not(#touch-help)').forEach(node => node.classList.add('keyboard-only'));
-  const touch = { forward: 0, right: 0, sprint: false, stickId: -1, originX: 0, originY: 0, dragId: -1, dragX: 0, dragStartedAt: 0, dragMoved: 0 };
+  const touch = { forward: 0, right: 0, sprint: false, stickId: -1, originX: 0, originY: 0, dragId: -1, dragX: 0, dragY: 0, dragStartedAt: 0, dragMoved: 0 };
 
   const keys = new Set<string>();
   let dragging = false;
   let lastPointerX = 0;
+  let lastPointerY = 0;
   let previousPhase: Phase | null = null;
   let lastFrame = performance.now();
   let toastUntil = 0;
@@ -401,7 +406,7 @@ function boot(): void {
     if (!toast.hidden && game.phase === 'playing' && game.elapsed >= toastUntil) toast.hidden = true;
 
     if (debug) {
-      debugState.textContent = `${game.phase} / ${game.remaining.toFixed(2)}s\n玩家 (${game.player.position.x.toFixed(2)}, ${game.player.position.z.toFixed(2)})\n值班员 (${game.guard.position.x.toFixed(2)}, ${game.guard.position.z.toFixed(2)})\n门：${game.map.closedDoor ?? '全开'} / 语音 ${audio.snapshot().decodedVoices}/8`;
+      debugState.textContent = `${game.phase} / ${game.remaining.toFixed(2)}s\n玩家 (${game.player.position.x.toFixed(2)}, ${game.player.position.z.toFixed(2)})\n值班员 (${game.guard.position.x.toFixed(2)}, ${game.guard.position.z.toFixed(2)})\n视角 yaw ${follow.yaw.toFixed(2)} pitch ${follow.pitch.toFixed(2)}\n门：${game.map.closedDoor ?? '全开'} / 语音 ${audio.snapshot().decodedVoices}/8`;
       for (const button of debugButtons) button.disabled = game.phase !== 'playing';
     }
     if (previousPhase === game.phase) return;
@@ -482,21 +487,27 @@ function boot(): void {
     if (event.button !== 2 || game.phase !== 'playing') return;
     dragging = true;
     lastPointerX = event.clientX;
-    canvas.setPointerCapture(event.pointerId);
+    lastPointerY = event.clientY;
+    // 指针捕获只是“拖出画布仍持续转向”的增强；合成/注入事件的指针 id 可能无法捕获，失败不应中断拖动。
+    try { canvas.setPointerCapture(event.pointerId); } catch { /* 无法捕获时退化为画布内拖动 */ }
   });
   canvas.addEventListener('pointermove', event => {
     if (!dragging || game.phase !== 'playing') return;
-    follow.rotate((event.clientX - lastPointerX) * 0.006);
+    follow.rotate((event.clientX - lastPointerX) * 0.0032);
+    follow.tilt(-(event.clientY - lastPointerY) * 0.0028);
     lastPointerX = event.clientX;
+    lastPointerY = event.clientY;
   });
   canvas.addEventListener('pointerup', () => { dragging = false; });
   canvas.addEventListener('pointercancel', clearInput);
-  // 触摸板：双指横滑转镜头。wheel 监听必须非被动才能 preventDefault，避免页面滚动劫持手势。
+  // 触摸板：双指横滑转视角、竖滑俯仰。wheel 监听必须非被动才能 preventDefault，避免页面滚动劫持手势。
   canvas.addEventListener('wheel', event => {
     if (game.phase !== 'playing') return;
     event.preventDefault();
-    const delta = Math.max(-0.32, Math.min(0.32, event.deltaX * 0.009));
-    if (delta !== 0) follow.rotate(delta);
+    const yaw = Math.max(-0.32, Math.min(0.32, event.deltaX * 0.009));
+    if (yaw !== 0) follow.rotate(yaw);
+    const pitch = Math.max(-0.24, Math.min(0.24, event.deltaY * 0.0028));
+    if (pitch !== 0) follow.tilt(-pitch);
   }, { passive: false });
   // ── 触控输入 ──────────────────────────────────────────────
   // 左半屏拖动 = 摇杆；右半屏拖动 = 转镜头；轻触（短距离短时间）= 不产生输入，避免误触打断移动。
@@ -549,19 +560,23 @@ function boot(): void {
     if (event.pointerType === 'mouse' || game.phase !== 'playing') return;
     touch.dragId = event.pointerId;
     touch.dragX = event.clientX;
+    touch.dragY = event.clientY;
     touch.dragStartedAt = performance.now();
     touch.dragMoved = 0;
-    canvas.setPointerCapture(event.pointerId);
+    try { canvas.setPointerCapture(event.pointerId); } catch { /* 同上：捕获失败不阻断触控拖动 */ }
   });
   canvas.addEventListener('pointermove', event => {
     if (event.pointerId !== touch.dragId || game.phase !== 'playing') return;
     const dx = event.clientX - touch.dragX;
-    if (dx === 0) return;
+    const dy = event.clientY - touch.dragY;
+    if (dx === 0 && dy === 0) return;
     touch.dragX = event.clientX;
-    touch.dragMoved += Math.abs(dx);
-    // 一旦判定为拖动就持续转镜头；累计位移超过轻触阈值即视为拖动，不要求单帧位移足够大。
+    touch.dragY = event.clientY;
+    touch.dragMoved += Math.abs(dx) + Math.abs(dy);
+    // 一旦判定为拖动就持续转视角；累计位移超过轻触阈值即视为拖动，不要求单帧位移足够大。
     if (touch.dragMoved > 12 || !isTap(touch.dragMoved, 0, performance.now() - touch.dragStartedAt)) {
-      follow.rotate(dx * 0.006);
+      follow.rotate(dx * 0.004);
+      follow.tilt(-dy * 0.0035);
     }
   });
   const endDrag = () => { touch.dragId = -1; };
@@ -634,7 +649,7 @@ function boot(): void {
   }
   hospital.sync(game, 0);
   hospital.scene.updateMatrixWorld(true);
-  follow.update(game.player.position, 0);
+  follow.update(game.player.position);
   updateUI();
   document.body.dataset.ready = 'true';
   document.body.dataset.touch = String(hasTouch);
@@ -643,7 +658,7 @@ function boot(): void {
     const state = () => ({
       phase: game.phase, elapsed: game.elapsed, remaining: game.remaining, unlocked: game.exitUnlocked,
       player: { ...game.player.position }, guard: { ...game.guard.position }, stamina: game.player.stamina,
-      door: game.map.closedDoor, yaw: follow.yaw, keys: [...keys], audio: audio.snapshot(),
+      door: game.map.closedDoor, yaw: follow.yaw, pitch: +follow.pitch.toFixed(3), keys: [...keys], audio: audio.snapshot(),
       guardMode: game.guard.mode, guardFacing: game.guard.facing, fov: +follow.camera.fov.toFixed(2),
       memory: { ...renderer.info.memory }, effect: game.activeEffect, commandsUsed: game.commandsUsed,
       presentation: hospital.snapshot(), camera: { x: follow.camera.position.x, y: follow.camera.position.y, z: follow.camera.position.z },
@@ -651,6 +666,7 @@ function boot(): void {
     });
     const controls = {
       state,
+      input: inputMirror,
       voiceUrls: VOICE_URLS,
       setPlayer(point: Point) {
         if (!game.map.canOccupy(point, PLAYER_RADIUS)) throw new Error('玩家测试坐标不可通行');
@@ -697,17 +713,15 @@ function boot(): void {
     audio.update(game);
     hospital.sync(game, game.phase === 'playing' ? dt : 0);
     hospital.scene.updateMatrixWorld(true);
-    follow.update(game.player.position, dt);
-    // 奔跑时镜头轻微扩张（62°→65°）、停下回落：给出速度感，又不破坏明亮克制的观感。
+    follow.update(game.player.position);
+    // 奔跑时镜头轻微扩张（72°→78°）、停下回落：给出速度感，又不破坏明亮克制的观感。
     const sprintingForFov = game.phase === 'playing' && input.sprint && (input.forward !== 0 || input.right !== 0);
-    const targetFov = sprintingForFov ? 65 : 62;
+    const targetFov = sprintingForFov ? 78 : 72;
     const nextFov = follow.camera.fov + (targetFov - follow.camera.fov) * Math.min(1, dt * 6);
     if (Math.abs(nextFov - follow.camera.fov) > 0.005) {
       follow.camera.fov = nextFov;
       follow.camera.updateProjectionMatrix();
     }
-    const cameraGap = Math.hypot(follow.camera.position.x-game.player.position.x, follow.camera.position.z-game.player.position.z);
-    hospital.playerHuman.setOpacity(cameraGap < 1.4 ? 0.25 : 1);
     renderer.render(hospital.scene, follow.camera);
     updateUI();
     updateThreatPointer();

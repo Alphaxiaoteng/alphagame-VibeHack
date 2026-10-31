@@ -1,17 +1,18 @@
 import * as THREE from 'three';
 import type { Point } from '../core/config';
 
-/** 镜头与移动共用 yaw：0 朝东，正方向向南。角色移动不会擅自旋转镜头。 */
-export class FollowCamera {
-  readonly camera = new THREE.PerspectiveCamera(62, 1, 0.06, 90);
+/**
+ * 第一人称镜头：位于玩家头部（y≈1.58 m），yaw/pitch 由输入直接驱动。
+ * 镜头在玩家碰撞圆内部，天然不会穿墙，不再需要第三人称的贴墙裁剪。
+ * yaw 与移动共用：0 朝东（+x），正方向向南（+z）。pitch 正值抬头。
+ */
+export class FirstPersonCamera {
+  readonly camera = new THREE.PerspectiveCamera(72, 1, 0.06, 90);
   yaw = 0;
-  private readonly target = new THREE.Vector3();
-  private readonly desired = new THREE.Vector3();
-  private readonly direction = new THREE.Vector3();
-  private readonly raycaster = new THREE.Raycaster();
-  private initialized = false;
-
-  constructor(private readonly blockers: THREE.Object3D[]) {}
+  pitch = 0;
+  /** 约 60° 上下限，防止翻转。 */
+  private static readonly PITCH_LIMIT = 1.05;
+  private readonly look = new THREE.Vector3();
 
   resize(width: number, height: number): void {
     this.camera.aspect = width / Math.max(1, height);
@@ -20,7 +21,7 @@ export class FollowCamera {
 
   reset(): void {
     this.yaw = 0;
-    this.initialized = false;
+    this.pitch = 0;
   }
 
   rotate(delta: number): void {
@@ -28,34 +29,17 @@ export class FollowCamera {
     this.yaw = Math.atan2(Math.sin(this.yaw), Math.cos(this.yaw));
   }
 
-  update(player: Point, dt: number): void {
-    const focus = new THREE.Vector3(player.x, 1.15, player.z);
-    const blend = 1 - Math.exp(-12 * Math.max(0, dt));
-    if (!this.initialized) this.target.copy(focus);
-    else this.target.lerp(focus, blend);
-    this.desired.set(
-      this.target.x - Math.cos(this.yaw) * 3.8 - Math.sin(this.yaw) * 0.25,
-      this.target.y + 1.15,
-      this.target.z - Math.sin(this.yaw) * 3.8 + Math.cos(this.yaw) * 0.25,
-    );
-    this.clipToWalls(this.desired);
-    if (!this.initialized) this.camera.position.copy(this.desired);
-    else this.camera.position.lerp(this.desired, blend);
-    // 平滑移动也必须受墙体限制，不能在拐角插值过程中穿墙。
-    this.clipToWalls(this.camera.position);
-    this.camera.lookAt(this.target);
-    this.initialized = true;
+  tilt(delta: number): void {
+    this.pitch = Math.max(-FirstPersonCamera.PITCH_LIMIT, Math.min(FirstPersonCamera.PITCH_LIMIT, this.pitch + delta));
   }
 
-  private clipToWalls(position: THREE.Vector3): void {
-    this.direction.copy(position).sub(this.target);
-    const length = this.direction.length();
-    if (length < 0.001) return;
-    this.raycaster.set(this.target, this.direction.normalize());
-    this.raycaster.far = length;
-    const hits = this.raycaster.intersectObjects(this.blockers, false);
-    if (hits.length > 0 && hits[0].distance < length) {
-      position.copy(this.target).addScaledVector(this.direction, Math.max(0.28, hits[0].distance - 0.18));
-    }
+  update(player: Point): void {
+    this.camera.position.set(player.x, 1.58, player.z);
+    this.look.set(
+      player.x + Math.cos(this.yaw) * Math.cos(this.pitch),
+      1.58 + Math.sin(this.pitch),
+      player.z + Math.sin(this.yaw) * Math.cos(this.pitch),
+    );
+    this.camera.lookAt(this.look);
   }
 }
