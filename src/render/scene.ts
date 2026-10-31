@@ -66,11 +66,15 @@ export class HospitalRenderer {
   private readonly doors = new Map<DoorId, { panel: THREE.Mesh; progress: number }>();
   private readonly wardLamps: { lamp: THREE.Mesh; light: THREE.PointLight; point: Point }[] = [];
   private readonly route = new THREE.Group();
-  private readonly routeMaterial = new THREE.MeshBasicMaterial({ color: 0x61a77b, transparent: true, opacity: 0.68, depthWrite: false });
+  private readonly ambient = new THREE.HemisphereLight(0xf4f6ef, 0x7c8883, 1.05);
+  private readonly key = new THREE.DirectionalLight(0xf9fbf1, 1.15);
+  /** 开灯效果 0→1 的混合值：实现“啪一下亮起”的短过渡，同时让环境光让位形成光池节奏。 */
+  private lightsBlend = 0;
+  private readonly routeMaterial = new THREE.MeshBasicMaterial({ color: 0x2fa765, transparent: true, opacity: 0.95, depthWrite: false });
   private readonly arrowGeometry: THREE.ShapeGeometry;
   /** 需要静态合批的容器：构造完成后按材质把小网格合并，减少 draw call。 */
   private readonly staticRoots: THREE.Object3D[] = [];
-  private diffuserMaterial = new THREE.MeshStandardMaterial({ color: 0xdfe8dd, emissive: 0xd9e7d4, emissiveIntensity: 0.55, roughness: 0.55 });
+  private diffuserMaterial = new THREE.MeshStandardMaterial({ color: 0xdfe8dd, emissive: 0xf4fcf0, emissiveIntensity: 0.55, roughness: 0.55 });
   private exitLamp!: THREE.Mesh;
   private exitSign!: THREE.Mesh;
   private exitLabel!: THREE.Mesh;
@@ -135,8 +139,15 @@ export class HospitalRenderer {
       entry.panel.scale.y = Math.max(0.001, entry.progress * 2.72);
       entry.panel.visible = entry.progress > 0.005;
     }
-    for (const lamp of this.lamps) lamp.intensity = game.lightsOn ? 20 : 8.5;
-    this.diffuserMaterial.emissiveIntensity = game.lightsOn ? 1.5 : 0.55;
+    // 开灯反馈必须“看得见来源”：灯管爆亮、环境与主光让位，形成灯下亮、灯间暗的节奏，而不是整屏均匀变白。
+    const lightsTarget = game.lightsOn ? 1 : 0;
+    this.lightsBlend += (lightsTarget - this.lightsBlend) * Math.min(1, dt * 9);
+    if (Math.abs(lightsTarget - this.lightsBlend) < 0.004) this.lightsBlend = lightsTarget;
+    const lit = this.lightsBlend;
+    for (const lamp of this.lamps) lamp.intensity = 8.5 + lit * 13.5;
+    this.diffuserMaterial.emissiveIntensity = 0.55 + lit * 2.65;
+    this.ambient.intensity = 1.05 - lit * 0.55;
+    this.key.intensity = 1.15 - lit * 0.4;
     for (const ward of this.wardLamps) {
       const target = game.activeEffect?.id === 'broadcast' ? game.activeEffect.target : null;
       const active = !!target && target.x === ward.point.x && target.z === ward.point.z;
@@ -278,8 +289,8 @@ export class HospitalRenderer {
   }
 
   private buildLights(): void {
-    this.scene.add(new THREE.HemisphereLight(0xf4f6ef, 0x7c8883, 1.05));
-    const key = new THREE.DirectionalLight(0xf9fbf1, 1.15);
+    this.scene.add(this.ambient);
+    const key = this.key;
     key.position.set(17,10,10); key.target.position.set(15,0,11);
     key.castShadow = true; key.shadow.mapSize.set(2048,2048);
     Object.assign(key.shadow.camera, { left: -17, right: 17, top: 13, bottom: -13, near: 0.5, far: 22 });
@@ -459,7 +470,7 @@ export class HospitalRenderer {
     let start=game.player.position;
     for (const point of path) {
       const length=distance(start,point);
-      for (let at=0.6;at<length;at+=1.25) {
+      for (let at=1.1;at<length;at+=1.25) {
         const arrow=new THREE.Mesh(this.arrowGeometry,this.routeMaterial);
         arrow.position.set(start.x+(point.x-start.x)*at/length,0.017,start.z+(point.z-start.z)*at/length);
         arrow.rotation.set(-Math.PI/2,0,Math.atan2(point.x-start.x,-(point.z-start.z)));

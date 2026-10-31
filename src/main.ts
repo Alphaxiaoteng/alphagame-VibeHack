@@ -129,9 +129,11 @@ function boot(): void {
     touchSprint.setAttribute('aria-pressed', 'false');
   }
 
-  function notice(text: string): void {
+  function notice(text: string, alert = false): void {
     toast.textContent = text;
     toast.hidden = false;
+    // 追逐警报直接由红色警示条承载全文，不再另弹一枚与正文叠压的“被发现了”胶囊。
+    toast.classList.toggle('alert', alert);
     // 使用游玩时钟，暂停时不偷偷让提示消失。
     toastUntil = game.elapsed + 3.2;
   }
@@ -144,6 +146,7 @@ function boot(): void {
     audio.startRound(); // 必须直接在用户手势内 resume AudioContext
     follow.reset();
     toast.hidden = true;
+    toast.classList.remove('alert');
     toastUntil = 0;
     dangerUntil = 0;
     uiTime = -1;
@@ -239,7 +242,7 @@ function boot(): void {
         }
         break;
       case 'guardChanged':
-        notice(event.message ?? '巡查状态改变');
+        notice(event.message ?? '巡查状态改变', game.guard.mode === 'chase');
         dangerUntil = dangerWindow(previousGuardMode, game.guard.mode, game.elapsed, dangerUntil);
         if (game.guard.mode === 'chase' && previousGuardMode !== 'chase') audio.alert();
         previousGuardMode = game.guard.mode;
@@ -273,24 +276,24 @@ function boot(): void {
     if (!ctx) return;
     const s = 6, x0 = 10, z0 = 7;
     ctx.clearRect(0, 0, 200, 146);
-    ctx.fillStyle = '#d8e1d5'; ctx.fillRect(0, 0, 200, 146);
+    ctx.fillStyle = '#a9b6a4'; ctx.fillRect(0, 0, 200, 146);
     for (const rect of WALKABLE_RECTS) {
       ctx.fillStyle = '#f0f4e9';
       ctx.fillRect(x0+rect.minX*s,z0+rect.minZ*s,(rect.maxX-rect.minX)*s,(rect.maxZ-rect.minZ)*s);
     }
-    ctx.fillStyle = '#a9b9ab';
+    ctx.fillStyle = '#93a48d';
     for (const rect of FURNITURE_RECTS) ctx.fillRect(x0+rect.minX*s,z0+rect.minZ*s,(rect.maxX-rect.minX)*s,(rect.maxZ-rect.minZ)*s);
     if (game.map.closedDoor) {
       const door = DOORS[game.map.closedDoor]; ctx.strokeStyle = '#a96255'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(x0+15*s,z0+door.minZ*s); ctx.lineTo(x0+15*s,z0+door.maxZ*s); ctx.stroke();
     }
-    ctx.fillStyle = game.exitUnlocked ? '#4d9562' : '#ac7b56';
+    ctx.fillStyle = game.exitUnlocked ? '#2f9257' : '#a06b45';
     ctx.fillRect(x0+EXIT_POINT.x*s-2,z0+EXIT_POINT.z*s-5,4,10);
     const p = game.player.position;
-    ctx.fillStyle = '#2d7967'; ctx.beginPath(); ctx.arc(x0+p.x*s,z0+p.z*s,3.7,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#2d7967'; ctx.beginPath(); ctx.arc(x0+p.x*s,z0+p.z*s,4.2,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#2d7967'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0+p.x*s,z0+p.z*s); ctx.lineTo(x0+(p.x+Math.cos(follow.yaw)*1.2)*s,z0+(p.z+Math.sin(follow.yaw)*1.2)*s); ctx.stroke();
     if (game.lightsOn || (distance(p,game.guard.position)<10 && game.map.hasLineOfSight(p,game.guard.position))) {
-      ctx.fillStyle = '#a45b4c'; ctx.beginPath(); ctx.arc(x0+game.guard.position.x*s,z0+game.guard.position.z*s,3.6,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#a45b4c'; ctx.beginPath(); ctx.arc(x0+game.guard.position.x*s,z0+game.guard.position.z*s,4.1,0,Math.PI*2); ctx.fill();
     }
     corridorName.textContent = corridor(p);
     mapNote.textContent = game.exitUnlocked ? '东侧安全门已通电 · 绿灯为逃生路线' : game.lightsOn ? `开灯定位：值班员在${corridor(game.guard.position)}` : '绿点：你 · 东侧：安全门';
