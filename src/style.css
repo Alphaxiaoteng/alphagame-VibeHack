@@ -791,13 +791,49 @@ body[data-phase="start"] .tactical-menu-panel {
   border-left: none;
   gap: 14px;
 }
-body[data-phase="paused"] .difficulty-picker-container,
-body[data-phase="won"] .difficulty-picker-container,
-body[data-phase="lost"] .difficulty-picker-container,
 body[data-phase="paused"] .shop,
 body[data-phase="won"] .shop,
 body[data-phase="lost"] .shop {
   display: none !important;
+}
+
+.restart-round-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 22px;
+  background: var(--paper-card-bg);
+  color: var(--paper-ink);
+  border: 1.5px solid var(--paper-border);
+  border-left: 4px solid var(--paper-stamp-red);
+  border-radius: 1px;
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  order: 3;
+}
+.restart-round-btn[hidden] {
+  display: none !important;
+}
+.restart-round-btn:hover {
+  background: var(--paper-stamp-red);
+  border-color: var(--paper-stamp-red);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+.restart-round-btn .arrow-icon {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--paper-stamp-red);
+}
+.restart-round-btn:hover .arrow-icon {
+  color: #ffffff;
 }
 
 .primary {
@@ -1020,15 +1056,68 @@ body[data-phase="won"] #result-flash { background: radial-gradient(ellipse at ce
   letter-spacing: 0.12em;
 }
 
-/* 结算状态下隐藏难度卡片与冗长日志 */
-body[data-phase="won"] .difficulty-picker,
-body[data-phase="lost"] .difficulty-picker,
+/* 结算与暂停状态下保留难度切换，隐藏次级链接与冗长日志 */
 body[data-phase="won"] .briefing-actions-secondary,
 body[data-phase="lost"] .briefing-actions-secondary,
 body[data-phase="paused"] .briefing-actions-secondary,
 body[data-phase="won"] .shift-log,
 body[data-phase="lost"] .shift-log {
   display: none !important;
+}
+
+body[data-phase="paused"] .difficulty-picker-container,
+body[data-phase="won"] .difficulty-picker-container,
+body[data-phase="lost"] .difficulty-picker-container {
+  order: 1;
+  padding: 10px 14px;
+  margin-bottom: 4px;
+  background: var(--paper-card-bg);
+  border: 1px solid var(--paper-rule);
+  border-radius: 1px;
+}
+body[data-phase="paused"] .diff-label-title,
+body[data-phase="won"] .diff-label-title,
+body[data-phase="lost"] .diff-label-title {
+  color: var(--paper-ink);
+  font-weight: 900;
+}
+body[data-phase="paused"] .difficulty-card,
+body[data-phase="won"] .difficulty-card,
+body[data-phase="lost"] .difficulty-card {
+  background: rgba(255, 252, 245, 0.55);
+  border: 1px solid rgba(43, 36, 29, 0.35);
+  color: var(--paper-ink-muted);
+}
+body[data-phase="paused"] .difficulty-card:not([data-locked="true"]):not([data-selected="true"]):hover,
+body[data-phase="won"] .difficulty-card:not([data-locked="true"]):not([data-selected="true"]):hover,
+body[data-phase="lost"] .difficulty-card:not([data-locked="true"]):not([data-selected="true"]):hover {
+  border-color: var(--paper-border);
+  color: var(--paper-ink);
+}
+body[data-phase="paused"] .difficulty-card[data-selected="true"],
+body[data-phase="won"] .difficulty-card[data-selected="true"],
+body[data-phase="lost"] .difficulty-card[data-selected="true"] {
+  background-color: var(--paper-ink) !important;
+  background-image: none !important;
+  border: 1px solid var(--paper-ink) !important;
+  border-bottom: 2px solid var(--paper-stamp-red) !important;
+  color: #f4eee0 !important;
+  box-shadow: 0 2px 6px rgba(23, 19, 16, 0.25);
+}
+body[data-phase="paused"] .difficulty-card[data-selected="true"] .diff-level-text,
+body[data-phase="won"] .difficulty-card[data-selected="true"] .diff-level-text,
+body[data-phase="lost"] .difficulty-card[data-selected="true"] .diff-level-text {
+  color: #f4eee0 !important;
+}
+body[data-phase="paused"] .diff-lock-icon,
+body[data-phase="won"] .diff-lock-icon,
+body[data-phase="lost"] .diff-lock-icon {
+  color: var(--paper-ink-dim);
+}
+body[data-phase="paused"] .primary,
+body[data-phase="won"] .primary,
+body[data-phase="lost"] .primary {
+  order: 2;
 }
 
 body[data-phase="won"] .overlay,

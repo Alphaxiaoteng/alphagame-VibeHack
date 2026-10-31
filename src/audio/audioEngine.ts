@@ -37,7 +37,7 @@ export const SFX_URLS = {
 };
 export type SfxId = keyof typeof SFX_URLS;
 
-/** 用户手势后建立 AudioContext，驱动微恐医院 BGM、统一慢速阴冷广播语音与真实音效。 */
+/** 默认进入即开启声音与微恐背景音乐，支持浏览器自动播放与首次微交互瞬时解锁。 */
 export class AudioEngine {
   muted = false;
   ready = false;
@@ -52,6 +52,9 @@ export class AudioEngine {
   private currentVoice: AudioBufferSourceNode | null = null;
   private currentBgm: AudioBufferSourceNode | null = null;
   private currentBgmId: BgmId | null = null;
+  private bgmElement: HTMLAudioElement | null = null;
+  private targetBgmVolume = 0.72;
+  private unlockBound = false;
   private generation = 0;
   private active = false;
   private paused = false;
@@ -71,8 +74,9 @@ export class AudioEngine {
         this.master.connect(this.context.destination);
       }
       this.applyVolume();
-      void this.context.resume().catch(() => { this.issue = '声音未能启动，游戏仍可继续'; });
+      void this.context.resume().catch(() => {});
       if (!this.loading) this.loading = this.loadAllAssets();
+      this.bindAutoUnlock();
       return true;
     } catch {
       this.issue = '此浏览器无法启用声音，游戏仍可继续';
@@ -80,15 +84,37 @@ export class AudioEngine {
     }
   }
 
-  /** 首页交互后自动播放微恐深邃菜单主题 BGM */
+  private bindAutoUnlock(): void {
+    if (this.unlockBound || typeof window === 'undefined') return;
+    this.unlockBound = true;
+    const events = ['pointerdown', 'mousedown', 'mousemove', 'pointermove', 'touchstart', 'wheel', 'keydown', 'click'];
+    const tryResume = () => {
+      if (this.context && this.context.state === 'suspended' && !this.paused) {
+        void this.context.resume().catch(() => {});
+      }
+      if (this.bgmElement && this.bgmElement.paused && !this.paused && !this.muted) {
+        void this.bgmElement.play().catch(() => {});
+      }
+      const ctxRunning = !this.context || this.context.state === 'running';
+      const bgmPlaying = !this.bgmElement || !this.bgmElement.paused;
+      if (ctxRunning && bgmPlaying) {
+        for (const ev of events) window.removeEventListener(ev, tryResume, true);
+        this.unlockBound = false;
+      }
+    };
+    for (const ev of events) {
+      window.addEventListener(ev, tryResume, { capture: true, passive: true });
+    }
+  }
+
+  /** 进入页面默认立即播放微恐深邃菜单主题 BGM */
   startMenuBgm(): void {
-    if (this.active || this.currentBgmId === 'menu') return;
-    if (!this.ensureContext()) return;
-    this.playBgm('menu', 0.24);
+    this.ensureContext();
+    this.switchBgmTrack('menu', 0.72);
   }
 
   startRound(): void {
-    this.stopRound();
+    this.stopRoundNodes();
     this.active = true;
     this.paused = false;
     this.nextPlayerStep = 0;
@@ -100,12 +126,12 @@ export class AudioEngine {
     this.patrolSpoken = false;
     if (!this.ensureContext()) return;
     this.startHum();
-    this.playBgm('ambience', 0.28);
+    this.switchBgmTrack('ambience', 0.62);
     this.paDing();
     this.voice('start');
   }
 
-  stopRound(): void {
+  private stopRoundNodes(): void {
     this.generation += 1;
     this.active = false;
     for (const node of this.nodes) {
@@ -114,12 +140,24 @@ export class AudioEngine {
     this.nodes.clear();
     this.currentVoice = null;
     this.currentBgm = null;
-    this.currentBgmId = null;
+  }
+
+  stopRound(): void {
+    this.stopRoundNodes();
+    // 结算页保持微恐背景乐低回环绕，不陷入死寂
+    this.switchBgmTrack('menu', 0.56);
   }
 
   setPaused(paused: boolean): void {
     if (this.paused === paused) return;
     this.paused = paused;
+    if (this.bgmElement) {
+      // 暂停菜单下降低 BGM 音量保留恐怖氛围
+      this.bgmElement.volume = this.muted ? 0 : (paused ? this.targetBgmVolume * 0.45 : this.targetBgmVolume);
+      if (!paused && this.bgmElement.paused && !this.muted) {
+        void this.bgmElement.play().catch(() => {});
+      }
+    }
     if (!this.context) return;
     const operation = paused ? this.context.suspend() : this.context.resume();
     void operation.catch(() => { this.issue = '声音暂停状态未能切换'; });
@@ -131,7 +169,33 @@ export class AudioEngine {
     return this.muted;
   }
 
-  private playBgm(id: BgmId, volume: number): void {
+  private switchBgmTrack(id: BgmId, volume: number): void {
+    this.targetBgmVolume = volume;
+    if (typeof Audio !== 'undefined') {
+      if (!this.bgmElement) {
+        this.bgmElement = new Audio();
+        this.bgmElement.loop = true;
+        this.bgmElement.preload = 'auto';
+        this.bgmElement.autoplay = true;
+      }
+      const nextUrl = BGM_URLS[id];
+      if (this.currentBgmId !== id || !this.bgmElement.src) {
+        this.currentBgmId = id;
+        this.bgmElement.src = nextUrl;
+      }
+      this.bgmElement.muted = this.muted;
+      this.bgmElement.volume = this.muted ? 0 : (this.paused ? volume * 0.45 : volume);
+      if (this.bgmElement.paused && !this.muted) {
+        void this.bgmElement.play().catch(() => {
+          this.bindAutoUnlock();
+        });
+      }
+      return;
+    }
+    this.playWebAudioBgm(id, volume);
+  }
+
+  private playWebAudioBgm(id: BgmId, volume: number): void {
     if (!this.context || !this.master) return;
     const generation = this.generation;
     const startLoop = () => {
@@ -157,7 +221,7 @@ export class AudioEngine {
     else void this.loading?.then(startLoop);
   }
 
-  private playSfx(id: SfxId, volume = 0.65, playbackRate = 1.0): boolean {
+  private playSfx(id: SfxId, volume = 0.72, playbackRate = 1.0): boolean {
     if (!this.context || !this.master || this.paused) return false;
     const buffer = this.sfxBuffers.get(id);
     if (!buffer) return false;
@@ -186,7 +250,7 @@ export class AudioEngine {
       const source = this.context.createBufferSource();
       const gain = this.context.createGain();
       source.buffer = buffer;
-      gain.gain.value = 0.96;
+      gain.gain.value = 1.0;
       source.connect(gain);
       gain.connect(this.master);
       this.track(source);
@@ -198,40 +262,40 @@ export class AudioEngine {
   }
 
   doorSound(): void {
-    if (this.playSfx('doorSlam', 0.82)) return;
+    if (this.playSfx('doorSlam', 0.88)) return;
     this.tone(85, 0.22, 0.17, 'triangle');
     this.tone(160, 0.11, 0.09, 'triangle');
   }
 
   /** 门重开：电磁锁弹开与防火门滑轨音效 */
   doorOpenSound(): void {
-    if (this.playSfx('doorOpen', 0.72)) return;
+    if (this.playSfx('doorOpen', 0.78)) return;
     this.tone(150, 0.1, 0.09, 'triangle');
     this.tone(230, 0.16, 0.06, 'triangle');
   }
 
   /** 开灯：工业断路器合闸与镇流器电流声 */
   lightSwitch(): void {
-    if (this.playSfx('lightSwitch', 0.75)) return;
+    if (this.playSfx('lightSwitch', 0.82)) return;
     this.tone(1900, 0.022, 0.07, 'square');
     this.tone(1400, 0.03, 0.05, 'square');
   }
 
   /** 广播前的微恐失谐医院内线提示音 */
   paDing(): void {
-    if (this.playSfx('paChime', 0.62)) return;
+    if (this.playSfx('paChime', 0.72)) return;
     this.tone(660, 0.09, 0.075, 'sine');
     this.tone(880, 0.14, 0.055, 'sine');
   }
 
   alert(): void {
-    if (this.playSfx('dangerSting', 0.85)) return;
+    if (this.playSfx('dangerSting', 0.92)) return;
     this.tone(420, 0.16, 0.09, 'triangle');
     this.tone(600, 0.19, 0.045, 'sine');
   }
 
   chime(): void {
-    if (this.playSfx('escapeWin', 0.78)) return;
+    if (this.playSfx('escapeWin', 0.85)) return;
     this.tone(523.25, 0.24, 0.11);
     this.tone(659.25, 0.34, 0.07);
     this.tone(783.99, 0.4, 0.055);
@@ -244,13 +308,13 @@ export class AudioEngine {
     if (moved && game.elapsed >= this.nextPlayerStep) {
       const rate = 0.94 + Math.random() * 0.12;
       const played = game.player.sprinting
-        ? this.playSfx('sprint', 0.58, rate)
-        : this.playSfx('walk', 0.42, rate);
+        ? this.playSfx('sprint', 0.65, rate)
+        : this.playSfx('walk', 0.48, rate);
       if (!played) this.tone(game.player.sprinting ? 118 : 100, 0.075, 0.075);
       this.nextPlayerStep = game.elapsed + (game.player.sprinting ? 0.26 : 0.42);
     }
     if (game.player.sprinting && game.player.stamina < 18 && game.elapsed >= this.nextBreathStep) {
-      this.playSfx('breathGasp', 0.48);
+      this.playSfx('breathGasp', 0.55);
       this.nextBreathStep = game.elapsed + 5.5;
     }
     const gap = distance(game.player.position, game.guard.position);
@@ -258,7 +322,7 @@ export class AudioEngine {
     if (guardMoved && game.elapsed >= this.nextGuardStep) {
       const wait = secondsUntilFootstep(game.elapsed, game.guard.mode, gap);
       if (wait !== Infinity) {
-        const vol = Math.min(0.85, 0.65 / (1 + gap * 0.25));
+        const vol = Math.min(0.9, 0.72 / (1 + gap * 0.25));
         if (!this.playSfx('wardenStep', vol, 0.96 + Math.random() * 0.08)) {
           this.tone(70, 0.1, 0.1 / (1 + gap * 0.35));
         }
@@ -270,7 +334,7 @@ export class AudioEngine {
     if (game.elapsed >= this.nextBellStep) {
       const wait = secondsUntilGuardBell(game.elapsed, game.guard.mode, gap);
       if (wait !== Infinity) {
-        const vol = Math.min(0.88, 0.72 / (1 + gap * 0.18));
+        const vol = Math.min(0.92, 0.78 / (1 + gap * 0.18));
         if (!this.playSfx('wardenBell', vol)) {
           this.tone(880, 0.06, 0.05, 'square');
         }
@@ -293,6 +357,8 @@ export class AudioEngine {
       muted: this.muted,
       issue: this.issue,
       context: this.context?.state ?? 'not-started',
+      bgmTrack: this.currentBgmId,
+      bgmPlaying: this.bgmElement ? !this.bgmElement.paused : Boolean(this.currentBgm),
       decodedVoices: this.buffers.size,
       decodedBgm: this.bgmBuffers.size,
       decodedSfx: this.sfxBuffers.size,
@@ -324,7 +390,16 @@ export class AudioEngine {
   }
 
   private applyVolume(): void {
-    if (this.context && this.master) this.master.gain.setValueAtTime(this.muted ? 0 : 0.62, this.context.currentTime);
+    if (this.context && this.master) {
+      this.master.gain.setValueAtTime(this.muted ? 0 : 0.88, this.context.currentTime);
+    }
+    if (this.bgmElement) {
+      this.bgmElement.muted = this.muted;
+      this.bgmElement.volume = this.muted ? 0 : (this.paused ? this.targetBgmVolume * 0.45 : this.targetBgmVolume);
+      if (!this.muted && !this.paused && this.bgmElement.paused) {
+        void this.bgmElement.play().catch(() => {});
+      }
+    }
   }
 
   /** 医院底噪两层：空调低频隆隆 + 荧光灯镇流器嗡鸣，衬托 BGM 与脚步声。 */
@@ -370,7 +445,7 @@ export class AudioEngine {
   /** 安全门推开与锁扣弹开的厚重气动沉浸音效 */
   playDoorOpenSound(): void {
     if (!this.context || !this.master || this.muted) return;
-    if (this.playSfx('doorOpen', 0.85)) return;
+    if (this.playSfx('doorOpen', 0.88)) return;
     const now = this.context.currentTime;
     const clickOsc = this.context.createOscillator();
     const clickGain = this.context.createGain();
@@ -394,7 +469,6 @@ export class AudioEngine {
       if (this.currentVoice === source) this.currentVoice = null;
       if (this.currentBgm === source) {
         this.currentBgm = null;
-        this.currentBgmId = null;
       }
     };
   }

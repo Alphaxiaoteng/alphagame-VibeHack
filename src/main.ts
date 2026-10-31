@@ -37,6 +37,7 @@ function boot(): void {
   const debug = new URLSearchParams(location.search).get('debug') === '1';
   const game = new RoundsGame();
   const audio = new AudioEngine();
+  audio.startMenuBgm();
   const hospital = new HospitalRenderer();
   const follow = new FirstPersonCamera();
   // 第一人称：玩家模型不再出镜，只保留值班员。
@@ -73,6 +74,8 @@ function boot(): void {
   const footnote = element('overlay-footnote');
   const shiftLog = element('shift-log');
   const primary = element<HTMLButtonElement>('primary');
+  const restartRoundBtn = document.getElementById('restart-round') as HTMLButtonElement | null;
+  const restartRoundLabel = document.getElementById('restart-round-label');
   const pause = element<HTMLButtonElement>('pause');
   const mute = element<HTMLButtonElement>('mute');
   const stamina = element('stamina');
@@ -177,6 +180,8 @@ function boot(): void {
     hospital.resetExitDoor();
     resumeNote = '';
     unlockNotice = null;
+    game.phase = 'start';
+    game.setDifficulty(selectedDifficulty);
     game.start();
     audio.startRound(); // 必须直接在用户手势内 resume AudioContext
     follow.reset();
@@ -269,12 +274,17 @@ function boot(): void {
     const badge = document.getElementById('diff-current-badge');
     if (badge) badge.textContent = preset.name;
     const overlayCopy = document.getElementById('overlay-copy');
-    if (overlayCopy) {
-      overlayCopy.innerHTML = `屏息潜行 <strong class="highlight-timer">${preset.timeLimit} 秒</strong>，走出医院。`;
+    if (overlayCopy && game.phase === 'start') {
+      overlayCopy.innerHTML = `一款 <strong class="highlight-timer">3D 心理微恐潜行</strong> 逃生游戏<span class="briefing-subcopy">改写灯光、封门与广播，躲开夜间查房，存活 ${preset.timeLimit} 秒走出医院。</span>`;
     }
     const introSub = document.querySelector('.intro-sub');
     if (introSub) {
       introSub.innerHTML = `坚持 <strong>${preset.timeLimit} 秒</strong>，待东侧安全门通电后离开医院。`;
+    }
+    if (restartRoundLabel && game.phase === 'paused') {
+      restartRoundLabel.textContent = selectedDifficulty !== game.difficulty.id
+        ? `按「${preset.name}」难度重新进入`
+        : '重新进入本局';
     }
     for (const card of difficultyCards) {
       const id = card.dataset.difficulty as DifficultyId;
@@ -282,15 +292,20 @@ function boot(): void {
       const locked = !unlockedDifficulties.includes(id);
       if (locked) card.dataset.locked = 'true';
       else delete card.dataset.locked;
-      card.disabled = locked || game.phase === 'playing' || game.phase === 'paused';
+      card.disabled = locked || game.phase === 'playing';
     }
   }
   for (const card of difficultyCards) {
     card.addEventListener('click', () => {
       const id = card.dataset.difficulty as DifficultyId;
-      if (!unlockedDifficulties.includes(id) || game.phase === 'playing' || game.phase === 'paused') return;
+      if (!unlockedDifficulties.includes(id) || game.phase === 'playing') return;
       selectedDifficulty = id;
-      game.setDifficulty(id);
+      if (game.phase !== 'paused') {
+        game.setDifficulty(id);
+      } else {
+        const preset = DIFFICULTIES[id];
+        copy.innerHTML = `<p class="result-evaluation">已选「${preset.name}」难度（${preset.timeLimit}s），点击下方重新进入生效。</p>`;
+      }
       renderDifficultyCards();
       card.blur();
     });
@@ -571,13 +586,14 @@ function boot(): void {
     overlay.hidden = game.phase === 'playing' || escapingCutscene.active;
     renderShiftLog(game.phase);
     renderDifficultyCards();
+    if (restartRoundBtn) restartRoundBtn.hidden = game.phase !== 'paused';
     pause.disabled = game.phase !== 'playing' && game.phase !== 'paused';
     pause.innerHTML = game.phase === 'paused' ? '继续 <kbd>Esc</kbd>' : '暂停 <kbd>Esc</kbd>';
     help.hidden = true;
     if (game.phase === 'paused') {
       kicker.textContent = '时钟已冻结';
       title.textContent = '值班暂停。';
-      copy.innerHTML = `<p class="result-evaluation">${resumeNote || '准备就绪后，点击继续返回走廊。'}</p>`;
+      copy.innerHTML = `<p class="result-evaluation">${resumeNote || '可继续当前巡查，或切换下方难度重新进入。'}</p>`;
       primary.innerHTML = '<span>继续值班</span><span class="arrow-icon" aria-hidden="true">→</span>';
       footnote.textContent = '';
     } else if (game.phase === 'won') {
@@ -757,6 +773,7 @@ function boot(): void {
     else if (game.phase === 'start') startIntroSequence();
     else beginRound();
   });
+  if (restartRoundBtn) press(restartRoundBtn, beginRound);
   press(pause, togglePause);
   for (const id of COMMAND_IDS) {
     press(commandButtons[id], () => activateCommand(id));
