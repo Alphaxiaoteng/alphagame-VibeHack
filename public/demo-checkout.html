@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waffo Pancake 收银台 (演示环境)</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(15, 23, 42, 0.95);
+      --border: rgba(56, 189, 248, 0.25);
+      --accent: #38bdf8;
+      --gold: #f59e0b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 30%, #1e293b 0%, #090d16 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      color: var(--text);
+      padding: 20px;
+    }
+    .checkout-card {
+      width: 440px;
+      max-width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(56, 189, 248, 0.15);
+      backdrop-filter: blur(20px);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+    }
+    .brand { font-size: 13px; font-weight: 800; letter-spacing: 2px; color: var(--accent); }
+    .badge {
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: var(--gold);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    .item-title { font-size: 20px; font-weight: 800; margin: 0 0 6px; }
+    .item-desc { font-size: 13px; color: var(--muted); margin: 0 0 20px; line-height: 1.5; }
+    .price-box {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 24px;
+    }
+    .price-label { font-size: 12px; color: var(--muted); }
+    .price-amount { font-size: 28px; font-weight: 800; color: #ffffff; }
+    .price-currency { font-size: 13px; color: var(--accent); margin-left: 4px; }
+    .card-info {
+      background: rgba(11, 15, 25, 0.7);
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 24px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .card-info strong { color: #fff; }
+    .pay-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(2, 132, 199, 0.4);
+      transition: all 0.2s;
+    }
+    .pay-btn:hover {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(56, 189, 248, 0.5);
+    }
+    .cancel-link {
+      display: block;
+      text-align: center;
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .cancel-link:hover { color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="checkout-card">
+    <div class="header">
+      <span class="brand">WAFFO PANCAKE</span>
+      <span class="badge">TESTPAY / 演示沙箱</span>
+    </div>
+    <h1 class="item-title" id="p-name">02 夜隐寮 (买断解锁)</h1>
+    <p class="item-desc">《查房》买断制扩展内容，付款后永久绑定这台设备的本地账本，无任何后续订阅扣费。</p>
+    <div class="price-box">
+      <span class="price-label">待付买断总额</span>
+      <div>
+        <span class="price-amount" id="p-price">0.99</span>
+        <span class="price-currency">USD</span>
+      </div>
+    </div>
+    <div class="card-info">
+      <div>测试卡号：<strong>4576 7500 0000 0110</strong></div>
+      <div style="margin-top:4px;">有效期：<strong>12/28</strong> &nbsp; CVC：<strong>888</strong></div>
+    </div>
+    <button type="button" class="pay-btn" id="pay-btn">确认支付 $0.99 (模拟出单)</button>
+    <a href="/" class="cancel-link">取消并返回游戏</a>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const sku = params.get('sku') || 'LEVEL_DOJO';
+    const ref = params.get('ref') || '';
+    const name = params.get('name') || '02 夜隐寮';
+    const price = params.get('price') || '0.99';
+
+    document.getElementById('p-name').textContent = name + ' (买断解锁)';
+    document.getElementById('p-price').textContent = price;
+
+    const btn = document.getElementById('pay-btn');
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = '正在出单与记账…';
+      try {
+        const resp = await fetch('/api/demo-pay', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ sku, ref })
+        });
+        const d = await resp.json();
+        if (d.ok) {
+          btn.textContent = '支付成功！正在返回游戏…';
+          setTimeout(() => {
+            location.href = '/?paid=1';
+          }, 800);
+        } else {
+          alert('支付失败: ' + (d.error || '未知'));
+          btn.disabled = false;
+        }
+      } catch (e) {
+        alert('网络异常: ' + e.message);
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

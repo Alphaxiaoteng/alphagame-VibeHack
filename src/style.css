@@ -396,12 +396,6 @@ body[data-touch="true"] .map-panel { display: none; }
   box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.5), 0 36px 80px -15px rgba(0, 0, 0, 0.8), 0 0 50px rgba(56, 189, 248, 0.12);
   border-radius: 28px;
   color: var(--text-primary);
-  transition: opacity 0.25s ease, transform 0.25s ease;
-}
-body[data-config-open="true"] .briefing {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.98);
 }
 .briefing-head {
   display: flex;
@@ -1073,20 +1067,32 @@ body[data-touch="true"] .keyboard-only { display: none; }
 }
 .shop-summary-btn .gear-icon { font-size: 12px; }
 
-/* 独立弹窗：战备整备舱 */
+/* 独立弹窗：战备整备舱 (顶层全屏模态) */
 .shop-config-layer {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(8, 14, 22, 0.82);
-  backdrop-filter: blur(12px);
+  padding: 20px;
+}
+.shop-config-layer[hidden] {
+  display: none !important;
 }
 .shop-config-card {
+  position: relative;
+  z-index: 1;
   width: 620px;
   max-width: 95vw;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border-bright);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 40px rgba(56, 189, 248, 0.2);
+  border-radius: 24px;
+  overflow: hidden;
+  animation: modalEnter 0.25s ease-out;
 }
 .config-title-block {
   display: flex;

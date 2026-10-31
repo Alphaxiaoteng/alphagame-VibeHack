@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import type { SkinId } from '../core/economy';
-import { ROLE_GLB_URLS } from '../render/gltfCharacter';
+import { ROLE_IDLE_GLB_URLS } from '../render/gltfCharacter';
 
 export class Role3DPreview {
   readonly domElement: HTMLCanvasElement;
@@ -71,7 +71,7 @@ export class Role3DPreview {
       return;
     }
 
-    const url = ROLE_GLB_URLS[skinId];
+    const url = ROLE_IDLE_GLB_URLS[skinId];
     if (!url) return;
 
     try {
@@ -83,9 +83,9 @@ export class Role3DPreview {
       box.getSize(size);
       const center = new THREE.Vector3();
       box.getCenter(center);
-      const scale = size.y > 0 ? 1.4 / size.y : 1;
+      const scale = size.y > 0 ? 1.25 / size.y : 1;
 
-      const clip = gltf.animations.find(a => a.name.toLowerCase().includes('walk')) ?? gltf.animations[0];
+      const clip = gltf.animations.find(a => a.name.toLowerCase().includes('idle')) ?? gltf.animations[0];
       if (clip) {
         this.cache.set(skinId, { model, clip, scale, center });
         if (this.currentSkin === skinId) {
@@ -114,29 +114,42 @@ export class Role3DPreview {
     const pivot = new THREE.Group();
     pivot.add(clone);
     // 固定正面朝向镜头（微侧 0.08 弧度增���三维层次感，永远正面展示）
-    pivot.rotation.y = 0;
+    pivot.rotation.y = -Math.PI / 2;
     this.currentModel = pivot;
     this.scene.add(pivot);
 
+    // 驱动自然的呼吸待命（Idle）动作，双臂自然下垂，绝无位移，绝无十字架 T-Pose
     this.mixer = new THREE.AnimationMixer(clone);
     const action = this.mixer.clipAction(cached.clip);
     action.reset();
     action.setEffectiveTimeScale(1.0);
     action.setEffectiveWeight(1.0);
     action.play();
+
+    this.renderFrame();
   }
 
+  private readonly bbox = new THREE.Box3();
+  private readonly targetCenter = new THREE.Vector3();
   private lastTime = performance.now();
+
+  private renderFrame(): void {
+    if (this.currentModel) {
+      this.bbox.setFromObject(this.currentModel);
+      this.bbox.getCenter(this.targetCenter);
+      this.camera.position.set(this.targetCenter.x, this.targetCenter.y + 0.08, this.targetCenter.z + 2.15);
+      this.camera.lookAt(this.targetCenter.x, this.targetCenter.y + 0.04, this.targetCenter.z);
+    }
+    this.renderer.render(this.scene, this.camera);
+  }
+
   private loop(now: number): void {
     if (!this.active) return;
     const dt = Math.min(0.1, (now - this.lastTime) / 1000);
     this.lastTime = now;
 
-    // 驱动骨骼动画（原地踏步走动）
     if (this.mixer) this.mixer.update(dt);
-    // 锁定正面朝向，不再自转背对玩家
-
-    this.renderer.render(this.scene, this.camera);
+    this.renderFrame();
     requestAnimationFrame(this.loop);
   }
 }

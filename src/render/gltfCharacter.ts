@@ -10,10 +10,20 @@ import standardGlb from '../../assets/art/models/role_standard_walk.glb?url';
 import indigoGlb from '../../assets/art/models/role_indigo_walk.glb?url';
 import vermilionGlb from '../../assets/art/models/role_vermilion_walk.glb?url';
 
+import standardIdleGlb from '../../assets/art/models/role_standard_idle.glb?url';
+import indigoIdleGlb from '../../assets/art/models/role_indigo_idle.glb?url';
+import vermilionIdleGlb from '../../assets/art/models/role_vermilion_idle.glb?url';
+
 export const ROLE_GLB_URLS: Record<SkinId, string> = {
   'standard': standardGlb,
   'shinobi-indigo': indigoGlb,
   'scroll-vermilion': vermilionGlb,
+};
+
+export const ROLE_IDLE_GLB_URLS: Record<SkinId, string> = {
+  'standard': standardIdleGlb,
+  'shinobi-indigo': indigoIdleGlb,
+  'scroll-vermilion': vermilionIdleGlb,
 };
 
 export class GltfCharacterRig {

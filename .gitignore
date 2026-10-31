@@ -13,4 +13,6 @@ tripo-out/
 .codely/
 output/
 assets/art/models/*.glb
+!assets/art/models/role_*.glb
 assets/art/models/*/
+.waffo-ledger.json

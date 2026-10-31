@@ -13,6 +13,7 @@ import {
   createWaffoClient,
   defaultLedgerPath,
   ensureProducts,
+  grant,
   handleWebhook,
   ownedSkus,
   readLedger,
@@ -135,7 +136,14 @@ async function route(state: ApiState, req: IncomingMessage, res: ServerResponse)
       return true;
     }
     if (!state.config) {
-      sendJson(res, 503, { error: state.configError ?? 'Waffo 未配置' });
+      // 演示环境兜底：提供真实模拟收银台跳转，跑通端到端买断、支付跳转与就地解锁全流程
+      const product = PRODUCTS.find(p => p.sku === sku);
+      const demoUrl = `${originOf(req, payload.origin)}/demo-checkout.html?sku=${encodeURIComponent(sku)}&ref=${encodeURIComponent(ref)}&name=${encodeURIComponent(product?.name ?? 'DLC')}&price=${product?.price ?? '0.99'}`;
+      sendJson(res, 200, {
+        checkoutUrl: demoUrl,
+        sessionId: `demo_${Date.now()}`,
+        demo: true,
+      });
       return true;
     }
     try {
@@ -155,6 +163,25 @@ async function route(state: ApiState, req: IncomingMessage, res: ServerResponse)
     } catch (error) {
       sendJson(res, 502, { error: (error as Error).message });
     }
+    return true;
+  }
+
+  // 演示环境收银台快速支付模拟通道：将权益直接落入本地账本并重定向回游戏
+  if (path === '/api/demo-pay' && req.method === 'POST') {
+    let payload: { sku?: string; ref?: string };
+    try {
+      payload = JSON.parse(await readBody(req)) as typeof payload;
+    } catch {
+      sendJson(res, 400, { error: '请求体非法' });
+      return true;
+    }
+    if (payload.sku && isProductSku(payload.sku) && payload.ref) {
+      grant(state.ledger, payload.ref, payload.sku);
+      writeLedger(state.ledgerPath, state.ledger);
+      sendJson(res, 200, { ok: true, granted: true });
+      return true;
+    }
+    sendJson(res, 400, { error: '参数不合法' });
     return true;
   }
 

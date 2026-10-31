@@ -228,8 +228,8 @@ export class HospitalRenderer {
           this.nurseCounterSlot.slot.add(model.clone(true));
         }
       } else if (category === 'warden') {
-        // 守卫采用包含肢体摆动、屈膝与巡逻手电筒的 HumanRig 骨架，保持动作生动自然
-        this.guardHuman.body.visible = true;
+        // 如果已加载 Tripo 3D 动画值班员模型，保持程序化身体隐藏，彻底根除双猎人重影 BUG
+        this.guardHuman.body.visible = !this.wardenAnimatedModel;
         if (this.wardenModelInstance) {
           this.wardenModelInstance.removeFromParent();
           this.wardenModelInstance = null;
@@ -326,6 +326,7 @@ export class HospitalRenderer {
     
     // 驱动 Tripo 3D 骨骼动画值班员
     if (this.wardenMixer) {
+      if (this.guardHuman.body.visible) this.guardHuman.body.visible = false;
       this.wardenMixer.update(dt);
       const isMoving = guardMeters > 0.0003;
       const isChase = game.guard.mode === 'chase';

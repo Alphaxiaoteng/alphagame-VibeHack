@@ -427,18 +427,9 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
       });
       const payload = (await response.json()) as { checkoutUrl?: string; error?: string };
       if (!response.ok || !payload.checkoutUrl) {
-        if (response.status === 503) {
-          showBuyModal(
-            `解锁 ${product?.name ?? '付费内容'}`,
-            `本关卡与角色已完成 Waffo 买断接入架构与视觉制作。当前处于赛事单机演示环境。`,
-            sku,
-            '接口已就绪 · 暂未开放公网扣费'
-          );
-          buy.disabled = false;
-          return;
-        }
         throw new Error(payload.error ?? `下单失败（HTTP ${response.status}）`);
       }
+      // 成功获得收银台 URL，立即触发页面跳转！
       window.location.href = payload.checkoutUrl;
     } catch (error) {
       buy.disabled = false;
