@@ -16,7 +16,6 @@
           <div class="identity"><strong>查房</strong><span class="mono">ROUNDS / 01</span><span class="stage-label">夜间巡查 / 住院部</span></div>
           <div class="timer-block"><span id="timer-label">安全门通电</span><strong id="timer" class="mono">60<span>s</span></strong></div>
           <div class="toolbar">
-            <button id="btn-pitch" type="button" title="查看路演幻灯片 PPT">路演 PPT</button>
             <button id="btn-qr" type="button" title="手机扫码直接体验">手机扫码</button>
             <button id="mute" type="button" aria-pressed="false" title="静音或打开声音"><kbd>M</kbd> 声音</button>
             <button id="pause" type="button" disabled title="暂停"><kbd>Esc</kbd> 暂停</button>
@@ -58,28 +57,81 @@
       </div>
       <section id="overlay" class="overlay" aria-labelledby="overlay-title">
         <div class="briefing">
-          <div class="briefing-head"><span class="mono">夜间值班记录 / 001</span><span class="phase-badge">住院部 · 夜班</span></div>
+          <div class="briefing-head">
+            <div class="brand-pill"><span class="brand-name">ROUNDS</span><span class="sep">/</span><span class="mono">查房</span></div>
+            <span class="phase-badge">夜班巡查 · 01</span>
+          </div>
           <p id="overlay-kicker" class="eyebrow">备用电源正在充能</p>
           <h1 id="overlay-title">今晚，走出医院。</h1>
-          <p id="overlay-copy" class="briefing-copy">躲开值班员，活过 <strong>45 秒</strong>。<br />安全门亮起后，跑到东侧门前逃生。</p>
-          <div id="start-help" class="briefing-help"><div><kbd>W A S D</kbd><span>相对镜头移动</span></div><div><kbd>Shift</kbd><span>短暂奔跑，体力用完需松开</span></div><div><kbd>鼠标右键</kbd><span>按住拖动转镜头，无需锁定鼠标</span></div><div><kbd>触摸板双指</kbd><span>左右滑动转镜头</span></div><div id="touch-help" hidden><kbd>左下摇杆</kbd><span>拖动移动 · 右侧「跑」加速 · 点指令卡改规则</span></div></div>
+          <p id="overlay-copy" class="briefing-copy">躲开值班员，坚持 <strong class="highlight-timer">45 秒</strong> 通电逃生。</p>
+          
+          <!-- 正方形按键游戏 UI -->
+          <div id="start-help" class="gamepad-guide" aria-label="操作按键指南">
+            <div class="key-cluster wasd-group">
+              <div class="wasd-layout">
+                <div class="key-row key-row-top">
+                  <span class="key-cap square-key">W</span>
+                </div>
+                <div class="key-row key-row-bottom">
+                  <span class="key-cap square-key">A</span>
+                  <span class="key-cap square-key">S</span>
+                  <span class="key-cap square-key">D</span>
+                </div>
+              </div>
+              <span class="key-action-label">移动</span>
+            </div>
+
+            <div class="guide-divider" aria-hidden="true"></div>
+
+            <div class="key-cluster actions-group">
+              <div class="action-key-item">
+                <span class="key-cap pill-key">Shift</span>
+                <span class="key-action-label">奔跑</span>
+              </div>
+              <div class="action-key-item">
+                <span class="key-cap mouse-key">
+                  <svg class="mouse-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="5" y="2" width="14" height="20" rx="7"></rect>
+                    <line x1="12" y1="6" x2="12" y2="10"></line>
+                    <path d="M12 2v8h7" fill="rgba(56, 189, 248, 0.45)"></path>
+                  </svg>
+                  右键拖动
+                </span>
+                <span class="key-action-label">旋转视角</span>
+              </div>
+            </div>
+
+            <div id="touch-help" class="touch-hint-pill" hidden>
+              <span>触控模式：左下虚拟摇杆移动 · 右侧奔跑</span>
+            </div>
+          </div>
+
           <div id="difficulty-picker" class="difficulty-picker" aria-label="选择值班难度">
-            <button type="button" class="difficulty-card" data-difficulty="intern"><strong>见习夜班</strong><small>值班员刚接手 · 反应慢半拍</small></button>
-            <button type="button" class="difficulty-card" data-difficulty="standard"><strong>标准夜班</strong><small>他熟悉这栋楼 · 当前平衡</small></button>
+            <button type="button" class="difficulty-card" data-difficulty="intern">
+              <strong>见习夜班</strong>
+              <small>反应慢半拍 · 视距较近</small>
+            </button>
+            <button type="button" class="difficulty-card" data-difficulty="standard">
+              <strong>标准夜班</strong>
+              <small>熟悉楼层 · 正常巡查速度</small>
+            </button>
             <button type="button" class="difficulty-card" data-difficulty="graveyard" data-locked="true">
-              <strong>高危夜巡 <svg class="lock-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></strong>
-              <small>他守了十年 · 耳聪目明</small>
+              <strong>高危夜巡 <svg class="lock-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></strong>
+              <small>耳聪目明 · 守备极严</small>
               <em class="lock-hint">通关标准夜班解锁</em>
             </button>
           </div>
-          <button id="primary" class="primary" type="button">开始值班 <span aria-hidden="true">→</span></button>
+
+          <button id="primary" class="primary" type="button">
+            <span>开始逃生</span>
+            <span class="arrow-icon" aria-hidden="true">→</span>
+          </button>
+
           <div class="briefing-actions-secondary">
-            <button id="briefing-qr" type="button" class="subtle-link">手机扫码玩</button>
-            <span class="sep">/</span>
-            <button id="briefing-pitch" type="button" class="subtle-link">项目路演 PPT</button>
+            <button id="briefing-qr" type="button" class="subtle-link">手机扫码即玩</button>
           </div>
-          <p class="boot-note" aria-live="polite">正在载入值班室（three.js 场景约 0.6 MB）… 按钮就绪后自动亮起。</p>
-          <p id="overlay-footnote" class="briefing-footnote">1 开灯：你也会暴露 · 2 封门：你也要绕路 · 3 广播：先躲开视线。可按键，也可点击下方卡片。</p>
+
+          <p id="overlay-footnote" class="briefing-footnote" hidden></p>
           <div id="shift-log" class="shift-log" hidden></div>
         </div>
       </section>

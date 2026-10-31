@@ -178,10 +178,14 @@ export class HospitalRenderer {
     this.buildDoors();
     this.mergeStaticGeometry();
     this.scene.add(this.playerRig, this.guardRig, this.route);
-    // 移除进入游戏时的主线程阻塞式全量 GLB 同步，根除 1-2 秒白屏卡顿，保证 0ms 瞬间启动与 60 FPS
+    // 注册资产热切换监听
     AssetRegistry.get().subscribe(() => {
       this.syncEffectiveAssets().catch((e) => console.warn('Asset change sync failed:', e));
     });
+    // 首帧程序化网格 0ms 瞬间渲染，随后后台空闲异步自动将真实 3D 模型装配至插槽，零白屏且恒定 60 FPS
+    setTimeout(() => {
+      this.syncEffectiveAssets().catch((e) => console.warn('Asset initial sync failed:', e));
+    }, 120);
     this.searchRing = new THREE.Mesh(
       new THREE.RingGeometry(0.62, 0.74, 40),
       new THREE.MeshBasicMaterial({ color: 0xb67a52, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }),
@@ -365,28 +369,45 @@ export class HospitalRenderer {
 
     const cabinetMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.45, metalness: 0.7 });
     const silverTrimMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.25, metalness: 0.85 });
-    const glassMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.28, depthWrite: false });
+    const glassMat = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      roughness: 0.02,
+      metalness: 0.05,
+      transparent: true,
+      opacity: 0.15,
+      depthWrite: false,
+    });
 
-    // 柜体外框壳体
-    const cabinetHousing = box(0.58, 0.82, 0.18, cabinetMat, 0, 0, -0.01, 0.02);
-    station.add(cabinetHousing);
-
-    // 柜体背板深黑衬底（仅厚 0.01m 紧贴后壁，绝不遮挡灭火器罐体）
-    const backWall = box(0.54, 0.78, 0.01, new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.95 }), 0, 0, -0.09);
+    // 柜体空心箱身（后板 + 顶板 + 底板 + 左板 + 右板，中空通透，绝不遮挡内部 3D 灭火器）
+    const backWall = box(0.58, 0.82, 0.015, new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.95 }), 0, 0, -0.09);
     station.add(backWall);
+    const topPlate = box(0.58, 0.018, 0.18, cabinetMat, 0, 0.40, 0);
+    station.add(topPlate);
+    const bottomPlate = box(0.58, 0.018, 0.18, cabinetMat, 0, -0.40, 0);
+    station.add(bottomPlate);
+    const leftPlate = box(0.018, 0.82, 0.18, cabinetMat, -0.285, 0, 0);
+    station.add(leftPlate);
+    const rightPlate = box(0.018, 0.82, 0.18, cabinetMat, 0.285, 0, 0);
+    station.add(rightPlate);
 
-    // 底座托板
-    const shelf = box(0.54, 0.02, 0.16, cabinetMat, 0, -0.38, 0);
-    station.add(shelf);
+    // 门框镂空中空边框（上、下、左、右 4 根细边压条，中心敞亮透视）
+    const frameTop = box(0.56, 0.05, 0.012, silverTrimMat, 0, 0.365, 0.09);
+    const frameBottom = box(0.56, 0.05, 0.012, silverTrimMat, 0, -0.365, 0.09);
+    const frameLeft = box(0.05, 0.68, 0.012, silverTrimMat, -0.255, 0, 0.09);
+    const frameRight = box(0.05, 0.68, 0.012, silverTrimMat, 0.255, 0, 0.09);
+    station.add(frameTop, frameBottom, frameLeft, frameRight);
 
-    // 观察窗边框与透明钢化玻璃门
-    const doorFrame = box(0.54, 0.78, 0.015, silverTrimMat, 0, 0, 0.09, 0.01);
-    station.add(doorFrame);
-    const glassWindow = box(0.44, 0.68, 0.004, glassMat, 0, 0, 0.095);
+    // 观察窗超清钢化玻璃门
+    const glassWindow = box(0.48, 0.70, 0.003, glassMat, 0, 0, 0.092);
     station.add(glassWindow);
 
+    // 箱内顶部暖白微光探灯（照亮 3D 灭火器大红金属罐体与气压表）
+    const cabinetLight = new THREE.PointLight(0xffedd5, 1.8, 1.5);
+    cabinetLight.position.set(0, 0.32, 0.02);
+    station.add(cabinetLight);
+
     // 不锈钢把手
-    const handle = box(0.018, 0.12, 0.024, silverTrimMat, 0.22, 0, 0.105, 0.004);
+    const handle = box(0.018, 0.12, 0.024, silverTrimMat, 0.24, 0, 0.105, 0.004);
     station.add(handle);
 
     // 真实 3D 灭火器总成（首帧使用高保真 3D 网格，同时异步载入 Tripo P2 游戏级 GLB）

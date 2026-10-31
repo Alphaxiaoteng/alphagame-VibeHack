@@ -39,6 +39,9 @@ function boot(): void {
   const follow = new FirstPersonCamera();
   // 第一人称：玩家模型不再出镜，只保留值班员。
   hospital.playerRig.visible = false;
+  (window as any).__ROUNDS_GAME__ = game;
+  (window as any).__ROUNDS_FOLLOW__ = follow;
+  (window as any).__ROUNDS_HOSPITAL__ = hospital;
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
