@@ -268,7 +268,7 @@ function boot(): void {
     if (badge) badge.textContent = preset.name;
     const overlayCopy = document.getElementById('overlay-copy');
     if (overlayCopy && game.phase === 'start') {
-      overlayCopy.innerHTML = `一款 <strong class="highlight-timer">3D 心理微恐潜行</strong> 逃生游戏<span class="briefing-subcopy">改写灯光、封门与广播，躲开夜间查房，存活 ${preset.timeLimit} 秒走出医院。</span>`;
+      overlayCopy.innerHTML = `一款<strong class="highlight-timer">心理微恐潜行</strong> 逃生3D 游戏<span class="briefing-subcopy">改写灯光、封门与广播，躲开夜间查房，存活 ${preset.timeLimit} 秒走出医院。</span>`;
     }
     const introSub = document.querySelector('.intro-sub');
     if (introSub) {
