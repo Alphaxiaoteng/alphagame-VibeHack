@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EXIT_APPROACH, GUARD_RADIUS, GUARD_SPAWN, NO_INPUT, PLAYER_SPAWN } from '../src/core/config';
+import { EXIT_APPROACH, GUARD_RADIUS, GUARD_SPAWN, NO_INPUT, PATROL_SPEED, PLAYER_SPAWN, TIME_LIMIT } from '../src/core/config';
 import { RoundsGame } from '../src/core/state';
 import { HospitalMap, distance } from '../src/core/map';
 import { Player } from '../src/core/player';
@@ -54,15 +54,17 @@ describe('第一阶段胜负、计时与重开', () => {
     game.start();
     game.tick(20, walk);
     expect(game.elapsed).toBeCloseTo(0.1);
-    expect(game.player.position.x).toBeCloseTo(10.34);
+    // 平滑起步：0.1 秒内应已位移，但尚未达到满速位移。
+    expect(game.player.position.x).toBeGreaterThan(10);
+    expect(game.player.position.x).toBeLessThan(10.34);
     game.tick(Number.NaN, walk);
     game.tick(-5, walk);
     expect(game.elapsed).toBeCloseTo(0.1);
   });
 
-  it('60 秒之前站在安全门口不能获胜', () => {
+  it('倒计时结束前站在安全门口不能获胜', () => {
     const game = safeGame();
-    advance(game, 59);
+    advance(game, TIME_LIMIT - 1);
     game.player.position = { ...EXIT_APPROACH };
     game.guard.position = { x: 4.5, z: 17.5 };
     game.guard.replan(game.map);
@@ -71,9 +73,9 @@ describe('第一阶段胜负、计时与重开', () => {
     expect(game.phase).toBe('playing');
   });
 
-  it('60 秒只解锁，不自动判胜；必须亲自进入门口触发区', () => {
+  it('倒计时只解锁，不自动判胜；必须亲自进入门口触发区', () => {
     const game = safeGame();
-    advance(game, 60);
+    advance(game, TIME_LIMIT);
     expect(game.remaining).toBe(0);
     expect(game.exitUnlocked).toBe(true);
     expect(game.phase).toBe('playing');
@@ -105,7 +107,7 @@ describe('第一阶段胜负、计时与重开', () => {
 
   it('同一更新既触门又被抓，优先失败且不会二次结算', () => {
     const game = safeGame();
-    advance(game, 60);
+    advance(game, TIME_LIMIT);
     game.drainEvents();
     game.player.position = { ...EXIT_APPROACH };
     game.guard.position = { x: 26.35, z: 11.5 };
@@ -121,7 +123,7 @@ describe('第一阶段胜负、计时与重开', () => {
   for (const terminal of ['won', 'lost'] as const) {
     it(`${terminal} 后冻结，重开恢复位置、计时、门、体力及事件`, () => {
       const game = safeGame();
-      advance(game, 60);
+      advance(game, TIME_LIMIT);
       game.setDoor('A', true);
       game.player.stamina = 0.2;
       if (terminal === 'won') {
@@ -143,7 +145,7 @@ describe('第一阶段胜负、计时与重开', () => {
       expect(game.guard.position).toEqual(guard);
       game.restart();
       expect(game.phase).toBe('playing');
-      expect(game.remaining).toBe(60);
+      expect(game.remaining).toBe(TIME_LIMIT);
       expect(game.exitUnlocked).toBe(false);
       expect(game.map.closedDoor).toBeNull();
       expect(game.player.position).toEqual(PLAYER_SPAWN);
@@ -155,7 +157,7 @@ describe('第一阶段胜负、计时与重开', () => {
 
   it('30 秒、10 秒和解锁语音事件每局各发一次', () => {
     const game = safeGame();
-    advance(game, 65);
+    advance(game, TIME_LIMIT + 5);
     const types = game.drainEvents().map(event => event.type);
     for (const type of ['warning30', 'warning10', 'exitUnlocked']) {
       expect(types.filter(value => value === type)).toHaveLength(1);
@@ -178,10 +180,11 @@ describe('移动方向与体力', () => {
     const map = new HospitalMap();
     const player = new Player();
     player.update(0.1, walk, map);
-    expect(player.position.x).toBeCloseTo(10.34);
+    expect(player.position.x).toBeGreaterThan(10);
+    expect(player.position.x).toBeLessThan(10.34);
     const z = player.position.z;
     player.update(0.1, { ...NO_INPUT, right: 1 }, map);
-    expect(player.position.z).toBeCloseTo(z + 0.34);
+    expect(player.position.z).toBeGreaterThan(z);
   });
 
   it('转镜头后 W 随镜头移动，斜向输入不加速', () => {
@@ -189,10 +192,13 @@ describe('移动方向与体力', () => {
     const player = new Player();
     player.position = { x: 25.5, z: 8 };
     player.update(0.1, { ...walk, yaw: Math.PI / 2 }, map);
-    expect(player.position.z).toBeCloseTo(8.34);
+    expect(player.position.z).toBeGreaterThan(8);
+    expect(player.position.z).toBeLessThan(8.34);
     const before = { ...player.position };
     player.update(0.1, { ...walk, right: 1 }, map);
-    expect(distance(before, player.position)).toBeCloseTo(0.34);
+    // 斜向输入归一化：持续位移但不超过满速。
+    expect(distance(before, player.position)).toBeGreaterThan(0.05);
+    expect(distance(before, player.position)).toBeLessThan(0.35);
   });
 
   it('奔跑恰好持续三秒，耗尽后一直按 Shift 也只能走', () => {
@@ -200,10 +206,13 @@ describe('移动方向与体力', () => {
     const player = new Player();
     for (let frame = 0; frame < 180; frame++) player.update(1 / 60, run, map);
     expect(player.stamina).toBeCloseTo(0);
-    expect(player.position.x).toBeCloseTo(25);
+    expect(player.position.x).toBeGreaterThan(24.3);
+    expect(player.position.x).toBeLessThan(25);
     const x = player.position.x;
     player.update(0.1, run, map);
-    expect(player.position.x - x).toBeCloseTo(0.34);
+    // 耗尽后立即降为步行：步长介于步行与奔跑之间，绝不能继续按 0.5 前进。
+    expect(player.position.x - x).toBeGreaterThan(0.3);
+    expect(player.position.x - x).toBeLessThan(0.5);
     expect(player.sprinting).toBe(false);
   });
 
@@ -227,6 +236,25 @@ describe('移动方向与体力', () => {
     player.update(0.1, NO_INPUT, map);
     player.update(0.1, run, map);
     expect(player.sprinting).toBe(true);
+  });
+
+  it('起步平滑加速、松手平滑滑停，不瞬移不滑步', () => {
+    const map = new HospitalMap();
+    const player = new Player();
+    player.update(0.1, walk, map);
+    const eased = player.position.x - 10;
+    expect(eased).toBeGreaterThan(0.05);
+    expect(eased).toBeLessThan(0.34);
+    for (let frame = 0; frame < 120; frame++) player.update(1 / 60, walk, map);
+    const settled = player.position.x;
+    player.update(1 / 60, walk, map);
+    expect(player.position.x - settled).toBeCloseTo(3.4 / 60, 2);
+    player.update(1 / 60, NO_INPUT, map);
+    expect(player.position.x).toBeGreaterThan(settled + 3.4 / 60);
+    for (let frame = 0; frame < 120; frame++) player.update(1 / 60, NO_INPUT, map);
+    const stopped = player.position.x;
+    player.update(1 / 60, NO_INPUT, map);
+    expect(player.position.x).toBeCloseTo(stopped, 5);
   });
 });
 
@@ -261,7 +289,7 @@ describe('临时路点巡逻（不是第二阶段感知 AI）', () => {
       const before = { ...guard.position };
       guard.update(1 / 60, map);
       expect(map.canOccupy(guard.position, GUARD_RADIUS)).toBe(true);
-      expect(distance(before, guard.position)).toBeLessThanOrEqual(2.5 / 60 + 0.001);
+      expect(distance(before, guard.position)).toBeLessThanOrEqual(PATROL_SPEED / 60 + 0.001);
     }
     expect(distance(start, guard.position)).toBeGreaterThan(5);
   });

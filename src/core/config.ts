@@ -29,7 +29,7 @@ export const NO_INPUT: PlayerInput = { forward: 0, right: 0, sprint: false, yaw:
 export const MAP_WIDTH = 30;
 export const MAP_DEPTH = 22;
 
-export const TIME_LIMIT = 60;
+export const TIME_LIMIT = 45;
 /** 单帧最大模拟步长，避免切后台回来瞬间跳过几秒玩法 */
 export const MAX_STEP = 0.1;
 
@@ -38,7 +38,7 @@ export const RUN_SPEED = 5.0;
 export const STAMINA_DRAIN_SECONDS = 3;
 export const STAMINA_RECOVER_SECONDS = 6;
 
-export const PATROL_SPEED = 2.5;
+export const PATROL_SPEED = 2.8;
 export const CATCH_RADIUS = 0.8;
 
 export const PLAYER_RADIUS = 0.35;

@@ -70,6 +70,14 @@ export class HospitalRenderer {
   private readonly key = new THREE.DirectionalLight(0xf9fbf1, 1.15);
   /** 开灯效果 0→1 的混合值：实现“啪一下亮起”的短过渡，同时让环境光让位形成光池节奏。 */
   private lightsBlend = 0;
+  /** 模型转身的角阻尼状态：逻辑 facing 保持瞬时，模型平滑扫过换向而不是瞬移。 */
+  private playerYaw = 0;
+  private guardYaw = 0;
+
+  private dampFacing(current: number, target: number, dt: number): number {
+    const delta = Math.atan2(Math.sin(target - current), Math.cos(target - current));
+    return current + delta * (1 - Math.exp(-14 * Math.max(0, dt)));
+  }
   private readonly routeMaterial = new THREE.MeshBasicMaterial({ color: 0x2fa765, transparent: true, opacity: 0.95, depthWrite: false });
   private readonly arrowGeometry: THREE.ShapeGeometry;
   /** 需要静态合批的容器：构造完成后按材质把小网格合并，减少 draw call。 */
@@ -124,9 +132,15 @@ export class HospitalRenderer {
     this.playerHuman.animate(playerMeters < 1 ? playerMeters : 0, dt, game.player.sprinting);
     this.guardHuman.animate(guardMeters < 1 ? guardMeters : 0, dt, game.guard.mode === 'chase');
     this.playerRig.position.set(game.player.position.x, 0, game.player.position.z);
-    this.playerRig.rotation.y = -game.player.facing;
     this.guardRig.position.set(game.guard.position.x, 0, game.guard.position.z);
-    this.guardRig.rotation.y = -game.guard.facing;
+    if (restarted) {
+      this.playerYaw = -game.player.facing;
+      this.guardYaw = -game.guard.facing;
+    }
+    this.playerYaw = this.dampFacing(this.playerYaw, -game.player.facing, dt);
+    this.guardYaw = this.dampFacing(this.guardYaw, -game.guard.facing, dt);
+    this.playerRig.rotation.y = this.playerYaw;
+    this.guardRig.rotation.y = this.guardYaw;
     this.previousPlayer = { ...game.player.position };
     this.previousGuard = { ...game.guard.position };
     this.previousTime = game.elapsed;

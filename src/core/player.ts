@@ -19,6 +19,11 @@ export class Player {
   facing = 0;
   /** 体力耗尽后必须先松开 Shift 才能重新奔跑 */
   private sprintLocked = false;
+  /** 平滑加减速：起步缓入、停步利落，消除满速瞬移与急停的生硬感。 */
+  private static readonly ACCEL_RATE = 12;
+  private static readonly DECEL_RATE = 22;
+  private velocityX = 0;
+  private velocityZ = 0;
   /** 浮点余量：低于该值视为已耗尽，避免耗尽瞬间多跑一整帧 */
   private static readonly STAMINA_EPSILON = 1e-6;
 
@@ -28,6 +33,8 @@ export class Player {
     this.sprinting = false;
     this.facing = 0;
     this.sprintLocked = false;
+    this.velocityX = 0;
+    this.velocityZ = 0;
   }
 
   update(dt: number, input: PlayerInput, map: HospitalMap): void {
@@ -67,11 +74,24 @@ export class Player {
       this.stamina = Math.min(1, this.stamina + dt / STAMINA_RECOVER_SECONDS);
     }
 
-    const step = speed * dt;
-    if (step > 0) {
+    const targetX = directionX * speed;
+    const targetZ = directionZ * speed;
+    const currentSpeed = Math.hypot(this.velocityX, this.velocityZ);
+    const targetSpeed = Math.hypot(targetX, targetZ);
+    const rate = targetSpeed < currentSpeed ? Player.DECEL_RATE : Player.ACCEL_RATE;
+    const blend = 1 - Math.exp(-rate * Math.max(0, dt));
+    this.velocityX += (targetX - this.velocityX) * blend;
+    this.velocityZ += (targetZ - this.velocityZ) * blend;
+    if (targetSpeed === 0 && Math.hypot(this.velocityX, this.velocityZ) < 0.05) {
+      this.velocityX = 0;
+      this.velocityZ = 0;
+    }
+    const stepX = this.velocityX * dt;
+    const stepZ = this.velocityZ * dt;
+    if (Math.hypot(stepX, stepZ) > 1e-9) {
       this.position = moveCircle(
         this.position,
-        { x: directionX * step, z: directionZ * step },
+        { x: stepX, z: stepZ },
         PLAYER_RADIUS,
         map,
       );
