@@ -130,7 +130,8 @@ describe('三档难度', () => {
     const game = new RoundsGame();
     game.setDifficulty('intern');
     game.start();
-    advance(game, 45);
+    // 巡逻覆盖修复后挂机 45 秒会被值班员抓住（设计如此），故用调试快进直接通电。
+    game.debugSetRemaining(0);
     game.player.position = { x: 26.5, z: 11 };
     game.guard.position = { x: 4.5, z: 17.5 };
     game.guard.replan(game.map);

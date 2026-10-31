@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { DIFFICULTIES, PATROL_WAYPOINTS, PLAYER_SPAWN } from '../src/core/config';
+import { DIFFICULTIES, NO_INPUT, PATROL_WAYPOINTS, PLAYER_SPAWN } from '../src/core/config';
 import { HospitalMap, distance } from '../src/core/map';
 import { PatrolGuard } from '../src/core/warden';
+import { RoundsGame } from '../src/core/state';
 
 const map = () => new HospitalMap();
 
@@ -78,5 +79,24 @@ describe('三档巡逻走位', () => {
       guard.movePatrol(1 / 60, map());
       expect(distance(guard.position, PLAYER_SPAWN)).toBeGreaterThan(7);
     }
+  });
+});
+describe('巡逻覆盖回归（开局保护窗 10 秒后恢复全图）', () => {
+  it('45 秒巡逻北/西走廊有覆盖，且值班员会目视发现出生点挂机玩家', () => {
+    const game = new RoundsGame();
+    game.start();
+    const zones: Record<string, number> = { 北: 0, 南: 0, 西: 0, 东: 0 };
+    let seen = false;
+    const total = 45 * 60;
+    for (let frame = 0; frame < total; frame++) {
+      game.tick(1 / 60, NO_INPUT);
+      const p = game.guard.position;
+      zones[p.z < 6.4 ? '北' : p.z > 15.6 ? '南' : p.x < 6 ? '西' : '东']++;
+      if (!seen && game.guard.seesPlayer) seen = true;
+    }
+    const pct = Object.fromEntries(Object.entries(zones).map(([k, v]) => [k, Math.round(v / total * 100)]));
+    // 修复前：北 6%、西 0%（值班员被锁死东南）；修复后北走廊为主要巡逻区
+    expect(pct['北']).toBeGreaterThanOrEqual(15);
+    expect(seen).toBe(true);
   });
 });

@@ -336,7 +336,7 @@ export class Warden extends PatrolGuard {
     }
     if (map.revision !== this.routeRevision) this.replan(map);
     if (this.mode === 'patrol') {
-      this.movePatrol(dt, map, this.perception ? player?.position : undefined, { openingProtected });
+      this.movePatrol(dt, map, this.perception ? player?.position : undefined, { openingProtected: opts?.openingProtected });
       return;
     }
 

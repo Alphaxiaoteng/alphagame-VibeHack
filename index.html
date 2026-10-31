@@ -95,58 +95,64 @@
           <h1 id="overlay-title">今晚，走出医院。</h1>
           <p id="overlay-copy" class="briefing-copy">躲开值班员，坚持 <strong class="highlight-timer">45 秒</strong> 通电逃生。</p>
           
-          <!-- 硬核战术按键教程 -->
+          <!-- 硬核战术按键教程：上下分层，宽绰优雅 -->
           <div id="start-help" class="gamepad-guide" aria-label="操作按键教程指南">
-            <!-- 移动操作组 -->
-            <div class="key-cluster wasd-group">
-              <div class="wasd-layout">
-                <div class="key-row key-row-top">
-                  <span class="key-cap square-key">W</span>
+            <!-- 上排：基础身法与视线 -->
+            <div class="guide-row guide-row-basic">
+              <div class="key-cluster wasd-group">
+                <div class="wasd-layout">
+                  <div class="key-row key-row-top">
+                    <span class="key-cap square-key">W</span>
+                  </div>
+                  <div class="key-row key-row-bottom">
+                    <span class="key-cap square-key">A</span>
+                    <span class="key-cap square-key">S</span>
+                    <span class="key-cap square-key">D</span>
+                  </div>
                 </div>
-                <div class="key-row key-row-bottom">
-                  <span class="key-cap square-key">A</span>
-                  <span class="key-cap square-key">S</span>
-                  <span class="key-cap square-key">D</span>
-                </div>
+                <span class="key-action-label">走位移动</span>
               </div>
-              <span class="key-action-label">走位移动</span>
-            </div>
 
-            <div class="guide-divider" aria-hidden="true"></div>
+              <div class="guide-divider-v" aria-hidden="true"></div>
 
-            <!-- 身法与视角组 -->
-            <div class="key-cluster actions-group">
-              <div class="action-key-item">
+              <div class="key-cluster sprint-group">
                 <span class="key-cap pill-key">Shift</span>
                 <span class="key-action-label">奔跑冲刺</span>
               </div>
-              <div class="action-key-item">
+
+              <div class="guide-divider-v" aria-hidden="true"></div>
+
+              <div class="key-cluster look-group">
                 <span class="key-cap mouse-key">
-                  <svg class="mouse-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <svg class="mouse-svg" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="5" y="2" width="14" height="20" rx="7"></rect>
                     <line x1="12" y1="6" x2="12" y2="10"></line>
                     <path d="M12 2v8h7" fill="rgba(255, 255, 255, 0.25)"></path>
                   </svg>
                   右键拖动
                 </span>
-                <span class="key-action-label">环顾视线</span>
+                <span class="key-action-label">环视镜头</span>
               </div>
             </div>
 
-            <div class="guide-divider" aria-hidden="true"></div>
+            <div class="guide-divider-h" aria-hidden="true"></div>
 
-            <!-- 1 2 3 战术技能指令组 -->
-            <div class="key-cluster tactical-group">
-              <div class="tactical-col">
-                <div class="tactical-keys-row">
-                  <span class="key-cap square-key num-key">1</span>
-                  <span class="key-cap square-key num-key">2</span>
-                  <span class="key-cap square-key num-key">3</span>
-                </div>
-                <div class="tactical-meta">
-                  <span class="key-action-label">战术指令槽 (开灯·封门·广播)</span>
-                </div>
+            <!-- 下排：1 2 3 战术按键指令槽 -->
+            <div class="guide-row guide-row-tactical">
+              <span class="tactical-lead-tag">战术指令</span>
+              <div class="tactical-item">
+                <span class="key-cap square-key num-key">1</span>
+                <span class="tactical-desc">全院开灯</span>
               </div>
+              <div class="tactical-item">
+                <span class="key-cap square-key num-key">2</span>
+                <span class="tactical-desc">封锁走廊</span>
+              </div>
+              <div class="tactical-item">
+                <span class="key-cap square-key num-key">3</span>
+                <span class="tactical-desc">广播查房</span>
+              </div>
+              <small class="tactical-hint">可按键或点击发动</small>
             </div>
 
             <div id="touch-help" class="touch-hint-pill" hidden>

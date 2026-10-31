@@ -90,12 +90,12 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   summaryBar.className = 'shop-summary-bar';
   summaryBar.innerHTML = `
     <div class="shop-summary-info">
-      <span class="shop-summary-tag">出勤配置</span>
+      <span class="shop-summary-tag">关卡选择</span>
       <strong class="shop-summary-level">01 住院部</strong>
-      <span class="shop-summary-role">· 值班医师</span>
+      <span class="shop-summary-role">· 免费畅玩</span>
     </div>
     <button type="button" class="shop-summary-btn">
-      <span>配置</span>
+      <span>关卡切换</span>
     </button>
   `;
   const summaryLevel = summaryBar.querySelector('.shop-summary-level') as HTMLElement;
@@ -233,7 +233,7 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
 
     // 同步首页摘要胶囊
     summaryLevel.textContent = `${currentLevel?.index ?? ''} ${currentLevel?.name ?? ''}`;
-    summaryRole.textContent = `· ${roleInfo.role} (${levelLocked ? '待解锁' : '免费就绪'})`;
+    summaryRole.textContent = levelLocked ? '· 待解锁 · $0.99' : '· 免费畅玩';
 
     // 渲染大视窗
     const art = LEVEL_COVERS[levelId];

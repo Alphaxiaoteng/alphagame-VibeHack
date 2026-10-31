@@ -339,19 +339,17 @@ body[data-touch="true"] .map-panel { display: none; }
   color: var(--text-muted);
   min-width: 140px;
   padding: 8px 12px;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: 14px;
-  box-shadow: var(--glass-specular);
+  background: #11141b;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
 }
 .controls-note kbd {
   font-size: 10px;
   padding: 2px 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--glass-border);
-  border-radius: 6px;
+  background: #1b1e28;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
   color: #ffffff;
   font-weight: 600;
 }
@@ -449,17 +447,17 @@ body[data-touch="true"] .map-panel { display: none; }
   text-shadow: none;
 }
 
-/* 战术操作指南：实心暗碳面板，小巧精致 */
+/* 战术操作指南：实心暗碳面板，硬核按键教程 */
 .gamepad-guide {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 12px;
   margin: 0 0 16px;
-  padding: 12px 16px;
-  background: #14161e;
+  padding: 12px 14px;
+  background: #11141b;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .key-cluster {
   display: flex;
@@ -468,7 +466,7 @@ body[data-touch="true"] .map-panel { display: none; }
 .wasd-group {
   flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 .wasd-layout {
   display: flex;
@@ -481,16 +479,16 @@ body[data-touch="true"] .map-panel { display: none; }
   gap: 3px;
 }
 .key-cap.square-key {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.08);
+  background: #1c202a;
   border: 1px solid rgba(255, 255, 255, 0.22);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 2px solid #090a0d;
   border-radius: 4px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
   color: #ffffff;
   font-size: 13px;
   font-weight: 700;
@@ -498,30 +496,29 @@ body[data-touch="true"] .map-panel { display: none; }
 }
 .guide-divider {
   width: 1px;
-  height: 42px;
-  background: rgba(255, 255, 255, 0.15);
+  height: 40px;
+  background: rgba(255, 255, 255, 0.12);
 }
 .actions-group {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
-  flex: 1;
 }
 .action-key-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 .pill-key {
-  height: 26px;
-  padding: 0 10px;
+  height: 24px;
+  padding: 0 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.08);
+  background: #1c202a;
   border: 1px solid rgba(255, 255, 255, 0.22);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 2px solid #090a0d;
   border-radius: 4px;
   color: #ffffff;
   font-size: 11px;
@@ -529,14 +526,14 @@ body[data-touch="true"] .map-panel { display: none; }
   font-family: ui-monospace, SFMono-Regular, monospace;
 }
 .mouse-key {
-  height: 26px;
-  padding: 0 10px;
+  height: 24px;
+  padding: 0 8px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.08);
+  gap: 5px;
+  background: #1c202a;
   border: 1px solid rgba(255, 255, 255, 0.22);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 2px solid #090a0d;
   border-radius: 4px;
   color: #ffffff;
   font-size: 11px;
@@ -546,11 +543,40 @@ body[data-touch="true"] .map-panel { display: none; }
   color: rgba(255, 255, 255, 0.85);
 }
 .key-action-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
-  color: var(--text-muted);
-  letter-spacing: 0.5px;
+  color: #8c93a4;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
 }
+
+/* 战术 1 2 3 按键教程组 */
+.tactical-group {
+  display: flex;
+  align-items: center;
+}
+.tactical-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+.tactical-keys-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.num-key {
+  font-weight: 800 !important;
+  background: #242936 !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+.tactical-meta {
+  display: flex;
+  align-items: center;
+}
+
 .touch-hint-pill {
   width: 100%;
   text-align: center;
@@ -836,6 +862,7 @@ body[data-touch="true"] .briefing-copy { font-size: 14px; line-height: 1.75; mar
 body[data-touch="true"] .gamepad-guide { padding: 10px 14px; margin-bottom: 16px; }
 body[data-touch="true"] .gamepad-guide .wasd-group,
 body[data-touch="true"] .gamepad-guide .actions-group,
+body[data-touch="true"] .gamepad-guide .tactical-group,
 body[data-touch="true"] .gamepad-guide .guide-divider { display: none; }
 body[data-touch="true"] #touch-help { display: block; }
 body[data-touch="true"] .primary { padding: 15px 16px; font-size: 15px; }
@@ -921,16 +948,15 @@ body[data-touch="true"] .keyboard-only { display: none; }
 .modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(5, 8, 15, 0.82);
-  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.85);
 }
 .modal-card {
   position: relative;
   z-index: 2;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
-  border-radius: 20px;
+  background: #0e1117;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.9);
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
