@@ -101,8 +101,8 @@ export const LEVELS: readonly LevelDef[] = [
 
 export const SKINS: readonly SkinDef[] = [
   { id: 'standard', name: '标准外科', free: true, swatch: 0x2f7d70, cloth: 0x2f7d70, wallSkirt: 0xb9c8bb, lamp: 0xebf3ef },
-  { id: 'shinobi-indigo', name: '夜行装束', free: false, swatch: 0x2b3a52, cloth: 0x2b3a52, wallSkirt: 0x5a6a7c, lamp: 0xe6eff7 },
-  { id: 'scroll-vermilion', name: '卷轴朱印', free: false, swatch: 0x8c3a2e, cloth: 0x8c3a2e, wallSkirt: 0x8a6a4a, lamp: 0xf7e2b4 },
+  { id: 'shinobi-indigo', name: '夜行装束', free: true, swatch: 0x2b3a52, cloth: 0x2b3a52, wallSkirt: 0x5a6a7c, lamp: 0xe6eff7 },
+  { id: 'scroll-vermilion', name: '卷轴朱印', free: true, swatch: 0x8c3a2e, cloth: 0x8c3a2e, wallSkirt: 0x8a6a4a, lamp: 0xf7e2b4 },
 ];
 
 /** 全部买断，无订阅：单买关卡 / 单买皮肤 / 一次性全院解锁包。 */

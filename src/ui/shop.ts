@@ -8,6 +8,7 @@
  */
 import { LEVELS, SKINS, canPlayLevel, canUseSkin, levelById, productBySku, productForLevel, productForSkin, resolveEntitlements } from '../core/economy';
 import type { Entitlements, LevelId, ProductSku, SkinId } from '../core/economy';
+import { Role3DPreview } from './role3dPreview';
 
 import wardCover from '../../assets/art/v2fun/web/ward-01-cover.jpg';
 import dojoCover from '../../assets/art/v2fun/web/dojo-02-cover.jpg';
@@ -89,7 +90,7 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   let levelId: LevelId = 'ward-01';
   let skinId: SkinId = 'standard';
 
-  // 1. 顶部大封面视窗（Hero Viewport）
+  // 1. 顶部大封面视窗（Hero Viewport）与 3D 角色动作视窗
   const cover = document.createElement('figure');
   cover.className = 'shop-cover';
   const coverImage = document.createElement('img');
@@ -101,7 +102,17 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   const coverTitle = document.createElement('strong');
   const coverSubtitle = document.createElement('span');
   coverMeta.append(coverTitle, coverSubtitle);
-  cover.append(coverImage, coverBadge, coverMeta);
+
+  // 3D 动作角色微型预览窗
+  const role3dContainer = document.createElement('div');
+  role3dContainer.className = 'shop-role-3d-box';
+  const role3dBadge = document.createElement('span');
+  role3dBadge.className = 'shop-role-3d-label';
+  role3dBadge.textContent = '3D 动态';
+  const role3d = new Role3DPreview(130, 130);
+  role3dContainer.append(role3d.domElement, role3dBadge);
+
+  cover.append(coverImage, role3dContainer, coverBadge, coverMeta);
 
   // 2. 科室与角色选择分组
   const group = document.createElement('div');
@@ -175,6 +186,9 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
     coverBadge.classList.toggle('locked', levelLocked);
     coverBadge.classList.toggle('free', !levelLocked && !!currentLevel?.free);
 
+    // 更新 3D 动作角色预览
+    role3d.show(skinId);
+
     // 渲染关卡按钮
     for (const button of levelRow.querySelectorAll<HTMLButtonElement>('button')) {
       const id = button.dataset.level as LevelId;
@@ -221,6 +235,7 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   function selectSkin(id: SkinId): void {
     skinId = id;
     paint();
+    role3d.show(skinId);
     if (canPlayLevel(levelId, entitlements) && canUseSkin(skinId, entitlements)) hooks.onSelect(levelId, skinId);
   }
 
@@ -264,7 +279,7 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
     swatch.style.background = `#${skin.swatch.toString(16).padStart(6, '0')}`;
     const text = document.createElement('span');
     const info = ROLE_TITLES[skin.id] ?? { role: skin.name, desc: '走廊主题' };
-    text.innerHTML = `<strong>${info.role}</strong><small>${info.desc}</small>`;
+    text.innerHTML = `<strong>${info.role}</strong><small>免费选用 · 备勤中</small>`;
     button.append(avatar, swatch, text);
     button.addEventListener('click', () => { selectSkin(skin.id); button.blur(); });
     skinRow.append(button);

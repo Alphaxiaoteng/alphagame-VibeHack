@@ -320,13 +320,49 @@ body[data-phase="start"] .hud { display: none; }
 }
 .shop-cover:hover img { transform: scale(1.02); }
 
+/* 3D 动作角色动态悬浮窗 */
+.shop-role-3d-box {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 124px;
+  height: 124px;
+  border-radius: var(--radius-sm);
+  background: radial-gradient(circle at 50% 50%, rgba(35, 65, 48, 0.88) 0%, rgba(16, 28, 20, 0.95) 100%);
+  border: 1px solid rgba(145, 195, 160, 0.6);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.role-3d-canvas {
+  width: 124px !important;
+  height: 124px !important;
+  display: block;
+}
+.shop-role-3d-label {
+  position: absolute;
+  bottom: 5px;
+  right: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #c4eccb;
+  letter-spacing: 0.5px;
+  background: rgba(12, 25, 18, 0.85);
+  padding: 2px 5px;
+  border-radius: 2px;
+  border: 1px solid rgba(145, 195, 160, 0.3);
+}
+
 .shop-cover-badge {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 5px 10px;
+  top: 10px;
+  left: 10px;
+  padding: 4px 9px;
   border-radius: var(--radius-sm);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.5px;
   backdrop-filter: blur(6px);

@@ -38,7 +38,7 @@ describe('买断制商品目录', () => {
   it('全部是买断制：没有任何订阅商品，01 住院部免费', () => {
     expect(PRODUCTS.every(product => product.price.length > 0)).toBe(true);
     expect(LEVELS.filter(level => level.free).map(level => level.id)).toEqual(['ward-01']);
-    expect(SKINS.filter(skin => skin.free).map(skin => skin.id)).toEqual(['standard']);
+    expect(SKINS.filter(skin => skin.free).map(skin => skin.id)).toEqual(['standard', 'shinobi-indigo', 'scroll-vermilion']);
   });
 
   it('关卡之间只差规则数字，且都比免费关更紧或更长', () => {
@@ -63,32 +63,32 @@ describe('买断制商品目录', () => {
 });
 
 describe('权益折算', () => {
-  it('未购买时只有免费关卡与标准皮肤可用', () => {
+  it('未购买时免费关卡与全角色外观均可用', () => {
     const entitlements = resolveEntitlements([]);
     expect(canPlayLevel('ward-01', entitlements)).toBe(true);
     expect(canPlayLevel('dojo-02', entitlements)).toBe(false);
     expect(canUseSkin('standard', entitlements)).toBe(true);
-    expect(canUseSkin('shinobi-indigo', entitlements)).toBe(false);
-    expect(resolveSkin('dojo-02', entitlements).id).toBe('standard');
+    expect(canUseSkin('shinobi-indigo', entitlements)).toBe(true);
+    expect(canUseSkin('scroll-vermilion', entitlements)).toBe(true);
+    expect(resolveSkin('dojo-02', entitlements).id).toBe('shinobi-indigo');
   });
 
-  it('单买关卡只解锁该关卡，不动皮肤', () => {
+  it('单买关卡只解锁该关卡，全角色外观依然可用', () => {
     const entitlements = resolveEntitlements(['LEVEL_DOJO']);
     expect(canPlayLevel('dojo-02', entitlements)).toBe(true);
     expect(canPlayLevel('vault-03', entitlements)).toBe(false);
-    // 皮肤是单独的商品，买关卡不会顺带送皮肤
-    expect(canUseSkin('shinobi-indigo', entitlements)).toBe(false);
-    expect(resolveSkin('dojo-02', entitlements).id).toBe('standard');
+    expect(canUseSkin('shinobi-indigo', entitlements)).toBe(true);
+    expect(resolveSkin('dojo-02', entitlements).id).toBe('shinobi-indigo');
   });
 
-  it('买了皮肤包后，对应关卡的推荐皮肤自动生效', () => {
-    const entitlements = resolveEntitlements(['LEVEL_DOJO', 'SKIN_PACK']);
+  it('对应关卡的推荐皮肤直接生效', () => {
+    const entitlements = resolveEntitlements(['LEVEL_DOJO']);
     expect(resolveSkin('dojo-02', entitlements).id).toBe('shinobi-indigo');
     expect(resolveSkin('vault-03', entitlements).id).toBe('scroll-vermilion');
     expect(resolveSkin('ward-01', entitlements).id).toBe('standard');
   });
 
-  it('全院解锁包一次给到全部付费内容', () => {
+  it('全院解锁包一次给到全部付费关卡', () => {
     const entitlements = resolveEntitlements(['BUNDLE_ALL']);
     expect(canPlayLevel('dojo-02', entitlements)).toBe(true);
     expect(canPlayLevel('vault-03', entitlements)).toBe(true);
