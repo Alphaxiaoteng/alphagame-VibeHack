@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DIFFICULTIES, PATROL_WAYPOINTS, GUARD_RADIUS, PLAYER_SPAWN } from '../src/core/config';
+import { DIFFICULTIES, PATROL_WAYPOINTS, PLAYER_SPAWN } from '../src/core/config';
 import { HospitalMap, distance } from '../src/core/map';
 import { PatrolGuard } from '../src/core/warden';
 
