@@ -1,7 +1,7 @@
 import type { RoundsGame } from '../core/state';
 import { distance } from '../core/map';
 import type { Point } from '../core/config';
-import { secondsUntilFootstep, secondsUntilGuardBell } from '../core/ambience';
+import { secondsUntilFootstep, secondsUntilGuardBell, heartbeatInterval } from '../core/ambience';
 
 // 静态 URL 必须相对本模块写对，Vite 才会将 MP3 随正式构建打包。
 export const VOICE_URLS = {
@@ -11,6 +11,9 @@ export const VOICE_URLS = {
   warning10: new URL('../../assets/audio/voices/pa_10s_left.mp3', import.meta.url).href,
   unlocked: new URL('../../assets/audio/voices/pa_exit_unlocked.mp3', import.meta.url).href,
   ward: new URL('../../assets/audio/voices/pa_ward_call.mp3', import.meta.url).href,
+  lights: new URL('../../assets/audio/voices/pa_lights_on.mp3', import.meta.url).href,
+  lockdown: new URL('../../assets/audio/voices/pa_lockdown.mp3', import.meta.url).href,
+  chase: new URL('../../assets/audio/voices/warden_chase.mp3', import.meta.url).href,
   patrol: new URL('../../assets/audio/voices/warden_patrol_01.mp3', import.meta.url).href,
   caught: new URL('../../assets/audio/voices/warden_catch.mp3', import.meta.url).href,
 };
@@ -23,6 +26,9 @@ export const VOICE_TEXT: Record<VoiceId, string> = {
   warning10: '最后十秒，准备前往东侧安全门。',
   unlocked: '东侧安全门已解锁，门已打开，请立即撤离。',
   ward: '各科室注意，广播查房已启动，值班员已转向大厅。',
+  lights: '全院备用照明已开启，强光透视已接通。',
+  lockdown: '紧急通报，防火卷帘门已强制降下，通道封锁。',
+  chase: '站住！夜间巡查，不许跑！',
   patrol: '谁在那边？夜间严禁在走廊逗留。',
   caught: '抓到你了，立刻返回病房。',
 };
@@ -39,12 +45,15 @@ export const SFX_URLS = {
   wardenStep: new URL('../../assets/audio/sfx/sfx_warden_step.mp3', import.meta.url).href,
   wardenBell: new URL('../../assets/audio/sfx/sfx_warden_bell.mp3', import.meta.url).href,
   lightSwitch: new URL('../../assets/audio/sfx/sfx_light_switch.mp3', import.meta.url).href,
+  lightsSurge: new URL('../../assets/audio/sfx/sfx_lights_surge.mp3', import.meta.url).href,
   doorSlam: new URL('../../assets/audio/sfx/sfx_door_slam.mp3', import.meta.url).href,
   doorOpen: new URL('../../assets/audio/sfx/sfx_door_open.mp3', import.meta.url).href,
+  lockdownSlam: new URL('../../assets/audio/sfx/sfx_lockdown_slam.mp3', import.meta.url).href,
   paChime: new URL('../../assets/audio/sfx/sfx_pa_chime.mp3', import.meta.url).href,
   dangerSting: new URL('../../assets/audio/sfx/sfx_danger_sting.mp3', import.meta.url).href,
   escapeWin: new URL('../../assets/audio/sfx/sfx_escape_win.mp3', import.meta.url).href,
   breathGasp: new URL('../../assets/audio/sfx/sfx_breath_gasp.mp3', import.meta.url).href,
+  buzzDenied: new URL('../../assets/audio/sfx/sfx_buzz_denied.mp3', import.meta.url).href,
 };
 export type SfxId = keyof typeof SFX_URLS;
 
@@ -77,6 +86,7 @@ export class AudioEngine {
   private nextGuardStep = 0;
   private nextBellStep = 0;
   private nextBreathStep = 0;
+  private nextHeartbeat = 0;
   private lastPlayer: Point | null = null;
   private lastGuard: Point | null = null;
   private patrolSpoken = false;
@@ -164,6 +174,7 @@ export class AudioEngine {
     this.nextGuardStep = 0;
     this.nextBellStep = 0;
     this.nextBreathStep = 0;
+    this.nextHeartbeat = 0;
     this.lastPlayer = null;
     this.lastGuard = null;
     this.patrolSpoken = false;
@@ -444,6 +455,74 @@ export class AudioEngine {
     this.tone(783.99, 0.4, 0.055);
   }
 
+  /** 开灯技能专属：高压电容升压充能音效 + 闸刀合闸 + 全院应急照明通报 */
+  lightsSound(): void {
+    if (!this.playSfx('lightsSurge', 0.95)) {
+      this.lightSwitch();
+    }
+    this.voice('lights');
+  }
+
+  /** 封锁技能专属：重型防火卷帘门液压气动降落砸地 + 紧急封锁通报 */
+  lockdownSound(): void {
+    if (!this.playSfx('lockdownSlam', 0.95)) {
+      this.doorSound();
+    }
+    this.voice('lockdown');
+  }
+
+  /** 广播查房技能专属：医院微恐失谐提示音 + 病房内线呼叫通报 */
+  broadcastSound(): void {
+    this.paDing();
+    this.voice('ward');
+  }
+
+  /** 指令受阻/冷却中拒绝提示：短路蜂鸣音效 */
+  buzzError(): void {
+    if (this.playSfx('buzzDenied', 0.88)) return;
+    this.tone(160, 0.12, 0.18, 'sawtooth');
+    this.tone(110, 0.14, 0.14, 'square');
+  }
+
+  /**
+   * 心理微恐动态双重重击心跳 (Lub-Dub)：
+   * 追逐或迫近时低频共振撞击耳膜，模拟恐慌窒息感。
+   */
+  heartbeat(volume: number): void {
+    if (!this.context || !this.master || this.muted || this.paused) return;
+    const now = this.context.currentTime;
+    const v = Math.min(1.0, Math.max(0.04, volume));
+    // S1: Lub (低频 62Hz 沉重骤缩)
+    const s1 = this.context.createOscillator();
+    const g1 = this.context.createGain();
+    s1.type = 'sine';
+    s1.frequency.setValueAtTime(62, now);
+    s1.frequency.exponentialRampToValueAtTime(38, now + 0.08);
+    g1.gain.setValueAtTime(0, now);
+    g1.gain.linearRampToValueAtTime(v * 0.95, now + 0.006);
+    g1.gain.exponentialRampToValueAtTime(0.0001, now + 0.085);
+    s1.connect(g1);
+    g1.connect(this.master);
+    this.track(s1);
+    s1.start(now);
+    s1.stop(now + 0.09);
+
+    // S2: Dub (稍高 82Hz，相隔 110ms 紧随其后)
+    const s2 = this.context.createOscillator();
+    const g2 = this.context.createGain();
+    s2.type = 'sine';
+    s2.frequency.setValueAtTime(82, now + 0.11);
+    s2.frequency.exponentialRampToValueAtTime(48, now + 0.18);
+    g2.gain.setValueAtTime(0, now + 0.11);
+    g2.gain.linearRampToValueAtTime(v * 0.68, now + 0.116);
+    g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.185);
+    s2.connect(g2);
+    g2.connect(this.master);
+    this.track(s2);
+    s2.start(now + 0.11);
+    s2.stop(now + 0.19);
+  }
+
   update(game: RoundsGame): void {
     if (!this.active || this.paused || game.phase !== 'playing') return;
     const moved = this.lastPlayer ? distance(this.lastPlayer, game.player.position) > 0.002 : false;
@@ -462,6 +541,15 @@ export class AudioEngine {
     }
     const gap = distance(game.player.position, game.guard.position);
     // 脚步与追逐心跳/钥匙声均按秒表排程，不靠逐帧计数。
+    const heartWait = heartbeatInterval(game.guard.mode, gap);
+    if (heartWait !== Infinity && game.elapsed >= this.nextHeartbeat) {
+      const isChase = game.guard.mode === 'chase';
+      const vol = isChase
+        ? Math.min(1.0, 0.52 + (1 - Math.min(gap, 18) / 18) * 0.48)
+        : Math.min(0.55, 0.38 * (1 - gap / 6.5));
+      this.heartbeat(vol);
+      this.nextHeartbeat = game.elapsed + heartWait;
+    }
     if (guardMoved && game.elapsed >= this.nextGuardStep) {
       const wait = secondsUntilFootstep(game.elapsed, game.guard.mode, gap);
       if (wait !== Infinity) {

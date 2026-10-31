@@ -336,7 +336,6 @@ function boot(): void {
         break;
       case 'doorClosed':
         audio.doorSound();
-        audio.voice('door');
         notice(`防火门 ${event.door} 已关闭，玩家和值班员都需要绕行`);
         break;
       case 'doorOpened':
@@ -346,17 +345,16 @@ function boot(): void {
       case 'doorBlocked': notice('无法落门：门框被占用，或另一扇门仍关闭'); break;
       case 'commandStarted':
         notice(event.message ?? '指令已发动');
-        if (event.command === 'broadcast') {
-          audio.paDing();
-          audio.voice('ward');
-        }
-        else if (event.command === 'lights') audio.lightSwitch();
+        if (event.command === 'broadcast') audio.broadcastSound();
+        else if (event.command === 'lights') audio.lightsSound();
+        else if (event.command === 'lockdown') audio.lockdownSound();
         break;
       case 'commandEnded':
         if (event.command === 'lights') notice('开灯结束 · 视距恢复，注意走廊拐角');
         else if (event.command === 'broadcast') notice(game.guard.broadcastInterrupted ? '广播未能继续引开值班员，保持距离' : '广播结束 · 值班员开始警觉搜索');
         break;
       case 'commandRejected':
+        audio.buzzError();
         notice(event.message ?? '当前无法发动这条指令');
         if (event.command) {
           commandButtons[event.command].classList.remove('denied');
@@ -367,7 +365,10 @@ function boot(): void {
       case 'guardChanged':
         notice(event.message ?? '巡查状态改变', game.guard.mode === 'chase');
         dangerUntil = dangerWindow(previousGuardMode, game.guard.mode, game.elapsed, dangerUntil);
-        if (game.guard.mode === 'chase' && previousGuardMode !== 'chase') audio.alert();
+        if (game.guard.mode === 'chase' && previousGuardMode !== 'chase') {
+          audio.alert();
+          audio.voice('chase');
+        }
         previousGuardMode = game.guard.mode;
         break;
       case 'caught':

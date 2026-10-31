@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GUARD_BELL_INTERVAL, footstepInterval, secondsUntilFootstep, secondsUntilGuardBell } from '../src/core/ambience';
+import { GUARD_BELL_INTERVAL, footstepInterval, secondsUntilFootstep, secondsUntilGuardBell, heartbeatInterval } from '../src/core/ambience';
 
 describe('值班员脚步与追逐铃音节奏', () => {
   it('追逐的脚步比巡逻更密', () => {
@@ -25,5 +25,18 @@ describe('值班员脚步与追逐铃音节奏', () => {
     expect(secondsUntilGuardBell(1.2, 'search', 5)).toBe(Infinity);
     expect(secondsUntilGuardBell(1.2, 'patrol', 5)).toBe(Infinity);
     expect(secondsUntilGuardBell(1.2, 'chase', 25)).toBe(Infinity);
+  });
+
+  it('追逐时心跳随着距离缩短急剧加速', () => {
+    const farWait = heartbeatInterval('chase', 18);
+    const closeWait = heartbeatInterval('chase', 3);
+    expect(closeWait).toBeLessThan(farWait);
+    expect(closeWait).toBeGreaterThanOrEqual(0.32);
+    expect(farWait).toBeLessThanOrEqual(0.75);
+  });
+
+  it('潜行暗处时近身潜伏触发低频重击心跳，远距离保持静默', () => {
+    expect(heartbeatInterval('patrol', 4)).toBe(0.95);
+    expect(heartbeatInterval('patrol', 12)).toBe(Infinity);
   });
 });

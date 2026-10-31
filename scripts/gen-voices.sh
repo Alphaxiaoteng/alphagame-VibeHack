@@ -59,5 +59,8 @@ clip pa_30s_left "$FEMALE" '备用电源充能中，距离安全门解锁还有�
 clip pa_10s_left "$FEMALE" '安全门即将通电，请做好撤离准备。'
 clip pa_exit_unlocked "$FEMALE" '东侧安全门已解锁，请立即沿绿灯撤离。'
 clip pa_ward_call "$FEMALE" '呼叫值班员，请前往病房核查呼叫信号。'
+clip pa_lights_on "$FEMALE" '全院备用照明已开启，强光透视已接通。'
+clip pa_lockdown "$FEMALE" '紧急通报，防火卷帘门已强制降下，通道封锁。'
 clip warden_patrol_01 "$MALE" '走廊还没查完，谁在那边？'
+clip warden_chase "$MALE" '站住！夜间巡查，不许跑！'
 clip warden_catch "$MALE" '抓到你了，今晚谁也别想擅自离岗。'

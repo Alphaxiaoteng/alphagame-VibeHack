@@ -30,3 +30,21 @@ export function secondsUntilGuardBell(elapsed: number, mode: GuardModeLike, gap:
   const phase = elapsed % GUARD_BELL_INTERVAL;
   return phase === 0 ? GUARD_BELL_INTERVAL : GUARD_BELL_INTERVAL - phase;
 }
+
+/**
+ * 心理微恐压迫心跳节奏：
+ * 追逐模式下或与值班员近距离暗处周旋时，心跳随间距急剧加速；
+ * 追逐远距 (18m) 约为 80 BPM (0.75s 间隔)，迫近至 2m 时飙升至 185 BPM (0.32s 间隔)；
+ * 潜伏周旋近距离 (gap < 6.5m) 保持低速重击心跳 (63 BPM, 0.95s 间隔)。
+ */
+export function heartbeatInterval(mode: GuardModeLike, gap: number): number {
+  if (mode === 'chase' && gap <= 20) {
+    const t = Math.max(0, Math.min(1, (gap - 2) / 16));
+    return 0.32 + t * 0.43;
+  }
+  if (gap <= 6.5) {
+    return 0.95;
+  }
+  return Infinity;
+}
+
