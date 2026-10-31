@@ -3,145 +3,333 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Waffo Pancake 收银台 (演示环境)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Serif+SC:wght@500;700;900&display=swap" rel="stylesheet">
+  <title>Waffo 收银台 · ���查房》买断核销单</title>
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: rgba(15, 23, 42, 0.95);
-      --border: rgba(56, 189, 248, 0.25);
-      --accent: #38bdf8;
-      --gold: #f59e0b;
-      --text: #f8fafc;
-      --muted: #94a3b8;
+      --font-serif: "Noto Serif SC", "Songti SC", "STSong", "PMingLiU", serif;
+      --font-display: "Cinzel", "Noto Serif SC", "Songti SC", serif;
+      
+      --paper-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.12 0 0 0 0 0.10 0 0 0 0 0.08 0 0 0 0.075 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      --paper-sheet-bg: radial-gradient(ellipse at 50% 42%, #eae4d3 0%, #ded4bf 68%, #c5b69c 100%);
+      --paper-card-bg: rgba(247, 242, 230, 0.72);
+      
+      --paper-ink: #171310;
+      --paper-ink-muted: #53483b;
+      --paper-ink-dim: #7c6f5e;
+      --paper-border: #2b241d;
+      --paper-stamp-red: #8c1d1d;
+      --paper-stamp-green: #1b4d3e;
+      
+      --bg-dark: #070a0e;
     }
+    
     * { box-sizing: border-box; }
+    
     body {
       margin: 0;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at 50% 30%, #1e293b 0%, #090d16 100%);
-      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
-      color: var(--text);
-      padding: 20px;
+      background: radial-gradient(circle at 50% 35%, #131c24 0%, #06090c 100%);
+      font-family: var(--font-serif);
+      color: var(--paper-ink);
+      padding: 24px;
+      position: relative;
+      overflow-x: hidden;
     }
+    
+    /* 深夜走廊暗角环境光效 */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 50% 20%, rgba(56, 189, 248, 0.04) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    
+    /* 复古病历牛皮纸收银核销卡 */
     .checkout-card {
       width: 440px;
       max-width: 100%;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 30px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(56, 189, 248, 0.15);
-      backdrop-filter: blur(20px);
+      background-color: #dcd2bd;
+      background-image: var(--paper-noise), var(--paper-sheet-bg);
+      border: 1.5px solid var(--paper-border);
+      border-right: 4px solid var(--paper-ink);
+      border-bottom: 3px solid var(--paper-border);
+      border-radius: 1px;
+      padding: 30px 28px 26px;
+      box-shadow: 
+        0 25px 60px rgba(0, 0, 0, 0.85),
+        0 0 0 2px rgba(22, 19, 16, 0.8),
+        inset 0 0 30px rgba(139, 115, 85, 0.15);
+      position: relative;
+      z-index: 1;
     }
+    
+    /* 顶部装订线与档案批号 */
+    .archive-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: var(--paper-ink-dim);
+      border-bottom: 1px dashed rgba(43, 36, 29, 0.35);
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+    
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 14px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
-    .brand { font-size: 13px; font-weight: 800; letter-spacing: 2px; color: var(--accent); }
-    .badge {
-      background: rgba(245, 158, 11, 0.2);
-      border: 1px solid rgba(245, 158, 11, 0.4);
-      color: var(--gold);
+    
+    .brand-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    
+    .brand {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      color: var(--paper-ink);
+      text-transform: uppercase;
+    }
+    
+    .brand-sub {
       font-size: 10px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 12px;
+      letter-spacing: 0.08em;
+      color: var(--paper-ink-muted);
     }
-    .item-title { font-size: 20px; font-weight: 800; margin: 0 0 6px; }
-    .item-desc { font-size: 13px; color: var(--muted); margin: 0 0 20px; line-height: 1.5; }
+    
+    /* 朱砂红印章戳 */
+    .badge-stamp {
+      border: 1.5px solid var(--paper-stamp-red);
+      color: var(--paper-stamp-red);
+      font-family: var(--font-serif);
+      font-size: 11px;
+      font-weight: 900;
+      padding: 3px 8px;
+      border-radius: 2px;
+      letter-spacing: 0.1em;
+      transform: rotate(-2deg);
+      background: rgba(140, 29, 29, 0.06);
+      box-shadow: 0 0 0 1px rgba(140, 29, 29, 0.15);
+      user-select: none;
+    }
+    
+    .item-title {
+      font-size: 20px;
+      font-weight: 900;
+      margin: 0 0 6px;
+      color: var(--paper-ink);
+      letter-spacing: 0.05em;
+    }
+    
+    .item-desc {
+      font-size: 12px;
+      color: var(--paper-ink-muted);
+      margin: 0 0 20px;
+      line-height: 1.6;
+    }
+    
+    /* 账单金额栏（复古发票出纳格） */
     .price-box {
-      background: rgba(30, 41, 59, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 16px;
+      background: var(--paper-card-bg);
+      border: 1px solid rgba(43, 36, 29, 0.3);
+      border-left: 3px solid var(--paper-stamp-red);
+      border-radius: 1px;
+      padding: 14px 16px;
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      margin-bottom: 24px;
+      margin-bottom: 18px;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
     }
-    .price-label { font-size: 12px; color: var(--muted); }
-    .price-amount { font-size: 28px; font-weight: 800; color: #ffffff; }
-    .price-currency { font-size: 13px; color: var(--accent); margin-left: 4px; }
-    .card-info {
-      background: rgba(11, 15, 25, 0.7);
-      border: 1px dashed var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin-bottom: 24px;
+    
+    .price-label {
       font-size: 12px;
-      color: var(--muted);
+      font-weight: 700;
+      color: var(--paper-ink-muted);
+      letter-spacing: 0.06em;
     }
-    .card-info strong { color: #fff; }
+    
+    .price-values {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    
+    .price-amount {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--paper-ink);
+    }
+    
+    .price-currency {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--paper-stamp-red);
+      letter-spacing: 0.08em;
+    }
+    
+    /* 测试环境付款凭据格 */
+    .card-info {
+      background: rgba(43, 36, 29, 0.05);
+      border: 1px dashed rgba(43, 36, 29, 0.4);
+      border-radius: 1px;
+      padding: 12px 14px;
+      margin-bottom: 22px;
+      font-size: 12px;
+      color: var(--paper-ink-muted);
+      line-height: 1.5;
+    }
+    
+    .card-info strong {
+      color: var(--paper-ink);
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-weight: 700;
+    }
+    
+    /* 确认出单大按钮（深黑油墨质感 + 悬停深红印泥） */
     .pay-btn {
       width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-      color: #fff;
+      padding: 14px 18px;
+      border-radius: 1px;
+      background: var(--paper-ink);
+      color: #f4eee0;
+      font-family: var(--font-serif);
       font-size: 15px;
-      font-weight: 700;
-      border: 1px solid var(--accent);
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      border: 1px solid var(--paper-ink);
       cursor: pointer;
-      box-shadow: 0 8px 24px rgba(2, 132, 199, 0.4);
-      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(23, 19, 16, 0.45);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
+    
     .pay-btn:hover {
-      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 12px 30px rgba(56, 189, 248, 0.5);
+      background: var(--paper-stamp-red);
+      border-color: var(--paper-stamp-red);
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(140, 29, 29, 0.45);
     }
+    
+    .pay-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    }
+    
+    .pay-btn:disabled {
+      background: #736657;
+      border-color: #736657;
+      color: #d8ceba;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
     .cancel-link {
       display: block;
       text-align: center;
-      margin-top: 14px;
+      margin-top: 16px;
       font-size: 12px;
-      color: var(--muted);
-      text-decoration: none;
+      font-weight: 600;
+      color: var(--paper-ink-muted);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      letter-spacing: 0.06em;
+      transition: color 0.18s ease;
     }
-    .cancel-link:hover { color: #fff; }
+    
+    .cancel-link:hover {
+      color: var(--paper-stamp-red);
+    }
+    
+    /* 底部收执防伪标识 */
+    .stamp-watermark {
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(43, 36, 29, 0.18);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      color: var(--paper-ink-dim);
+      font-family: var(--font-display);
+      letter-spacing: 0.12em;
+    }
   </style>
 </head>
 <body>
   <div class="checkout-card">
-    <div class="header">
-      <span class="brand">WAFFO PANCAKE</span>
-      <span class="badge">TESTPAY / 演示沙箱</span>
+    <div class="archive-meta">
+      <span>REF // WAFFO-CHCK-2026</span>
+      <span>HOSPITAL EVAC AUTH</span>
     </div>
-    <h1 class="item-title" id="p-name">02 夜隐寮 (买断解锁)</h1>
+    
+    <div class="header">
+      <div class="brand-group">
+        <span class="brand">WAFFO PAYMENTS</span>
+        <span class="brand-sub">全球出海合规结算通道</span>
+      </div>
+      <span class="badge-stamp">演示沙箱 · 离线结算</span>
+    </div>
+    
+    <h1 class="item-title" id="p-name">03 封印殿 (买断解锁)</h1>
     <p class="item-desc">《查房》买断制扩展内容，付款后永久绑定这台设备的本地账本，无任何后续订阅扣费。</p>
+    
     <div class="price-box">
-      <span class="price-label">待付买断总额</span>
-      <div>
+      <span class="price-label">待付买断总额 / TOTAL</span>
+      <div class="price-values">
         <span class="price-amount" id="p-price">0.99</span>
         <span class="price-currency">USD</span>
       </div>
     </div>
+    
     <div class="card-info">
       <div>测试卡号：<strong>4576 7500 0000 0110</strong></div>
-      <div style="margin-top:4px;">有效期：<strong>12/28</strong> &nbsp; CVC：<strong>888</strong></div>
+      <div style="margin-top:4px;">有效期：<strong>12/28</strong> &nbsp;&nbsp; 安全码 CVC：<strong>888</strong></div>
     </div>
-    <button type="button" class="pay-btn" id="pay-btn">确认支付 $0.99 (模拟出单)</button>
-    <a href="/" class="cancel-link">取消并返回游戏</a>
+    
+    <button type="button" class="pay-btn" id="pay-btn">确认支付 $0.99 (模拟出单) →</button>
+    <a href="/" class="cancel-link">取消并返回病房</a>
+    
+    <div class="stamp-watermark">
+      <span>PANCAKE CHECKOUT ENGINE</span>
+      <span>STATION_AUTH: 04:00 AM</span>
+    </div>
   </div>
 
   <script>
     const params = new URLSearchParams(location.search);
-    const sku = params.get('sku') || 'LEVEL_DOJO';
+    const sku = params.get('sku') || 'LEVEL_VAULT';
     const ref = params.get('ref') || '';
-    const name = params.get('name') || '02 夜隐寮';
+    const name = params.get('name') || '03 封印殿';
     const price = params.get('price') || '0.99';
 
     document.getElementById('p-name').textContent = name + ' (买断解锁)';
     document.getElementById('p-price').textContent = price;
-
     const btn = document.getElementById('pay-btn');
+    btn.textContent = `确认支付 $${price} (模拟出单) →`;
+
     btn.addEventListener('click', async () => {
       btn.disabled = true;
       btn.textContent = '正在出单与记账…';
@@ -153,17 +341,19 @@
         });
         const d = await resp.json();
         if (d.ok) {
-          btn.textContent = '支付成功！正在返回游戏…';
+          btn.textContent = '支��成功！正在返回游戏…';
           setTimeout(() => {
             location.href = '/?paid=1';
           }, 800);
         } else {
           alert('支付失败: ' + (d.error || '未知'));
           btn.disabled = false;
+          btn.textContent = `确认支付 $${price} (模拟出单) →`;
         }
       } catch (e) {
         alert('网络异常: ' + e.message);
         btn.disabled = false;
+        btn.textContent = `确认支付 $${price} (模拟出单) →`;
       }
     });
   </script>
