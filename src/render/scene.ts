@@ -657,7 +657,7 @@ export class HospitalRenderer {
       for (let at=1.1;at<length;at+=1.25) {
         const arrow=new THREE.Mesh(this.arrowGeometry,this.routeMaterial);
         arrow.position.set(start.x+(point.x-start.x)*at/length,0.017,start.z+(point.z-start.z)*at/length);
-        arrow.rotation.set(-Math.PI/2,0,Math.atan2(point.x-start.x,-(point.z-start.z)));
+        arrow.rotation.set(-Math.PI/2,0,Math.atan2(start.x-point.x,start.z-point.z));
         this.route.add(arrow);
       }
       start=point;
