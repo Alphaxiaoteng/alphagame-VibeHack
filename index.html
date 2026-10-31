@@ -116,7 +116,10 @@
 
           <p id="overlay-kicker" class="eyebrow">备用电源正在充能</p>
           <h1 id="overlay-title">今晚，走出医院。</h1>
-          <p id="overlay-copy" class="briefing-copy">屏息潜行 <strong class="highlight-timer">45 秒</strong>，走出医院。</p>
+          <p id="overlay-copy" class="briefing-copy">
+            一款 <strong class="highlight-timer">3D 心理微恐潜行</strong> 逃生游戏
+            <span class="briefing-subcopy">改写灯光、封门与广播，躲开夜间查房，存活 45 秒走出医院。</span>
+          </p>
           
           <!-- 主机级底部通栏操作按键图例 -->
           <div id="start-help" class="gamepad-guide" aria-label="操作按键教程指南">
@@ -279,7 +282,10 @@
             </div>
             <div class="loader-foot-actions">
               <span id="loader-countdown" class="mono loader-time">5.0s</span>
-              <button id="loader-skip" type="button" class="loader-skip-btn">跳过 <kbd>Space</kbd> →</button>
+              <div class="loader-actions-group">
+                <button id="loader-pause" type="button" class="loader-pause-btn" aria-pressed="false">暂停 <kbd>P</kbd></button>
+                <button id="loader-skip" type="button" class="loader-skip-btn">跳过 <kbd>Space</kbd> →</button>
+              </div>
             </div>
           </footer>
         </div>

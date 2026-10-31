@@ -1382,6 +1382,52 @@ body[data-touch="true"] .keyboard-only { display: none; }
   justify-content: space-between;
   margin-top: 2px;
 }
+.loader-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.loader-pause-btn {
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid var(--paper-border);
+  color: var(--paper-ink);
+  font-family: var(--font-serif);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.loader-pause-btn kbd {
+  padding: 1px 6px;
+  margin: 0 4px;
+  background: rgba(43, 36, 29, 0.12);
+  border: 1px solid var(--paper-border);
+  border-radius: 1px;
+  font-size: 10px;
+  color: var(--paper-ink);
+}
+.loader-pause-btn:hover {
+  background: var(--paper-ink);
+  color: #f4eee0;
+  border-color: var(--paper-ink);
+}
+.loader-pause-btn:hover kbd {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #f4eee0;
+}
+.loader-pause-btn.active {
+  background: var(--paper-stamp-red);
+  border-color: var(--paper-stamp-red);
+  color: #ffffff;
+}
+.loader-pause-btn.active kbd {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+}
 .loader-skip-btn {
   padding: 8px 18px;
   background: var(--paper-ink);

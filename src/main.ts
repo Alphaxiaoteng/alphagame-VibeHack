@@ -615,17 +615,63 @@ function boot(): void {
   const loaderFill = document.getElementById('loader-fill');
   const loaderCountdown = document.getElementById('loader-countdown');
   const loaderSkip = document.getElementById('loader-skip') as HTMLButtonElement | null;
+  const loaderPause = document.getElementById('loader-pause') as HTMLButtonElement | null;
   let introRafId = 0;
   let introActive = false;
+  let introPaused = false;
+  let introElapsedMs = 0;
+  let introLastTimestamp = 0;
+  const introDurationMs = 5000;
 
   function finishIntroSequence(): void {
     if (!introActive) return;
     introActive = false;
+    introPaused = false;
     if (introRafId) cancelAnimationFrame(introRafId);
     introRafId = 0;
     if (introLoader) introLoader.hidden = true;
     delete document.body.dataset.intro;
     beginRound();
+  }
+
+  function stepIntro(now: number): void {
+    if (!introActive || introPaused) return;
+    if (introLastTimestamp > 0) {
+      introElapsedMs += Math.max(0, now - introLastTimestamp);
+    }
+    introLastTimestamp = now;
+
+    const progress = Math.min(1, introElapsedMs / introDurationMs);
+    const remainSec = Math.max(0, (introDurationMs - introElapsedMs) / 1000);
+    if (loaderFill) loaderFill.style.transform = `scaleX(${progress.toFixed(3)})`;
+    if (loaderCountdown) loaderCountdown.textContent = `${remainSec.toFixed(1)}s`;
+
+    if (progress >= 1) {
+      finishIntroSequence();
+      return;
+    }
+    introRafId = requestAnimationFrame(stepIntro);
+  }
+
+  function toggleIntroPause(): void {
+    if (!introActive) return;
+    introPaused = !introPaused;
+    if (loaderPause) {
+      loaderPause.setAttribute('aria-pressed', String(introPaused));
+      loaderPause.classList.toggle('active', introPaused);
+      loaderPause.innerHTML = introPaused
+        ? '继续 <kbd>P</kbd>'
+        : '暂停 <kbd>P</kbd>';
+    }
+    if (introPaused) {
+      if (introRafId) cancelAnimationFrame(introRafId);
+      introRafId = 0;
+      const remainSec = Math.max(0, (introDurationMs - introElapsedMs) / 1000);
+      if (loaderCountdown) loaderCountdown.textContent = `暂停中 · ${remainSec.toFixed(1)}s`;
+    } else {
+      introLastTimestamp = performance.now();
+      introRafId = requestAnimationFrame(stepIntro);
+    }
   }
 
   function startIntroSequence(): void {
@@ -634,28 +680,29 @@ function boot(): void {
       return;
     }
     introActive = true;
+    introPaused = false;
+    introElapsedMs = 0;
+    introLastTimestamp = 0;
     document.body.dataset.intro = 'true';
     overlay.hidden = true;
     introLoader.hidden = false;
     audio.chime();
-    const durationMs = 5000;
-    const startAt = performance.now();
-    const step = (now: number): void => {
-      if (!introActive) return;
-      const elapsed = Math.max(0, now - startAt);
-      const progress = Math.min(1, elapsed / durationMs);
-      const remainSec = Math.max(0, (durationMs - elapsed) / 1000);
-      if (loaderFill) loaderFill.style.transform = `scaleX(${progress.toFixed(3)})`;
-      if (loaderCountdown) loaderCountdown.textContent = `${remainSec.toFixed(1)}s`;
-      if (progress >= 1) {
-        finishIntroSequence();
-        return;
-      }
-      introRafId = requestAnimationFrame(step);
-    };
+    if (loaderPause) {
+      loaderPause.setAttribute('aria-pressed', 'false');
+      loaderPause.classList.remove('active');
+      loaderPause.innerHTML = '暂停 <kbd>P</kbd>';
+    }
     if (loaderFill) loaderFill.style.transform = 'scaleX(0)';
     if (loaderCountdown) loaderCountdown.textContent = '5.0s';
-    introRafId = requestAnimationFrame(step);
+    introLastTimestamp = performance.now();
+    introRafId = requestAnimationFrame(stepIntro);
+  }
+
+  if (loaderPause) {
+    loaderPause.addEventListener('click', () => {
+      loaderPause.blur();
+      toggleIntroPause();
+    });
   }
 
   if (loaderSkip) {
@@ -665,9 +712,14 @@ function boot(): void {
     });
   }
   window.addEventListener('keydown', event => {
-    if (introActive && (event.code === 'Space' || event.code === 'Enter')) {
-      event.preventDefault();
-      finishIntroSequence();
+    if (introActive) {
+      if (event.code === 'KeyP') {
+        event.preventDefault();
+        toggleIntroPause();
+      } else if (event.code === 'Space' || event.code === 'Enter') {
+        event.preventDefault();
+        finishIntroSequence();
+      }
     }
   });
 
