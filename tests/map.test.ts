@@ -59,10 +59,16 @@ describe('医院碰撞与导航使用同一地图', () => {
 
   it('斜向撞墙仍沿墙滑动，不会把角色卡在墙中', () => {
     const map = new HospitalMap();
-    const end = moveCircle({ x: 4.5, z: 8 }, { x: 4, z: 4 }, PLAYER_RADIUS, map);
-    expect(end.x).toBeLessThanOrEqual(5.651);
-    expect(end.z).toBeGreaterThan(11);
-    expect(map.canOccupy(end, PLAYER_RADIUS)).toBe(true);
+    // 西走廊条带内（远离病房凹间开口）：实体墙依旧阻挡并允许滑动
+    const straight = moveCircle({ x: 4.5, z: 8 }, { x: 4, z: 1 }, PLAYER_RADIUS, map);
+    expect(straight.x).toBeLessThanOrEqual(5.651);
+    expect(straight.z).toBeGreaterThan(8.9);
+    expect(map.canOccupy(straight, PLAYER_RADIUS)).toBe(true);
+    // 从凹间开口斜向滑入病房 01 是合法路线，后墙会接住角色
+    const intoBay = moveCircle({ x: 4.5, z: 8 }, { x: 4, z: 4 }, PLAYER_RADIUS, map);
+    expect(intoBay.x).toBeLessThanOrEqual(8.251);
+    expect(intoBay.z).toBeGreaterThan(9.7);
+    expect(map.canOccupy(intoBay, PLAYER_RADIUS)).toBe(true);
   });
 
   it('床和药柜同样阻挡实际移动', () => {

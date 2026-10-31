@@ -303,14 +303,16 @@ describe('临时路点巡逻（不是第二阶段感知 AI）', () => {
       guard.position = { ...PATROL_WAYPOINTS[guard.targetIndex] };
       guard.path = [];
       guard.update(1 / 60, map);
-      const start = { ...guard.position };
+      // 随机选点可能出现远路点往返：用累计移动量断言“持续在走”，净位移不再适用。
+      let traveled = 0;
       for (let frame = 0; frame < 900; frame++) {
         const before = { ...guard.position };
         guard.update(1 / 60, map);
+        traveled += distance(before, guard.position);
         expect(map.canOccupy(guard.position, GUARD_RADIUS)).toBe(true);
         expect(distance(before, guard.position)).toBeLessThanOrEqual(PATROL_SPEED / 60 + 0.001);
       }
-      expect(distance(start, guard.position)).toBeGreaterThan(4);
+      expect(traveled).toBeGreaterThan(4);
     }
   });
 
