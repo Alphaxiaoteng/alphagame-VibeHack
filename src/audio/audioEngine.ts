@@ -113,6 +113,24 @@ export class AudioEngine {
     this.tone(160, 0.11, 0.09, 'triangle');
   }
 
+  /** 门重开：上升双音金属，比落门轻，形成“落下-升起”的配对反馈。 */
+  doorOpenSound(): void {
+    this.tone(150, 0.1, 0.09, 'triangle');
+    this.tone(230, 0.16, 0.06, 'triangle');
+  }
+
+  /** 开灯：继电器咔哒两声，替代通用提示音，让“合闸”有实感。 */
+  lightSwitch(): void {
+    this.tone(1900, 0.022, 0.07, 'square');
+    this.tone(1400, 0.03, 0.05, 'square');
+  }
+
+  /** 广播前的 PA 提示短叮：先引人注意，语音随后接入。 */
+  paDing(): void {
+    this.tone(660, 0.09, 0.075, 'sine');
+    this.tone(880, 0.14, 0.055, 'sine');
+  }
+
   alert(): void {
     this.tone(420, 0.16, 0.09, 'triangle');
     this.tone(600, 0.19, 0.045, 'sine');
@@ -184,16 +202,26 @@ export class AudioEngine {
     if (this.context && this.master) this.master.gain.setValueAtTime(this.muted ? 0 : 0.32, this.context.currentTime);
   }
 
+  /** 医院底噪两层：空调低频隆隆 + 荧光灯镇流器嗡鸣，远低于一切操作反馈。 */
   private startHum(): void {
     if (!this.context || !this.master) return;
-    const oscillator = this.context.createOscillator();
-    const gain = this.context.createGain();
-    oscillator.frequency.value = 100;
-    gain.gain.value = 0.013;
-    oscillator.connect(gain);
-    gain.connect(this.master);
-    this.track(oscillator);
-    oscillator.start();
+    const rumble = this.context.createOscillator();
+    const rumbleGain = this.context.createGain();
+    rumble.frequency.value = 58;
+    rumbleGain.gain.value = 0.011;
+    rumble.connect(rumbleGain);
+    rumbleGain.connect(this.master);
+    this.track(rumble);
+    rumble.start();
+    const buzz = this.context.createOscillator();
+    const buzzGain = this.context.createGain();
+    buzz.type = 'sawtooth';
+    buzz.frequency.value = 119;
+    buzzGain.gain.value = 0.0035;
+    buzz.connect(buzzGain);
+    buzzGain.connect(this.master);
+    this.track(buzz);
+    buzz.start();
   }
 
   private tone(frequency: number, duration: number, volume: number, type: OscillatorType = 'sine'): void {

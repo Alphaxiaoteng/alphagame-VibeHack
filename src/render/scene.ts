@@ -159,7 +159,16 @@ export class HospitalRenderer {
     this.lightsBlend += (lightsTarget - this.lightsBlend) * Math.min(1, dt * 9);
     if (Math.abs(lightsTarget - this.lightsBlend) < 0.004) this.lightsBlend = lightsTarget;
     const lit = this.lightsBlend;
-    for (const lamp of this.lamps) lamp.intensity = 8.5 + lit * 13.5;
+    // 规格要求“个别灯可轻微闪烁”：护士站旁与安全门附近两盏故障灯，
+    // 双正弦拍频模拟镇流器接触不良，幅度 ≤12%，只动这两盏点光不影响整体亮度。
+    const flicker = (seed: number): number => {
+      const wave = Math.sin(game.elapsed * 13 + seed) * Math.sin(game.elapsed * 7.3 + seed * 2);
+      return 1 + wave * 0.12 * Math.max(0, Math.sin(game.elapsed * 0.9 + seed));
+    };
+    for (let i = 0; i < this.lamps.length; i++) {
+      const factor = i === 1 || i === 12 ? flicker(i * 2.7) : 1;
+      this.lamps[i].intensity = (8.5 + lit * 13.5) * factor;
+    }
     this.diffuserMaterial.emissiveIntensity = 0.55 + lit * 2.65;
     this.ambient.intensity = 1.05 - lit * 0.55;
     this.key.intensity = 1.15 - lit * 0.4;

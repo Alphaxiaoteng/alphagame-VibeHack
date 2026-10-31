@@ -222,12 +222,18 @@ function boot(): void {
         audio.voice('door');
         notice(`防火门 ${event.door} 已关闭，玩家和值班员都需要绕行`);
         break;
-      case 'doorOpened': notice(`防火门 ${event.door} 已打开，路线恢复`); break;
+      case 'doorOpened':
+        audio.doorOpenSound();
+        notice(`防火门 ${event.door} 已打开，路线恢复`);
+        break;
       case 'doorBlocked': notice('无法落门：门框被占用，或另一扇门仍关闭'); break;
       case 'commandStarted':
         notice(event.message ?? '指令已发动');
-        if (event.command === 'broadcast') audio.voice('ward');
-        else if (event.command === 'lights') audio.chime();
+        if (event.command === 'broadcast') {
+          audio.paDing();
+          audio.voice('ward');
+        }
+        else if (event.command === 'lights') audio.lightSwitch();
         break;
       case 'commandEnded':
         if (event.command === 'lights') notice('开灯结束 · 视距恢复，注意走廊拐角');
