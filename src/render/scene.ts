@@ -76,7 +76,10 @@ export class HospitalRenderer {
   private readonly ambient = new THREE.HemisphereLight(0x6e8c98, 0x1e2c34, 0.38);
   private readonly key = new THREE.DirectionalLight(0x88a8b5, 0.34);
   /** 玩家近身环境适应微光与值班员轮廓顶光：压暗走廊过曝亮度的同时，确保近景路况与远景人物清晰可见 */
-  private readonly playerAuraLight = new THREE.PointLight(0xb8d4e0, 2.4, 10.5, 1.35);
+  private readonly playerAuraLight = new THREE.PointLight(0xb8d4e0, 1.1, 10.5, 1.35);
+  /** 玩家第一人称战术手电：光锥实时跟随镜头 yaw/pitch，指向视线正前方 */
+  private readonly playerFlashlightSpot = new THREE.SpotLight(0xeef8ff, 8.5, 19, Math.PI / 5.2, 0.42, 1.15);
+  private readonly playerFlashlightTarget = new THREE.Object3D();
   private readonly guardRimLight = new THREE.PointLight(0xe0f2fe, 5.5, 6.5, 1.2);
   /** 开灯效果 0→1 的混合值：实现“啪一下亮起”的短过渡，同时让环境光让位形成光池节奏。 */
   private lightsBlend = 0;
@@ -120,8 +123,8 @@ export class HospitalRenderer {
       // 脚底吸附到 Y = 0，中心对齐
       const center = bbox.getCenter(new THREE.Vector3());
       model.position.set(-center.x * scale, -bbox.min.y * scale, -center.z * scale);
-      // 游戏内 guardRig 统一以本地 +X 为面朝前进方向，Tripo 角色旋转 +Math.PI / 2 正面迎向前进方向
-      model.rotation.y = Math.PI / 2;
+      // warden_animated.glb 原生面向本地 +X（骨骼实测：脚尖 L_ToeBase x=+0.053），与 guardRig 前进轴一致，无需额外旋转
+      model.rotation.y = 0;
 
       model.traverse((child) => {
         if (child instanceof THREE.Mesh) {
@@ -332,7 +335,11 @@ export class HospitalRenderer {
     this.guardRimLight.position.set(0, 1.95, 0);
     this.guardRig.add(this.guardRimLight);
     this.playerAuraLight.position.set(15, 1.65, 11);
-    this.scene.add(this.playerRig, this.guardRig, this.route, this.playerAuraLight);
+    // 玩家随动手电：target 独立挂 scene，每帧按相机视线向量刷新
+    this.playerFlashlightSpot.position.set(15, 1.52, 11);
+    this.playerFlashlightTarget.position.set(25, 1.52, 11);
+    this.playerFlashlightSpot.target = this.playerFlashlightTarget;
+    this.scene.add(this.playerRig, this.guardRig, this.route, this.playerAuraLight, this.playerFlashlightSpot, this.playerFlashlightTarget);
     this.scene.fog = new THREE.FogExp2(0x162229, 0.016);
     // 注册资产热切换监听
     AssetRegistry.get().subscribe(() => {
@@ -358,7 +365,7 @@ export class HospitalRenderer {
     this.loadWheelchair();
   }
 
-  sync(game: RoundsGame, dt: number): void {
+  sync(game: RoundsGame, dt: number, cameraYaw = 0, cameraPitch = 0): void {
     const restarted = game.elapsed < this.previousTime;
     if (restarted) {
       this.resetExitDoor();
@@ -388,6 +395,18 @@ export class HospitalRenderer {
     }
     this.playerRig.position.set(game.player.position.x, 0, game.player.position.z);
     this.playerAuraLight.position.set(game.player.position.x, 1.65, game.player.position.z);
+    // 玩家战术手电实时跟随镜头：光源位于视点下方微偏，target 沿视线向量前投 10m
+    {
+      const px = game.player.position.x;
+      const pz = game.player.position.z;
+      const cosP = Math.cos(cameraPitch);
+      this.playerFlashlightSpot.position.set(px, 1.52, pz);
+      this.playerFlashlightTarget.position.set(
+        px + Math.cos(cameraYaw) * cosP * 10,
+        1.52 + Math.sin(cameraPitch) * 10,
+        pz + Math.sin(cameraYaw) * cosP * 10,
+      );
+    }
     this.guardRig.position.set(game.guard.position.x, 0, game.guard.position.z);
     if (restarted) {
       this.playerYaw = -game.player.facing;
@@ -395,11 +414,15 @@ export class HospitalRenderer {
     }
     this.playerYaw = this.dampFacing(this.playerYaw, -game.player.facing, dt);
     this.guardYaw = this.dampFacing(this.guardYaw, -game.guard.facing, dt);
-    // 被抓住时：值班员必须绝对正面面对玩家镜头，彻底消除背身抓人 BUG
+    // 被抓住时：值班员必须绝对正面面对玩家镜头，彻底消除背身抓人 BUG；并切回 idle 站姿，消除抓捕瞬间走路跨步的侧扭定格
     if (game.phase === 'lost') {
       const dx = game.player.position.x - game.guard.position.x;
       const dz = game.player.position.z - game.guard.position.z;
       this.guardYaw = -Math.atan2(dz, dx);
+      if (this.wardenWalkAction && this.wardenIdleAction) {
+        this.wardenWalkAction.setEffectiveWeight(0);
+        this.wardenIdleAction.setEffectiveWeight(1);
+      }
     }
     this.playerRig.rotation.y = this.playerYaw;
     this.guardRig.rotation.y = this.guardYaw;

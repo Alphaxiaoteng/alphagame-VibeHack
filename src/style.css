@@ -52,23 +52,24 @@ button:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.8); outline-offs
 [hidden] { display: none !important; }
 .mono, kbd { font-family: ui-monospace, SFMono-Regular, "Roboto Mono", Menlo, monospace; font-variant-numeric: tabular-nums; }
 kbd {
-  padding: 3px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 9999px;
+  padding: 2px 7px;
+  border: 1px solid #120f0c;
+  border-bottom: 2px solid #080605;
+  border-radius: 1px;
   font-size: 11px;
-  line-height: 1.4;
+  font-weight: 800;
+  line-height: 1.35;
   white-space: nowrap;
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  background: #231e19;
+  color: #f4eee0;
+  box-shadow: none;
 }
 #app, #scene { position: fixed; inset: 0; width: 100%; height: 100%; }
 #scene canvas { display: block; width: 100%; height: 100%; outline: none; touch-action: none; }
 .hud { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
 .hud button { pointer-events: auto; }
 
-/* 顶部流体玻璃监控状态栏 */
-/* 顶部悬浮极简 HUD：彻底消除通栏黑条，全透明沉浸悬浮 */
+/* 顶部悬浮极简 HUD：全量采用微恐医院陈旧纸质病历标签与打字机油墨风格 */
 .topbar {
   position: absolute;
   top: 0;
@@ -87,29 +88,49 @@ kbd {
   z-index: 2;
 }
 .identity {
-  display: none !important; /* 彻底去除顶部冗余通栏大字，让画面纯粹沉浸 */
+  display: none !important;
 }
 
-/* 悬浮微型倒计时指示器 (实心硬核黑炭风格，去毛玻璃) */
+/* 顶部中央倒计时纸质卡片 */
 .timer-block {
   position: absolute;
   top: 14px;
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
-  min-width: 120px;
-  padding: 6px 18px;
-  border-radius: 8px;
-  background: #11141b;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  min-width: 128px;
+  padding: 6px 20px 5px;
+  border-radius: 1px;
+  background-color: #dcd2be;
+  background-image: var(--paper-noise), var(--paper-sheet-bg);
+  border: 1.5px solid var(--paper-border);
+  border-top: 3px solid var(--paper-stamp-red);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.78), 0 0 0 2px #161310;
   pointer-events: auto;
 }
-.timer-block > span { display: block; font-size: 9px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
-#timer { display: block; font-size: 28px; line-height: 1.1; font-weight: 700; color: #ffffff; }
-#timer span { font-size: 12px; font-weight: 400; margin-left: 2px; color: var(--text-muted); }
+.timer-block > span {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--paper-ink-muted);
+  font-weight: 800;
+}
+#timer {
+  display: block;
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 900;
+  color: var(--paper-ink);
+}
+#timer span {
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 2px;
+  color: var(--paper-ink-muted);
+}
 
-/* 右上角极简悬浮按钮 (实心硬朗黑白风格) */
+/* 右上角纸质档案签按钮（全屏 / M 声音 / Esc 暂停） */
 .toolbar {
   display: flex;
   gap: 8px;
@@ -120,75 +141,103 @@ kbd {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #14171f;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  border-radius: 6px;
-  padding: 6px 14px;
+  background-color: #dcd2be;
+  background-image: var(--paper-noise), var(--paper-sheet-bg);
+  border: 1.5px solid var(--paper-border);
+  border-bottom: 2.5px solid #161310;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+  border-radius: 1px;
+  padding: 6px 13px;
+  font-family: var(--font-serif);
   font-size: 12px;
-  color: var(--text-primary);
-  transition: all 0.16s ease;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--paper-ink);
+  transition: all 0.15s ease;
 }
-.toolbar button:hover {
-  background: #1e222b;
-  border-color: rgba(255, 255, 255, 0.35);
+.toolbar button:hover:not(:disabled) {
+  background-color: #efe7d6;
+  border-color: var(--paper-stamp-red);
   transform: translateY(-1px);
 }
-.toolbar button:disabled { opacity: 0.4; transform: none; }
-.toolbar kbd { font-size: 10px; padding: 2px 6px; }
+.toolbar button:disabled { opacity: 0.48; transform: none; }
+.toolbar kbd { font-size: 10px; padding: 1px 5px; }
 
-/* 彻底隐藏调试面板，防止 F2~F5 调试按钮污染玩家界面或造成按键混淆 */
 .debug-panel {
   display: none !important;
 }
 
-/* 左上角任务指令目标卡 (实心深炭黑，去液态玻璃) */
+/* 左上角纸质查房指令便签 */
 .objective {
   position: absolute;
-  top: 18px;
+  top: 16px;
   left: 24px;
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  background: #11141b;
+  gap: 10px;
+  background-color: #dcd2be;
+  background-image: var(--paper-noise), var(--paper-sheet-bg);
   padding: 10px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  border: 1.5px solid var(--paper-border);
+  border-left: 4px solid var(--paper-stamp-red);
+  border-radius: 1px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.78), 0 0 0 2px #161310;
   max-width: 360px;
 }
-.objective strong { font-size: 13px; font-weight: 600; display: block; color: var(--text-primary); letter-spacing: 0.5px; }
-.objective span:not(.status-dot) { display: block; margin-top: 4px; font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+.objective strong {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 900;
+  display: block;
+  color: var(--paper-ink);
+  letter-spacing: 0.08em;
+}
+.objective span:not(.status-dot) {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-serif);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--paper-ink-muted);
+  line-height: 1.45;
+}
 .status-dot {
-  width: 8px;
-  height: 8px;
-  background: #ffffff;
-  border-radius: 50%;
+  width: 7px;
+  height: 7px;
+  background: var(--paper-stamp-red);
+  border-radius: 0;
+  transform: rotate(45deg);
   margin-top: 5px;
   flex: none;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+  box-shadow: none;
 }
 
+/* 中央纸质通报条 */
 .toast {
   position: absolute;
   top: 96px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 10px 24px;
-  background: #141720;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+  padding: 9px 22px;
+  background-color: #e6decb;
+  background-image: var(--paper-noise), var(--paper-sheet-bg);
+  border: 1.5px solid var(--paper-border);
+  border-left: 4px solid var(--paper-stamp-red);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.85), 0 0 0 2px #161310;
+  font-family: var(--font-serif);
   font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   max-width: 520px;
   text-align: center;
-  border-radius: 8px;
-  color: #ffffff;
+  border-radius: 1px;
+  color: var(--paper-ink);
 }
 .toast.alert {
-  background: #2a1114;
-  border-color: #ef4444;
-  color: #fee2e2;
-  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
+  background-color: #381414;
+  background-image: var(--paper-noise);
+  border-color: #b92b2b;
+  color: #f7e6e6;
 }
 
 body[data-phase="start"] .hud { display: none; }
@@ -205,167 +254,277 @@ body[data-phase="start"] .hud { display: none; }
   gap: 20px;
 }
 
-/* 体力槽面板 (实心黑炭战术风) */
+/* 左下角纸质体能记录卡 */
 .stamina-panel {
-  width: 184px;
+  width: 186px;
   flex: none;
-  padding: 12px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: #11141b;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  padding: 10px 14px;
+  border: 1.5px solid var(--paper-border);
+  border-left: 4px solid var(--paper-ink);
+  background-color: #dcd2be;
+  background-image: var(--paper-noise), var(--paper-sheet-bg);
+  border-radius: 1px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.78), 0 0 0 2px #161310;
 }
-.stamina-panel > div:first-child { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-primary); font-weight: 600; }
-.stamina-track { height: 5px; background: #222633; margin: 7px 0; border-radius: 3px; overflow: hidden; }
-#stamina-fill { width: 100%; height: 100%; background: #ffffff; border-radius: 3px; transform-origin: left; transition: transform 0.08s linear; box-shadow: 0 0 4px rgba(255, 255, 255, 0.4); }
-.stamina-panel small { display: block; font-size: 9px; color: var(--text-muted); line-height: 1.3; }
+.stamina-panel > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-serif);
+  font-size: 12px;
+  color: var(--paper-ink);
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+.stamina-track {
+  height: 6px;
+  background: rgba(43, 36, 29, 0.22);
+  border: 1px solid rgba(43, 36, 29, 0.45);
+  margin: 7px 0;
+  border-radius: 0;
+  overflow: hidden;
+}
+#stamina-fill {
+  width: 100%;
+  height: 100%;
+  background: var(--paper-ink);
+  border-radius: 0;
+  transform-origin: left;
+  transition: transform 0.08s linear;
+}
+.stamina-panel small {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--paper-ink-muted);
+  line-height: 1.3;
+}
 
-/* 核心值班战术指令槽 (实心战术按键组件，纯黑白高级感) */
+/* 底部中央：三枚微恐医院纸质战术指令符卡（1 全院开灯 / 2 封锁走廊 / 3 广播查房） */
 .commands { display: flex; gap: 12px; margin: 0 auto; }
 .commands button {
   position: relative;
   overflow: hidden;
   display: flex;
-  gap: 12px;
+  gap: 11px;
   align-items: center;
   text-align: left;
-  padding: 10px 16px;
-  width: 216px;
-  background: #11141b;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
-  transition: all 0.16s ease;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  padding: 10px 14px;
+  width: 220px;
+  background-color: #dcd2be;
+  background-image: var(--paper-noise), var(--paper-sheet-bg);
+  border: 1.5px solid var(--paper-border);
+  border-left: 4px solid var(--paper-stamp-red);
+  border-radius: 1px;
+  transition: all 0.15s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.78), 0 0 0 2px #161310;
 }
 .commands button:hover:not(:disabled) {
-  background: #1a1e28;
-  border-color: rgba(255, 255, 255, 0.35);
+  background-color: #efe7d6;
+  border-color: var(--paper-stamp-red);
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75);
 }
 .commands button:active:not(:disabled) {
   transform: translateY(1px);
-  background: #0d0f15;
 }
-.commands button:disabled { opacity: 0.45; filter: grayscale(1); }
-/* 实心战术立体键帽 (1 / 2 / 3 按键) */
+.commands button:disabled {
+  opacity: 0.52;
+  filter: sepia(0.35) brightness(0.82);
+}
+/* 纸质指令卡上的暗红印章数字键帽 (1 / 2 / 3) */
 .commands kbd.key-badge, .commands kbd {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
   padding: 0;
-  font-size: 15px;
-  font-weight: 800;
-  font-family: ui-monospace, SFMono-Regular, "Roboto Mono", Menlo, monospace;
-  border-radius: 6px;
-  background: #1b1f29;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-bottom: 2px solid #090a0d;
-  color: #ffffff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  font-size: 14px;
+  font-weight: 900;
+  font-family: ui-monospace, SFMono-Regular, "Courier New", Menlo, monospace;
+  border-radius: 1px;
+  background: var(--paper-stamp-red);
+  border: 1px solid #521010;
+  border-bottom: 2px solid #360909;
+  color: #f7f3eb;
+  box-shadow: none;
 }
 .commands .cmd-info {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
-.commands strong { display: block; font-size: 13px; font-weight: 600; color: #ffffff; letter-spacing: 0.5px; }
-.commands small { display: block; font-size: 11px; color: #8c93a4; margin-top: 2px; white-space: nowrap; }
+.commands strong {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--paper-ink);
+  letter-spacing: 0.08em;
+}
+.commands small {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--paper-ink-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+}
 .commands .command-status {
   margin-left: auto;
+  font-family: var(--font-serif);
   font-size: 10px;
-  color: #ffffff;
+  color: var(--paper-stamp-green);
   white-space: nowrap;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-weight: 900;
+  padding: 1px 6px;
+  border-radius: 0;
+  background: rgba(27, 77, 62, 0.08);
+  border: 1px solid var(--paper-stamp-green);
 }
-.commands button:disabled .command-status { color: var(--text-dim); border-color: transparent; background: transparent; }
-.commands .cooldown-fill { position: absolute; left: 0; bottom: 0; height: 3px; width: var(--progress, 0%); background: #ffffff; opacity: 0.85; }
+.commands button:disabled .command-status {
+  color: var(--paper-ink-dim);
+  border-color: var(--paper-rule);
+  background: transparent;
+}
+.commands .cooldown-fill {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: var(--progress, 0%);
+  background: var(--paper-stamp-red);
+  opacity: 0.9;
+}
 .commands button.denied { animation: denied .32s ease; }
-@keyframes denied { 25% { border-color: #ef4444; } 60% { transform: translateX(3px); } }
+@keyframes denied { 25% { border-color: #b92b2b; } 60% { transform: translateX(3px); } }
 
-/* 状态提示卡 (实心深炭黑) */
+/* 生效中战术状态纸条 */
 .effect-panel {
   position: absolute;
   left: 50%;
-  bottom: 124px;
+  bottom: 118px;
   transform: translateX(-50%);
-  min-width: 290px;
+  min-width: 280px;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 18px;
-  background: #11141b;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
-  font-size: 11px;
-  color: var(--text-primary);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  padding: 7px 16px;
+  background-color: #e6decb;
+  background-image: var(--paper-noise), var(--paper-sheet-bg);
+  border: 1.5px solid var(--paper-border);
+  border-left: 4px solid var(--paper-stamp-red);
+  border-radius: 1px;
+  font-family: var(--font-serif);
+  font-size: 12px;
+  color: var(--paper-ink);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.78), 0 0 0 2px #161310;
 }
-.effect-panel strong { font-weight: 600; }
-.effect-panel .mono { margin-left: auto; color: #ffffff; font-size: 10px; font-weight: 600; }
-.effect-track { width: 64px; height: 4px; background: #222633; border-radius: 2px; overflow: hidden; }
-#effect-fill { height: 100%; background: #ffffff; border-radius: 2px; transform-origin: left; }
+.effect-panel strong { font-weight: 900; letter-spacing: 0.08em; }
+.effect-panel .mono { margin-left: auto; color: var(--paper-stamp-red); font-size: 11px; font-weight: 800; }
+.effect-track { width: 64px; height: 4px; background: rgba(43, 36, 29, 0.22); border-radius: 0; overflow: hidden; }
+#effect-fill { height: 100%; background: var(--paper-stamp-red); border-radius: 0; transform-origin: left; }
 
-/* 极简雷达小地图 (实心深炭黑底座) */
+/* 右上角纸质建筑平面图面板 */
 .map-panel {
   position: absolute;
-  right: 28px;
-  top: 92px;
-  width: 206px;
+  right: 24px;
+  top: 72px;
+  width: 210px;
   padding: 8px 8px 6px;
-  background: #11141b;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  background-color: #dcd2be;
+  background-image: var(--paper-noise), var(--paper-sheet-bg);
+  border: 1.5px solid var(--paper-border);
+  border-radius: 1px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.78), 0 0 0 2px #161310;
 }
-.map-panel > div { display: flex; justify-content: space-between; font-size: 9px; letter-spacing: 0.5px; color: var(--text-muted); padding: 0 4px 6px; font-weight: 500; }
-.map-panel canvas { display: block; width: 206px; height: 148px; background: #080c14; border-radius: 6px; }
-.map-panel small { display: block; margin-top: 5px; font-size: 9px; color: var(--text-dim); padding: 0 4px; }
+.map-panel > div {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-serif);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--paper-ink);
+  padding: 0 2px 5px;
+  font-weight: 900;
+}
+.map-panel canvas {
+  display: block;
+  width: 192px;
+  height: 140px;
+  background: #c8bba3;
+  border: 1px solid var(--paper-border);
+  border-radius: 0;
+}
+.map-panel small {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--font-serif);
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--paper-ink-muted);
+  padding: 0 2px;
+}
 
-.danger { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 100px 18px rgba(239, 68, 68, 0.45); opacity: 0; transition: opacity .2s; }
+.danger { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 100px 18px rgba(140, 29, 29, 0.55); opacity: 0; transition: opacity .2s; }
 .danger[data-on="true"] { opacity: 1; }
-.threat-pointer { position: fixed; left: 50%; top: 50%; z-index: 2; color: #ef4444; font-size: 22px; line-height: 1; pointer-events: none; opacity: .9; filter: drop-shadow(0 2px 8px rgba(239, 68, 68, 0.5)); }
+.threat-pointer { position: fixed; left: 50%; top: 50%; z-index: 2; color: #b92b2b; font-size: 22px; line-height: 1; pointer-events: none; opacity: .9; filter: drop-shadow(0 2px 8px rgba(140, 29, 29, 0.6)); }
 
 .touch-controls { position: absolute; left: 20px; right: 20px; bottom: 18px; display: flex; align-items: flex-end; justify-content: space-between; pointer-events: none; }
-.touch-stick { position: relative; width: 132px; height: 132px; border-radius: 50%; background: rgba(15, 23, 42, 0.78); border: 1px solid var(--glass-border); pointer-events: auto; touch-action: none; box-shadow: var(--glass-shadow); }
-.touch-thumb { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; background: rgba(56, 189, 248, 0.85); box-shadow: 0 2px 12px rgba(56, 189, 248, 0.5); }
+.touch-stick { position: relative; width: 132px; height: 132px; border-radius: 50%; background: rgba(24, 20, 16, 0.78); border: 1.5px solid rgba(220, 210, 190, 0.45); pointer-events: auto; touch-action: none; }
+.touch-thumb { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; background: #dcd2be; border: 1.5px solid #2b241d; }
 .touch-actions { display: flex; gap: 10px; pointer-events: auto; }
-.touch-actions button { position: relative; min-width: 64px; height: 64px; border-radius: 50%; border: 1px solid var(--glass-border); background: #141821; font-size: 15px; font-weight: 600; color: #ffffff; touch-action: manipulation; box-shadow: var(--glass-specular); }
-.touch-actions button[aria-pressed="true"] { background: var(--accent-cyan); color: #0f172a; border-color: var(--accent-cyan); }
-#touch-sprint::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(var(--accent-cyan) calc(var(--stamina, 1) * 1turn), rgba(51, 65, 85, 0.5) 0); -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 3.5px), #000 calc(100% - 2.5px)); mask: radial-gradient(closest-side, transparent calc(100% - 3.5px), #000 calc(100% - 2.5px)); }
-#touch-sprint.exhausted { color: var(--text-dim); }
+.touch-actions button { position: relative; min-width: 64px; height: 64px; border-radius: 50%; border: 1.5px solid #2b241d; background-color: #dcd2be; background-image: var(--paper-noise); font-family: var(--font-serif); font-size: 15px; font-weight: 900; color: var(--paper-ink); touch-action: manipulation; }
+.touch-actions button[aria-pressed="true"] { background: var(--paper-stamp-red); color: #f7f3eb; border-color: #521010; }
+#touch-sprint::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(var(--paper-stamp-red) calc(var(--stamina, 1) * 1turn), rgba(43, 36, 29, 0.25) 0); -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 3.5px), #000 calc(100% - 2.5px)); mask: radial-gradient(closest-side, transparent calc(100% - 3.5px), #000 calc(100% - 2.5px)); }
+#touch-sprint.exhausted { color: var(--paper-ink-dim); }
 body[data-touch="true"] .bottom-hud .stamina-panel { display: none; }
 body[data-touch="true"] .controls-note { display: none; }
 body[data-touch="true"] .map-panel { display: none; }
 
+/* 右下角纸质按键备忘签 */
 .controls-note {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   text-align: right;
+  font-family: var(--font-serif);
   font-size: 11px;
-  color: var(--text-muted);
-  min-width: 140px;
-  padding: 8px 12px;
-  background: #11141b;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  font-weight: 700;
+  color: var(--paper-ink);
+  min-width: 142px;
+  padding: 9px 13px;
+  background-color: #dcd2be;
+  background-image: var(--paper-noise), var(--paper-sheet-bg);
+  border: 1.5px solid var(--paper-border);
+  border-right: 4px solid var(--paper-ink);
+  border-radius: 1px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.78), 0 0 0 2px #161310;
 }
 .controls-note kbd {
   font-size: 10px;
-  padding: 2px 6px;
-  background: #1b1e28;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  color: #ffffff;
+  padding: 1px 5px;
+  background: #231e19;
+  border: 1px solid #120f0c;
+  border-radius: 1px;
+  color: #f4eee0;
+  font-weight: 800;
+}
+/* 1/2/3 战术指令作用副标：病历红色印章淡色，紧凑不挡视野 */
+.controls-note small {
+  margin-left: 6px;
+  font-size: 10px;
+  color: var(--paper-stamp-red);
+  opacity: 0.9;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+.tactical-desc small {
+  margin-left: 6px;
+  font-size: 10px;
+  color: var(--paper-ink-muted);
   font-weight: 600;
 }
 
@@ -636,46 +795,49 @@ body[data-phase="lost"] .shop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 22px;
-  background: linear-gradient(90deg, rgba(224, 214, 195, 0.14) 0%, rgba(20, 24, 28, 0.72) 72%, transparent 100%);
-  color: #f7f3eb;
-  border: none;
-  border-left: 3px solid #dfd6c5;
-  border-bottom: 1px solid rgba(214, 205, 188, 0.26);
+  padding: 15px 22px;
+  background-color: #dcd2be;
+  background-image: var(--paper-noise), var(--paper-sheet-bg);
+  color: var(--paper-ink);
+  border: 1.5px solid var(--paper-border);
+  border-left: 5px solid var(--paper-stamp-red);
   outline: none;
-  border-radius: 0;
+  border-radius: 1px;
   font-family: var(--font-serif);
   font-size: 18px;
   font-weight: 900;
   letter-spacing: 0.28em;
-  box-shadow: none;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.82), inset 0 0 12px rgba(92, 68, 38, 0.14);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   margin-bottom: 6px;
 }
 .primary-label-main {
   font-family: var(--font-serif);
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 900;
   letter-spacing: 0.32em;
-  color: #f7f3eb;
+  color: var(--paper-ink);
   margin-right: auto;
 }
 .primary:hover {
-  background: linear-gradient(90deg, rgba(224, 214, 195, 0.26) 0%, rgba(28, 34, 40, 0.85) 78%, transparent 100%);
-  color: #ffffff;
-  transform: translateX(6px);
-  border-left-color: #ffffff;
-  border-bottom-color: rgba(247, 243, 235, 0.55);
+  background-color: #efe7d6;
+  color: var(--paper-stamp-red);
+  transform: translateX(4px);
+  border-color: var(--paper-stamp-red);
+  border-left-color: var(--paper-stamp-red);
+}
+.primary:hover .primary-label-main {
+  color: var(--paper-stamp-red);
 }
 .primary:active {
-  transform: translateX(3px) scale(0.99);
+  transform: translateX(2px) scale(0.99);
 }
 .primary .arrow-icon {
   font-family: var(--font-serif);
   font-size: 16px;
-  font-weight: 700;
-  color: #dfd6c5;
+  font-weight: 900;
+  color: var(--paper-stamp-red);
   transition: transform 0.2s;
 }
 .primary:hover .arrow-icon {
@@ -688,13 +850,13 @@ body[data-phase="lost"] .shop {
   display: none !important;
 }
 
-/* 巡查难度：极简衬线排印行 */
+/* 巡查难度：泛黄纸条排印行 */
 .difficulty-picker-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 0;
-  border-bottom: 1px solid rgba(214, 205, 188, 0.14);
+  border-bottom: 1px solid rgba(214, 205, 188, 0.18);
 }
 .diff-header-row {
   display: flex;
@@ -706,7 +868,7 @@ body[data-phase="lost"] .shop {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.26em;
-  color: rgba(214, 205, 188, 0.72);
+  color: rgba(214, 205, 188, 0.78);
 }
 .difficulty-picker {
   display: flex;
@@ -721,33 +883,36 @@ body[data-phase="lost"] .shop {
   align-items: center;
   justify-content: center;
   gap: 5px;
-  padding: 4px 10px;
-  background: transparent;
-  border: none;
-  border-bottom: 1.5px solid transparent;
-  border-radius: 0;
+  padding: 4px 11px;
+  background: rgba(20, 18, 15, 0.55);
+  border: 1px solid rgba(214, 205, 188, 0.22);
+  border-radius: 1px;
   text-align: center;
   transition: all 0.16s ease;
   cursor: pointer;
-  color: rgba(214, 205, 188, 0.46);
+  color: rgba(214, 205, 188, 0.62);
 }
 .difficulty-card:not([data-locked="true"]):hover {
-  color: rgba(247, 243, 235, 0.92);
+  border-color: rgba(214, 205, 188, 0.55);
+  color: #f7f3eb;
 }
 .difficulty-card[data-selected="true"] {
-  background: rgba(224, 214, 195, 0.12);
-  border-bottom-color: #dfd6c5;
-  color: #f7f3eb;
+  background-color: #dcd2be;
+  background-image: var(--paper-noise), var(--paper-sheet-bg);
+  border: 1px solid var(--paper-border);
+  border-bottom: 2px solid var(--paper-stamp-red);
+  color: var(--paper-ink);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.55);
 }
 .diff-level-text {
   font-family: var(--font-serif);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 900;
   color: inherit;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
 }
 .difficulty-card[data-selected="true"] .diff-level-text {
-  color: #f7f3eb;
+  color: var(--paper-ink);
 }
 .diff-card-inner {
   display: flex;
@@ -1459,22 +1624,25 @@ body[data-touch="true"] .keyboard-only { display: none; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  border-radius: 0;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid rgba(214, 205, 188, 0.35);
-  color: rgba(230, 222, 206, 0.85);
+  padding: 5px 12px;
+  border-radius: 1px;
+  background-color: #dcd2be;
+  background-image: var(--paper-noise), var(--paper-sheet-bg);
+  border: 1px solid var(--paper-border);
+  border-left: 3px solid var(--paper-stamp-red);
+  color: var(--paper-ink);
   font-family: var(--font-serif);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.55);
   transition: all 0.16s ease;
   cursor: pointer;
 }
 .shop-summary-btn:hover {
-  color: #ffffff;
-  border-bottom-color: #ffffff;
+  background-color: #efe7d6;
+  color: var(--paper-stamp-red);
+  border-color: var(--paper-stamp-red);
   transform: translateX(3px);
 }
 
@@ -2010,8 +2178,11 @@ body[data-touch="true"] .objective {
   left: 12px !important;
   max-width: 220px !important;
   padding: 6px 10px !important;
-  background: #11141b !important;
-  border-radius: 4px !important;
+  background-color: #dcd2be !important;
+  background-image: var(--paper-noise), var(--paper-sheet-bg) !important;
+  border: 1.5px solid var(--paper-border) !important;
+  border-left: 4px solid var(--paper-stamp-red) !important;
+  border-radius: 1px !important;
 }
 body[data-touch="true"] .objective span:not(.status-dot) {
   display: none !important;
@@ -2034,10 +2205,12 @@ body[data-touch="true"] .commands button {
   min-width: 48px !important;
   padding: 0 !important;
   justify-content: center !important;
-  border-radius: 6px !important;
-  background: #11141b !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 1px !important;
+  background-color: #dcd2be !important;
+  background-image: var(--paper-noise), var(--paper-sheet-bg) !important;
+  border: 1.5px solid var(--paper-border) !important;
+  border-top: 3px solid var(--paper-stamp-red) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.72) !important;
 }
 body[data-touch="true"] .commands .cmd-info,
 body[data-touch="true"] .commands .command-status {
@@ -2049,8 +2222,8 @@ body[data-touch="true"] .commands kbd {
   border: none !important;
   box-shadow: none !important;
   font-size: 17px !important;
-  font-weight: 700 !important;
-  color: #ffffff !important;
+  font-weight: 900 !important;
+  color: var(--paper-ink) !important;
 }
 body[data-touch="true"] #touch-fullscreen,
 body[data-touch="true"] #touch-pause {
@@ -2059,14 +2232,15 @@ body[data-touch="true"] #touch-pause {
 body[data-touch="true"] .touch-stick {
   width: 104px !important;
   height: 104px !important;
-  background: rgba(15, 23, 42, 0.72) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: rgba(20, 17, 14, 0.82) !important;
+  border: 2px solid rgba(220, 210, 190, 0.45) !important;
 }
 body[data-touch="true"] .touch-thumb {
   width: 44px !important;
   height: 44px !important;
   margin: -22px 0 0 -22px !important;
-  background: rgba(56, 189, 248, 0.75) !important;
+  background: #dcd2be !important;
+  border: 2px solid var(--paper-border) !important;
 }
 body[data-touch="true"] .touch-actions {
   display: flex !important;
@@ -2078,16 +2252,17 @@ body[data-touch="true"] #touch-orientation {
   height: 44px !important;
   border-radius: 50% !important;
   font-size: 11px !important;
-  background: #141821 !important;
-  color: #94a3b8 !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: #dcd2be !important;
+  color: var(--paper-ink) !important;
+  border: 1.5px solid var(--paper-border) !important;
 }
 body[data-touch="true"] #touch-sprint {
   min-width: 72px !important;
   height: 72px !important;
   border-radius: 50% !important;
   font-size: 18px !important;
-  font-weight: 800 !important;
-  background: #141821 !important;
-  border: 2px solid rgba(56, 189, 248, 0.4) !important;
+  font-weight: 900 !important;
+  background: #dcd2be !important;
+  color: var(--paper-ink) !important;
+  border: 2px solid var(--paper-stamp-red) !important;
 }

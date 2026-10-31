@@ -386,72 +386,75 @@ function boot(): void {
     if (!ctx) return;
     const s = 6, x0 = 10, z0 = 7;
     ctx.clearRect(0, 0, 200, 146);
-    // 深夜战术蓝图底色（对齐主视觉冷灰黑夜视风格）
-    ctx.fillStyle = '#070b10';
+    // 医院陈旧纸质建筑平面图底色（与全局纸质感 UI 完全统一）
+    ctx.fillStyle = '#c8bba3';
     ctx.fillRect(0, 0, 200, 146);
     for (const rect of WALKABLE_RECTS) {
-      ctx.fillStyle = '#141f29';
+      ctx.fillStyle = '#e5dccb';
       ctx.fillRect(x0 + rect.minX * s, z0 + rect.minZ * s, (rect.maxX - rect.minX) * s, (rect.maxZ - rect.minZ) * s);
+      ctx.strokeStyle = 'rgba(43, 36, 29, 0.22)';
+      ctx.lineWidth = 0.75;
+      ctx.strokeRect(x0 + rect.minX * s, z0 + rect.minZ * s, (rect.maxX - rect.minX) * s, (rect.maxZ - rect.minZ) * s);
     }
-    ctx.fillStyle = '#263645';
+    ctx.fillStyle = '#968872';
     for (const rect of FURNITURE_RECTS) {
       ctx.fillRect(x0 + rect.minX * s, z0 + rect.minZ * s, (rect.maxX - rect.minX) * s, (rect.maxZ - rect.minZ) * s);
     }
     if (game.map.closedDoor) {
       const door = DOORS[game.map.closedDoor];
-      ctx.strokeStyle = '#ef4444';
+      ctx.strokeStyle = '#8c1d1d';
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(x0 + 15 * s, z0 + door.minZ * s);
       ctx.lineTo(x0 + 15 * s, z0 + door.maxZ * s);
       ctx.stroke();
     }
-    ctx.fillStyle = game.exitUnlocked ? '#10b981' : '#d97706';
+    ctx.fillStyle = game.exitUnlocked ? '#1b4d3e' : '#8c4a1d';
     ctx.fillRect(x0 + EXIT_POINT.x * s - 2, z0 + EXIT_POINT.z * s - 5, 4, 10);
     if (game.exitUnlocked) {
-      ctx.fillStyle = '#ecfdf5';
+      ctx.fillStyle = '#f4eee0';
       ctx.font = 'bold 7px sans-serif';
       ctx.fillText('出', x0 + EXIT_POINT.x * s - 3.5, z0 + EXIT_POINT.z * s + 2.5);
     }
     const p = game.player.position;
-    ctx.fillStyle = '#38bdf8';
+    ctx.fillStyle = '#171310';
     ctx.beginPath();
     ctx.arc(x0 + p.x * s, z0 + p.z * s, 4.0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#7dd3fc';
+    ctx.strokeStyle = '#2b241d';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(x0 + p.x * s, z0 + p.z * s);
     ctx.lineTo(x0 + (p.x + Math.cos(follow.yaw) * 1.35) * s, z0 + (p.z + Math.sin(follow.yaw) * 1.35) * s);
     ctx.stroke();
-    // 搜索状态：琥珀圈标出值班员的搜索中心
+    // 搜索状态：朱褐圈标出值班员的搜索中心
     if (game.guard.mode === 'search' || game.guard.mode === 'broadcast') {
       const marker = game.guard.targetPoint ?? game.guard.position;
-      ctx.strokeStyle = '#f59e0b';
+      ctx.strokeStyle = '#8c4a1d';
       ctx.lineWidth = 1.6;
       ctx.beginPath();
       ctx.arc(x0 + marker.x * s, z0 + marker.z * s, 6.5, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.fillStyle = '#f59e0b';
+      ctx.fillStyle = '#8c4a1d';
       ctx.font = 'bold 7px sans-serif';
       ctx.fillText('搜', x0 + marker.x * s - 3.5, z0 + marker.z * s - 8);
     }
-    // 广播诱导：目标病房青绿框脉动
+    // 广播诱导：目标病房墨绿框脉动
     if (game.activeEffect?.id === 'broadcast' && game.activeEffect.target) {
       const t = game.activeEffect.target;
-      ctx.strokeStyle = '#10b981';
+      ctx.strokeStyle = '#1b4d3e';
       ctx.lineWidth = 1.8;
       ctx.strokeRect(x0 + t.x * s - 7, z0 + t.z * s - 7, 14, 14);
     }
     // 值班员实时位置：开灯定位、近距离目视或正在追逐时可见
     if (game.lightsOn || game.guard.mode === 'chase' || (distance(p, game.guard.position) < 10 && game.map.hasLineOfSight(p, game.guard.position))) {
-      ctx.fillStyle = '#f43f5e';
+      ctx.fillStyle = '#8c1d1d';
       ctx.beginPath();
       ctx.arc(x0 + game.guard.position.x * s, z0 + game.guard.position.z * s, 4.1, 0, Math.PI * 2);
       ctx.fill();
     }
     corridorName.textContent = corridor(p);
-    mapNote.textContent = game.exitUnlocked ? '东侧安全门已通电 · 绿标为逃生出口' : game.lightsOn ? `开灯定位：值班员在${corridor(game.guard.position)}` : '蓝点：你 · 东侧：安全门';
+    mapNote.textContent = game.exitUnlocked ? '东侧安全门已通电 · 绿标为逃生出口' : game.lightsOn ? `开灯定位：值班员在${corridor(game.guard.position)}` : '黑点：你 · 东侧：安全门';
   }
 
   /** 追逐时画面外看不到威胁来源：一枚低强度红色箭头绕屏幕中心指向值班员方位，其余状态隐藏。 */
@@ -969,7 +972,7 @@ function boot(): void {
     lastViewport = { w: window.innerWidth, h: window.innerHeight };
     resize();
   }
-  hospital.sync(game, 0);
+  hospital.sync(game, 0, follow.yaw, follow.pitch);
   hospital.scene.updateMatrixWorld(true);
   follow.update(game.player.position);
   updateUI();
@@ -1062,7 +1065,14 @@ function boot(): void {
     lastKnownHidden = document.hidden;
     for (const event of game.drainEvents()) handleEvent(event);
     audio.update(game);
-    hospital.sync(game, game.phase === 'playing' ? dt : 0);
+    // 被抓住的演出：镜头强制锁定值班员正脸，无论逃跑时背对还是侧对，都必然正面贴脸对峙
+    if (game.phase === 'lost') {
+      const dx = game.guard.position.x - game.player.position.x;
+      const dz = game.guard.position.z - game.player.position.z;
+      follow.yaw = Math.atan2(dz, dx);
+      follow.pitch = -0.04;
+    }
+    hospital.sync(game, game.phase === 'playing' ? dt : 0, follow.yaw, follow.pitch);
     hospital.scene.updateMatrixWorld(true);
     if (game.phase === 'start') {
       // 标题待机时为背景走廊增加电影感微幅手持呼吸镜头（平滑正弦微晃，消除死板静止）
