@@ -242,6 +242,42 @@ export class AudioEngine {
     oscillator.stop(now + duration + 0.02);
   }
 
+  /** 安全门推开与锁扣弹开的厚重气动沉浸音效 */
+  playDoorOpenSound(): void {
+    if (!this.context || !this.master || this.muted) return;
+    const now = this.context.currentTime;
+    
+    // 1. 锁扣解开的清脆金属重音
+    const clickOsc = this.context.createOscillator();
+    const clickGain = this.context.createGain();
+    clickOsc.type = 'triangle';
+    clickOsc.frequency.setValueAtTime(480, now);
+    clickOsc.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+    clickGain.gain.setValueAtTime(0.28, now);
+    clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    clickOsc.connect(clickGain);
+    clickGain.connect(this.master);
+    this.track(clickOsc);
+    clickOsc.start(now);
+    clickOsc.stop(now + 0.14);
+
+    // 2. 厚重钢门向外推开的低沉门轴共鸣音
+    const swingOsc = this.context.createOscillator();
+    const swingGain = this.context.createGain();
+    swingOsc.type = 'sine';
+    swingOsc.frequency.setValueAtTime(95, now + 0.05);
+    swingOsc.frequency.linearRampToValueAtTime(145, now + 0.6);
+    swingOsc.frequency.exponentialRampToValueAtTime(65, now + 1.2);
+    swingGain.gain.setValueAtTime(0.001, now + 0.05);
+    swingGain.gain.linearRampToValueAtTime(0.22, now + 0.25);
+    swingGain.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
+    swingOsc.connect(swingGain);
+    swingGain.connect(this.master);
+    this.track(swingOsc);
+    swingOsc.start(now + 0.05);
+    swingOsc.stop(now + 1.35);
+  }
+
   private track(source: AudioScheduledSourceNode): void {
     this.nodes.add(source);
     source.onended = () => {

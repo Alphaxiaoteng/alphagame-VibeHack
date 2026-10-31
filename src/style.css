@@ -44,53 +44,65 @@ kbd {
 .hud button { pointer-events: auto; }
 
 /* 顶部流体玻璃监控状态栏 */
+/* 顶部悬浮极简 HUD：彻底消除通栏黑条，全透明沉浸悬浮 */
 .topbar {
-  height: 76px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 28px;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.35) 100%);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-bottom: 1px solid var(--glass-border);
+  padding: 16px 24px;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: none !important;
+  pointer-events: none;
+  z-index: 2;
 }
-.identity { display: flex; gap: 14px; align-items: baseline; }
-.identity strong { font-size: 22px; font-weight: 700; letter-spacing: 4px; color: var(--text-primary); text-shadow: 0 0 12px rgba(255, 255, 255, 0.2); }
-.identity > .mono { font-size: 10px; letter-spacing: 2px; color: var(--accent-cyan); font-weight: 600; }
-.stage-label { font-size: 11px; color: var(--text-muted); border-left: 1px solid var(--glass-border); padding-left: 12px; }
+.identity {
+  display: none !important; /* 彻底去除顶部冗余通栏大字，让画面纯粹沉浸 */
+}
 
-/* 悬浮液态玻璃倒计时胶囊 */
+/* 悬浮微型液态玻璃倒计时胶囊 */
 .timer-block {
   position: absolute;
-  top: 10px;
+  top: 14px;
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
-  min-width: 140px;
-  padding: 4px 20px;
+  min-width: 120px;
+  padding: 4px 18px;
   border-radius: 9999px;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-specular), var(--glass-shadow);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 12px 28px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
 }
 .timer-block > span { display: block; font-size: 9px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; font-weight: 500; }
-#timer { display: block; font-size: 32px; line-height: 1.1; font-weight: 700; color: #ffffff; text-shadow: 0 0 16px rgba(56, 189, 248, 0.35); }
-#timer span { font-size: 13px; font-weight: 400; margin-left: 2px; color: var(--text-muted); }
+#timer { display: block; font-size: 28px; line-height: 1.1; font-weight: 700; color: #ffffff; text-shadow: 0 0 16px rgba(56, 189, 248, 0.35); }
+#timer span { font-size: 12px; font-weight: 400; margin-left: 2px; color: var(--text-muted); }
 
-/* 右上角极简液态胶囊按钮 */
-.toolbar { display: flex; gap: 8px; }
+/* 右上角极简悬浮胶囊按钮 */
+.toolbar {
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+  margin-left: auto;
+}
 .toolbar button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-specular);
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 8px 20px rgba(0, 0, 0, 0.35);
   border-radius: 9999px;
   padding: 6px 14px;
   font-size: 12px;
@@ -98,10 +110,10 @@ kbd {
   transition: all 0.16s ease;
 }
 .toolbar button:hover {
-  background: var(--glass-bg-hover);
+  background: rgba(30, 41, 59, 0.8);
   border-color: var(--accent-cyan);
   transform: translateY(-1px);
-  box-shadow: var(--glass-specular), 0 4px 16px rgba(56, 189, 248, 0.25);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 4px 16px rgba(56, 189, 248, 0.25);
 }
 .toolbar button:disabled { opacity: 0.4; transform: none; }
 .toolbar kbd { font-size: 10px; padding: 2px 6px; }
@@ -109,8 +121,8 @@ kbd {
 /* 右上角极简验收模式 GUI 胶囊条 (按键 UI + 对应功能) */
 .debug-panel {
   position: absolute;
-  right: 28px;
-  top: 90px;
+  right: 24px;
+  top: 66px;
   pointer-events: auto;
 }
 .debug-pills {
@@ -147,19 +159,19 @@ kbd {
 /* 左上角任务指令目标卡：液态微弧胶囊 */
 .objective {
   position: absolute;
-  top: 92px;
-  left: 28px;
+  top: 18px;
+  left: 24px;
   display: flex;
   align-items: flex-start;
   gap: 12px;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  padding: 12px 20px;
+  padding: 10px 18px;
   border: 1px solid var(--glass-border);
-  border-radius: 18px;
+  border-radius: 16px;
   box-shadow: var(--glass-specular), var(--glass-shadow);
-  max-width: 380px;
+  max-width: 360px;
 }
 .objective strong { font-size: 13px; font-weight: 600; display: block; color: var(--text-primary); letter-spacing: 0.5px; }
 .objective span:not(.status-dot) { display: block; margin-top: 4px; font-size: 11px; color: var(--text-muted); line-height: 1.5; }
@@ -658,6 +670,72 @@ body[data-phase="lost"] #result-flash { background: radial-gradient(ellipse at c
 body[data-phase="won"] #result-flash { background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0) 50%, rgba(16, 185, 129, 0.35) 100%); animation: won-glow 2.4s ease-in-out infinite; }
 @keyframes lost-flash { 0% { opacity: 0; } 12% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes won-glow { 0%, 100% { opacity: .35; } 50% { opacity: .8; } }
+
+/* 逃出生天晨光光晕过场层 */
+.escape-flare {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  background: radial-gradient(circle at 75% 50%, rgba(255, 253, 245, 0.96) 0%, rgba(254, 243, 199, 0.8) 45%, rgba(255, 255, 255, 0.5) 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+}
+
+/* 极简结算战报指标胶囊与短评 */
+.result-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 16px 0 14px;
+}
+.stat-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+.stat-pill .stat-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+}
+.stat-pill .stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+.result-evaluation {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0 0 20px;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+/* 结算状态下隐藏难度卡片与冗长日志，保持极致极简 */
+body[data-phase="won"] .difficulty-picker,
+body[data-phase="lost"] .difficulty-picker,
+body[data-phase="won"] .briefing-actions-secondary,
+body[data-phase="lost"] .briefing-actions-secondary,
+body[data-phase="won"] .shift-log,
+body[data-phase="lost"] .shift-log {
+  display: none !important;
+}
+
+body[data-phase="won"] .briefing,
+body[data-phase="lost"] .briefing {
+  width: 460px;
+  padding: 30px 34px 26px;
+}
 
 body:not([data-ready="true"]) .primary { pointer-events: none; opacity: .5; }
 .boot-note { display: none; margin: 9px 0 0; font-size: 11px; color: var(--text-dim); text-align: center; }

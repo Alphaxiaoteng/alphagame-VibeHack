@@ -92,6 +92,21 @@ function boot(): void {
   const debugState = element('debug-state');
   const debugButtons = ['debug-a', 'debug-b', 'debug-time', 'debug-exit'].map(id => element<HTMLButtonElement>(id));
   element('debug-panel').hidden = !debug;
+  const escapeFlare = element('escape-flare');
+  const escapingCutscene = {
+    active: false,
+    elapsed: 0,
+    duration: 1.6,
+  };
+
+  function startEscapingCutscene(): void {
+    escapingCutscene.active = true;
+    escapingCutscene.elapsed = 0;
+    overlay.hidden = true;
+    audio.playDoorOpenSound();
+    audio.chime();
+    notice('安全门推开，迎向晨光逃离！');
+  }
   const mapPanel = document.querySelector<HTMLElement>('.map-panel');
   if (mapPanel) mapPanel.hidden = debug;
 
@@ -154,6 +169,10 @@ function boot(): void {
   /** 新建一局必须由玩家手势触发；若检测到后台抖动导致的暂停，不擅自开局。 */
   function beginRound(): void {
     clearInput();
+    escapingCutscene.active = false;
+    escapingCutscene.elapsed = 0;
+    escapeFlare.style.opacity = '0';
+    hospital.resetExitDoor();
     resumeNote = '';
     unlockNotice = null;
     game.start();
@@ -358,9 +377,9 @@ function boot(): void {
       case 'won': {
         clearInput();
         audio.stopRound();
-        audio.chime();
         recordRound('won');
         unlockNotice = clearDifficulty(game.difficulty.id);
+        startEscapingCutscene();
         break;
       }
     }
@@ -523,36 +542,59 @@ function boot(): void {
       debugState.textContent = `${game.phase} / ${game.remaining.toFixed(2)}s\n玩家 (${game.player.position.x.toFixed(2)}, ${game.player.position.z.toFixed(2)})\n值班员 (${game.guard.position.x.toFixed(2)}, ${game.guard.position.z.toFixed(2)})\n视角 yaw ${follow.yaw.toFixed(2)} pitch ${follow.pitch.toFixed(2)}\n门：${game.map.closedDoor ?? '全开'} / 语音 ${audio.snapshot().decodedVoices}/8`;
       for (const button of debugButtons) button.disabled = game.phase !== 'playing';
     }
-    if (previousPhase === game.phase) return;
+    if (previousPhase === game.phase && !escapingCutscene.active) return;
     previousPhase = game.phase;
     document.body.dataset.phase = game.phase;
-    overlay.hidden = game.phase === 'playing';
+    overlay.hidden = game.phase === 'playing' || escapingCutscene.active;
     renderShiftLog(game.phase);
     renderDifficultyCards();
     pause.disabled = game.phase !== 'playing' && game.phase !== 'paused';
     pause.innerHTML = game.phase === 'paused' ? '继续 <kbd>Esc</kbd>' : '暂停 <kbd>Esc</kbd>';
     help.hidden = game.phase !== 'start';
     if (game.phase === 'paused') {
-      kicker.textContent = '游玩时钟与值班员已冻结';
+      kicker.textContent = '时钟已冻结';
       title.textContent = '值班暂停。';
-      copy.textContent = resumeNote || '返回页面不会自动继续。准备好后，再回到走廊。';
-      primary.innerHTML = '继续值班 <span aria-hidden="true">→</span>';
-      footnote.textContent = `本局已进行 ${(TIME_LIMIT - game.remaining).toFixed(0)} 秒 · 已发动 ${game.commandsUsed} 次指令 · 倒计时、体力和主要音效在暂停时不推进。`;
+      copy.innerHTML = `<p class="result-evaluation">${resumeNote || '准备就绪后，点击继续返回走廊。'}</p>`;
+      primary.innerHTML = '<span>继续值班</span><span class="arrow-icon" aria-hidden="true">→</span>';
+      footnote.textContent = '';
     } else if (game.phase === 'won') {
-      kicker.textContent = '值班记录 / 撤离成功';
+      kicker.textContent = 'ROUNDS · 撤离成功';
       title.textContent = '你走出了医院。';
-      const verdict = game.commandsUsed === 0 ? '零指令硬闯，今晚你是真的会躲。' : game.commandsUsed === 1 ? '一击改写路线，干净利落。' : '把医院规则玩弄于股掌。';
-      copy.textContent = `安全门已抵达，逃离成功。本局发动 ${game.commandsUsed} 次指令——${verdict}`;
-      primary.innerHTML = '再来一次 <span aria-hidden="true">→</span>';
-      footnote.textContent = (unlockNotice ? `${unlockNotice}。` : '') + 'R 也可重开：位置、门、体力、倒计时与音效全部复位。';
+      const verdict = game.commandsUsed === 0
+        ? '零指令硬闯 · 身手干净利落'
+        : game.commandsUsed === 1
+        ? '一击改写路线 · 成功突围'
+        : '掌控全院规则 · 成功脱身';
+      const diffName = game.difficulty.id === 'intern' ? '见习' : game.difficulty.id === 'standard' ? '标准' : '高危';
+      const unlockPill = unlockNotice
+        ? `<div class="stat-pill"><span class="stat-label">解锁</span><strong class="stat-value">${unlockNotice.replace('已解锁：', '')}</strong></div>`
+        : '';
+      copy.innerHTML = `
+        <div class="result-stats">
+          <div class="stat-pill"><span class="stat-label">用时</span><strong class="stat-value">45.0s</strong></div>
+          <div class="stat-pill"><span class="stat-label">指令</span><strong class="stat-value">${game.commandsUsed}次</strong></div>
+          <div class="stat-pill"><span class="stat-label">难度</span><strong class="stat-value">${diffName}</strong></div>${unlockPill}
+        </div>
+        <p class="result-evaluation">${verdict}</p>
+      `;
+      primary.innerHTML = '<span>再来一次</span><span class="arrow-icon" aria-hidden="true">→</span>';
+      footnote.textContent = '';
     } else if (game.phase === 'lost') {
-      kicker.textContent = '值班记录 / 巡查中断';
+      kicker.textContent = 'ROUNDS · 巡查中断';
       title.textContent = '被值班员抓住。';
       const held = Math.floor(game.elapsed);
-      const verdict = held < 10 ? '刚接班就被按住——先看清他的路线再动。' : held < 30 ? '坚持了一阵。下次贴着墙角走，用指令改他的路线。' : '就差一点。门通电前的最后一段最危险，留好体力。';
-      copy.textContent = `${verdict}（坚持 ${held} 秒）`;
-      primary.innerHTML = '再来一次 <span aria-hidden="true">→</span>';
-      footnote.textContent = '按 R 或点击按钮重开。';
+      const remainingSec = Math.max(0, Math.floor(TIME_LIMIT - held));
+      const tip = held < 15 ? '先看清巡查路线再行动' : '通电前切忌奔跑 · 留好体力';
+      copy.innerHTML = `
+        <div class="result-stats">
+          <div class="stat-pill"><span class="stat-label">坚持</span><strong class="stat-value">${held}s</strong></div>
+          <div class="stat-pill"><span class="stat-label">距通电</span><strong class="stat-value">${remainingSec}s</strong></div>
+          <div class="stat-pill"><span class="stat-label">区域</span><strong class="stat-value">${corridor(game.player.position)}</strong></div>
+        </div>
+        <p class="result-evaluation">${tip}</p>
+      `;
+      primary.innerHTML = '<span>重新挑战</span><span class="arrow-icon" aria-hidden="true">→</span>';
+      footnote.textContent = '';
     }
   }
 
@@ -888,6 +930,32 @@ function boot(): void {
     if (Math.abs(nextFov - follow.camera.fov) > 0.005) {
       follow.camera.fov = nextFov;
       follow.camera.updateProjectionMatrix();
+    }
+    if (escapingCutscene.active) {
+      escapingCutscene.elapsed += dt;
+      // 门打开进度 0..1 (前 1.1 秒推开)
+      const p = Math.min(1, escapingCutscene.elapsed / 1.1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      hospital.openExitDoor(eased);
+
+      // 第一人称相机平滑前推穿过大门 (安全门在 x = 27，向东穿出)
+      if (game.player.position.x < 28.3) {
+        game.player.position.x += dt * 1.5;
+      }
+      follow.pitch = Math.max(-0.02, follow.pitch + dt * 0.08);
+
+      // 晨光逐渐充盈屏幕
+      if (escapingCutscene.elapsed > 0.25) {
+        const flareP = Math.min(1, (escapingCutscene.elapsed - 0.25) / 0.85);
+        escapeFlare.style.opacity = String(flareP * 0.88);
+      }
+
+      if (escapingCutscene.elapsed >= escapingCutscene.duration) {
+        escapingCutscene.active = false;
+        escapeFlare.style.opacity = '0';
+        overlay.hidden = false;
+        updateUI();
+      }
     }
     renderer.render(hospital.scene, follow.camera);
     updateUI();

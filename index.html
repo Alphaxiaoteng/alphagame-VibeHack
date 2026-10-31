@@ -13,10 +13,9 @@
       <div id="scene" aria-label="第三人称医院游戏画面"></div>
       <div id="hud" class="hud">
         <header class="topbar">
-          <div class="identity"><strong>查房</strong><span class="mono">ROUNDS / 01</span><span class="stage-label">夜间巡查 / 住院部</span></div>
           <div class="timer-block"><span id="timer-label">安全门通电</span><strong id="timer" class="mono">60<span>s</span></strong></div>
           <div class="toolbar">
-            <button id="btn-qr" type="button" title="手机扫码直接体验">手机扫码</button>
+            <button id="btn-qr" type="button" title="手机扫码直接体验" hidden>手机扫码</button>
             <button id="mute" type="button" aria-pressed="false" title="静音或打开声音"><kbd>M</kbd> 声音</button>
             <button id="pause" type="button" disabled title="暂停"><kbd>Esc</kbd> 暂停</button>
           </div>
@@ -137,6 +136,7 @@
       </section>
       <section id="fatal" class="fatal" role="alert" hidden><h1>画面未能启动</h1><p id="fatal-message"></p><p class="fatal-hint">请用支持 WebGL 2 的桌面浏览器，并打开硬件加速后刷新。</p></section>
       <div id="result-flash" aria-hidden="true"></div>
+      <div id="escape-flare" class="escape-flare" aria-hidden="true"></div>
 
       <!-- 手机扫码弹窗 -->
       <div id="qr-modal" class="modal-layer" hidden aria-modal="true" role="dialog" aria-label="手机扫码游玩">

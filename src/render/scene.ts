@@ -89,6 +89,10 @@ export class HospitalRenderer {
   readonly cabinetSlots: Array<{ slot: THREE.Group; procedural: THREE.Group }> = [];
   nurseCounterSlot: { slot: THREE.Group; procedural: THREE.Group } | null = null;
   private wardenModelInstance: THREE.Group | null = null;
+  exitDoorLeft: THREE.Group | null = null;
+  exitDoorRight: THREE.Group | null = null;
+  outdoorLight: THREE.PointLight | null = null;
+  outdoorSunlight: THREE.Mesh | null = null;
 
   public applyTheme(): void {
     const theme = AssetRegistry.get().getActiveTheme();
@@ -199,6 +203,7 @@ export class HospitalRenderer {
   sync(game: RoundsGame, dt: number): void {
     const restarted = game.elapsed < this.previousTime;
     if (restarted) {
+      this.resetExitDoor();
       this.playerHuman.reset(); this.guardHuman.reset();
       this.previousPlayer = this.previousGuard = null;
       this.routeUpdate = -1;
@@ -929,14 +934,46 @@ export class HospitalRenderer {
       }
     }
     const exit = new THREE.Group(); exit.position.set(EXIT_POINT.x-0.01,0,EXIT_POINT.z); exit.rotation.y=-Math.PI/2;
-    const doorMaterial=new THREE.MeshStandardMaterial({ color:0xc2d6c4,roughness:0.7,metalness:0.06 });
-    exit.add(box(1.85,2.27,0.035,doorMaterial,0,1.135,0));
+    const doorMaterial=new THREE.MeshStandardMaterial({ color:0xc2d6c4,roughness:0.65,metalness:0.08 });
+    
+    // 双扇防火防烟安全门（左门扇轴心在 x=-0.92，右门扇轴心在 x=+0.92，可向外真实旋转推开）
+    this.exitDoorLeft = new THREE.Group();
+    this.exitDoorLeft.position.set(-0.92, 0, 0);
+    // 左门板
+    this.exitDoorLeft.add(box(0.91, 2.25, 0.04, doorMaterial, 0.455, 1.125, 0));
+    // 观察窗与压条
+    this.exitDoorLeft.add(box(0.28, 0.54, 0.02, glass, 0.455, 1.65, 0.022));
+    this.exitDoorLeft.add(box(0.72, 0.045, 0.05, metal, 0.455, 1.05, 0.05, 0.012)); // 逃生推杆
+    exit.add(this.exitDoorLeft);
+
+    this.exitDoorRight = new THREE.Group();
+    this.exitDoorRight.position.set(0.92, 0, 0);
+    // 右门板
+    this.exitDoorRight.add(box(0.91, 2.25, 0.04, doorMaterial, -0.455, 1.125, 0));
+    // 观察窗与压条
+    this.exitDoorRight.add(box(0.28, 0.54, 0.02, glass, -0.455, 1.65, 0.022));
+    this.exitDoorRight.add(box(0.72, 0.045, 0.05, metal, -0.455, 1.05, 0.05, 0.012)); // 逃生推杆
+    exit.add(this.exitDoorRight);
+
+    // 门框立柱与门楣（静止固定）
     for (const side of [-1,1]) {
       exit.add(box(0.09,2.3,0.06,trim,side*0.96,1.15,0.025));
-      exit.add(box(0.67,0.04,0.06,metal,side*0.46,1.05,0.052,0.012));
-      exit.add(box(0.3,0.53,0.02,glass,side*0.47,1.7,0.022));
     }
     exit.add(box(2,0.09,0.08,trim,0,2.3,0.02));
+
+    // 室外晨光与逃出生天的泛光（门推开时向走廊喷涌）
+    this.outdoorLight = new THREE.PointLight(0xfff5e6, 0, 9, 1.5);
+    this.outdoorLight.position.set(0, 1.5, -1.0);
+    exit.add(this.outdoorLight);
+
+    this.outdoorSunlight = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.2, 3.2),
+      new THREE.MeshBasicMaterial({ color: 0xfffbf0, transparent: true, opacity: 0, depthWrite: false })
+    );
+    this.outdoorSunlight.position.set(0, 1.4, -0.45);
+    this.outdoorSunlight.visible = false;
+    exit.add(this.outdoorSunlight);
+
     this.exitSign=plaque('安全出口','EMERGENCY EXIT',1.48,0.37,true); this.exitSign.position.set(0,2.57,0.03); exit.add(this.exitSign);
     this.exitLamp=box(0.08,0.08,0.04,new THREE.MeshStandardMaterial({ color:0xaa594c,emissive:0xaa594c,emissiveIntensity:0.6 }),1.1,1.52,0.035,0.01); exit.add(this.exitLamp);
     // 通电后：门框绿色导引灯条 + 门内柔和光，让「已通电」在远处就能看出来。
@@ -955,6 +992,30 @@ export class HospitalRenderer {
     exit.add(this.exitLabel);
     this.exitBeacon.visible = this.exitChannel.visible = this.exitLabel.visible = false;
     this.scene.add(exit);
+  }
+
+  /** 平滑驱动安全门推开动画 (progress: 0 关闭 -> 1 完全推开，室外晨光喷涌) */
+  public openExitDoor(progress: number): void {
+    const clamped = Math.max(0, Math.min(1, progress));
+    const angle = clamped * (Math.PI * 0.44); // 约 80 度
+    if (this.exitDoorLeft) this.exitDoorLeft.rotation.y = -angle;
+    if (this.exitDoorRight) this.exitDoorRight.rotation.y = angle;
+    if (this.outdoorLight) this.outdoorLight.intensity = clamped * 6.5;
+    if (this.outdoorSunlight) {
+      this.outdoorSunlight.visible = clamped > 0.02;
+      (this.outdoorSunlight.material as THREE.MeshBasicMaterial).opacity = Math.min(1, clamped * 1.4);
+    }
+  }
+
+  /** 重启或复位安全门 */
+  public resetExitDoor(): void {
+    if (this.exitDoorLeft) this.exitDoorLeft.rotation.y = 0;
+    if (this.exitDoorRight) this.exitDoorRight.rotation.y = 0;
+    if (this.outdoorLight) this.outdoorLight.intensity = 0;
+    if (this.outdoorSunlight) {
+      this.outdoorSunlight.visible = false;
+      (this.outdoorSunlight.material as THREE.MeshBasicMaterial).opacity = 0;
+    }
   }
 
   private updateRoute(game: RoundsGame): void {
