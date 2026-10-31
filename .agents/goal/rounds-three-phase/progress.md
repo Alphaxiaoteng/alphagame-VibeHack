@@ -194,3 +194,20 @@
 5. **声音故障可感知**：`AudioEngine.issue` 非空时在游玩中提示一次「游戏可以继续，可用右上角按钮静音」。
 
 验证：`npm run test` 5 文件 / 55 测试通过；`npm run typecheck` Exit Code 0；`npm run build` Exit Code 0；1280 截图复查搜索圈与通电三处提示均可见。
+
+### 2026-10-31 · 轮次 9（分支 `feat/waffo-payments`）：买断制付费 + 原创忍者题材
+
+在独立 git worktree / 分支开发，主分支不受影响；**未推送、未合并**。
+
+1. **买断制商店**（无订阅）：`src/core/economy.ts` 作为关卡 / 皮肤 / 商品目录与解锁判定的唯一真相源，前端 UI（`src/ui/shop.ts`）与服务端 Webhook 共用，避免两边各写一套规则后漂移。
+2. **支付链路**：`@waffo/pancake-ts` + 同源 Vite 中间件（`src/server/apiPlugin.ts`，dev 与 preview 双挂载）。私钥只留在 Node 进程；收银台跳转用点击事件内 `window.location.href`（`await` 之后 `window.open` 会被拦截）；Webhook 用原始文本体验签，账本 `.waffo-ledger.json` 按 `ref` 幂等入账。
+3. **题材换血**：付费关改成原创忍者世界观「夜隐寮」，不挂任何既有 IP 名。医院外壳保留为掩护，忍者构件叠加其上——**不重建几何、不动碰撞与导航**。三条指令只换展示说法（照明符 / 岩壁封锁 / 替身诱敌），时长、冷却与视距仍以 `config.ts` 的 `COMMANDS` 为准，逻辑层零改动。
+4. **渲染**：`shinobiGroup` 按 `LevelDef.theme` 整组切显隐，因此不进全局静态合批，改由新的 `mergeRoot(root, parent)` 在组内按材质合并；提灯只用自发光材质不加实时光源（场景已有 13 盏点光）。
+
+踩坑记录：
+- `mergeRoot` 必须要求 `parent` 变换为单位阵，否则 `matrixWorld` 参与合并会把几何搬到错误位置。
+- `sage` 是模块级共享材质且盆栽也在用，皮肤墙裙色只能走 `this.skirt`，否则会误染绿植。
+- 提灯最初上下都用深色木箍，玩家出生点正上方那盏从下方看是一块黑盘；下箍改用同一张透光纸面后变成暖光圆底。
+- 账本在 Vite 插件创建时读一次，改账本必须重启 dev server 才生效。
+
+验证：`npm run typecheck` Exit Code 0；`npm run test` 8 文件 / 94 测试通过；`npm run build` Exit Code 0，`dist` 中 `waffo|PRIVATE KEY|MER_|STO_` 命中 0。ego-browser 实测 01 保持医院题材、02/03 叠忍者构件、指令卡与 toast 随题材换说法、同机位 draw call 276 → 287。**未验证**：缺真实 `WAFFO_PRIVATE_KEY`，真实收银台与 Webhook 未跑通。
