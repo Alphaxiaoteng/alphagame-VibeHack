@@ -1272,6 +1272,12 @@ function boot(): void {
       }
       follow.pitch = Math.max(-0.02, follow.pitch + dt * 0.08);
 
+      // 手机端逃生过场视野微扩至 80°，呈现更宽广的晨光透出与大门推开比例
+      if (hasTouch && follow.camera.fov < 80) {
+        follow.camera.fov = Math.min(80, follow.camera.fov + dt * 10);
+        follow.camera.updateProjectionMatrix();
+      }
+
       // 晨光逐渐充盈屏幕
       if (escapingCutscene.elapsed > 0.25) {
         const flareP = Math.min(1, (escapingCutscene.elapsed - 0.25) / 0.85);
@@ -1281,6 +1287,10 @@ function boot(): void {
       if (escapingCutscene.elapsed >= escapingCutscene.duration) {
         escapingCutscene.active = false;
         escapeFlare.style.opacity = '0';
+        if (hasTouch) {
+          follow.camera.fov = 72;
+          follow.camera.updateProjectionMatrix();
+        }
         overlay.hidden = false;
         updateUI();
       }

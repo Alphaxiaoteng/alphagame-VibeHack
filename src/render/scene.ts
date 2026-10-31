@@ -442,23 +442,32 @@ export class HospitalRenderer {
         pz + Math.sin(cameraYaw) * cosP * 10,
       );
     }
-    this.guardRig.position.set(game.guard.position.x, 0, game.guard.position.z);
-    if (restarted) {
-      this.playerYaw = -game.player.facing;
-      this.guardYaw = -game.guard.facing;
-    }
-    this.playerYaw = this.dampFacing(this.playerYaw, -game.player.facing, dt);
-    this.guardYaw = this.dampFacing(this.guardYaw, -game.guard.facing, dt);
+    let guardX = game.guard.position.x;
+    let guardZ = game.guard.position.z;
     // 被抓住时：值班员必须绝对正面面对玩家镜头，彻底消除背身抓人 BUG；并切回 idle 站姿，消除抓捕瞬间走路跨步的侧扭定格
     if (game.phase === 'lost') {
       const dx = game.player.position.x - game.guard.position.x;
       const dz = game.player.position.z - game.guard.position.z;
+      const dist = Math.hypot(dx, dz);
+      // 特写防穿模与比例适配：抓捕瞬间保持约 1.25m 适度压迫感距离，避免模型贴脸爆框穿模
+      if (dist < 1.25 && dist > 0.001) {
+        const pull = (1.25 - dist) / dist;
+        guardX -= dx * pull;
+        guardZ -= dz * pull;
+      }
       this.guardYaw = -Math.atan2(dz, dx);
       if (this.wardenWalkAction && this.wardenIdleAction) {
         this.wardenWalkAction.setEffectiveWeight(0);
         this.wardenIdleAction.setEffectiveWeight(1);
       }
     }
+    this.guardRig.position.set(guardX, 0, guardZ);
+    if (restarted) {
+      this.playerYaw = -game.player.facing;
+      this.guardYaw = -game.guard.facing;
+    }
+    this.playerYaw = this.dampFacing(this.playerYaw, -game.player.facing, dt);
+    this.guardYaw = this.dampFacing(this.guardYaw, -game.guard.facing, dt);
     this.playerRig.rotation.y = this.playerYaw;
     this.guardRig.rotation.y = this.guardYaw;
     this.previousPlayer = { ...game.player.position };

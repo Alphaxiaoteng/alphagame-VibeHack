@@ -2375,7 +2375,7 @@ body[data-touch="true"] .keyboard-only { display: none; }
 }
 
 /* =========================================================
-   移动触控端 (Mobile / Touch) 极简化与防遮挡优化（零毛玻璃）
+   移动触控端 (Mobile / Touch) 全量比例适配与防遮挡优化
    ========================================================= */
 body[data-touch="true"] .toolbar #btn-qr,
 body[data-touch="true"] .toolbar #pause {
@@ -2383,40 +2383,60 @@ body[data-touch="true"] .toolbar #pause {
 }
 body[data-touch="true"] #btn-fullscreen {
   display: inline-flex !important;
-  padding: 5px 11px !important;
+  padding: 4px 10px !important;
   font-size: 11px !important;
 }
 body[data-touch="true"] .objective {
-  top: 52px !important;
-  left: 12px !important;
-  max-width: 220px !important;
-  padding: 6px 10px !important;
+  top: 48px !important;
+  left: 10px !important;
+  max-width: 200px !important;
+  padding: 5px 9px !important;
   background-color: #dcd2be !important;
   background-image: var(--paper-noise), var(--paper-sheet-bg) !important;
   border: 1.5px solid var(--paper-border) !important;
-  border-left: 4px solid var(--paper-stamp-red) !important;
+  border-left: 3px solid var(--paper-stamp-red) !important;
   border-radius: 1px !important;
 }
 body[data-touch="true"] .objective span:not(.status-dot) {
   display: none !important;
 }
+body[data-touch="true"] .map-panel {
+  display: block !important;
+  right: 10px !important;
+  top: 48px !important;
+  width: 124px !important;
+  padding: 4px 5px !important;
+  z-index: 15 !important;
+}
+body[data-touch="true"] .map-panel canvas {
+  width: 112px !important;
+  height: 82px !important;
+}
+body[data-touch="true"] .map-panel > div {
+  font-size: 8.5px !important;
+  padding: 0 1px 2px !important;
+}
+body[data-touch="true"] .map-panel small {
+  font-size: 8px !important;
+}
+
 body[data-touch="true"] .bottom-hud {
   left: 50% !important;
   right: auto !important;
   transform: translateX(-50%) !important;
-  bottom: 16px !important;
+  bottom: 12px !important;
   width: auto !important;
   margin: 0 !important;
 }
 body[data-touch="true"] .commands {
   display: flex !important;
-  gap: 8px !important;
+  gap: 6px !important;
 }
 body[data-touch="true"] .commands button {
   width: auto !important;
-  min-width: 78px !important;
-  height: 50px !important;
-  padding: 4px 10px !important;
+  min-width: 70px !important;
+  height: 44px !important;
+  padding: 3px 8px !important;
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
@@ -2425,8 +2445,8 @@ body[data-touch="true"] .commands button {
   background-color: #dcd2be !important;
   background-image: var(--paper-noise), var(--paper-sheet-bg) !important;
   border: 1.5px solid var(--paper-border) !important;
-  border-top: 3px solid var(--paper-stamp-red) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.72) !important;
+  border-top: 2.5px solid var(--paper-stamp-red) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.72) !important;
 }
 body[data-touch="true"] .commands kbd.key-badge,
 body[data-touch="true"] .commands kbd,
@@ -2439,57 +2459,255 @@ body[data-touch="true"] .commands .cmd-info {
   justify-content: center !important;
 }
 body[data-touch="true"] .commands .cmd-info strong {
-  font-size: 12px !important;
+  font-size: 11px !important;
   font-weight: 900 !important;
-  letter-spacing: 0.04em !important;
+  letter-spacing: 0.03em !important;
   color: var(--paper-ink) !important;
   white-space: nowrap !important;
 }
 body[data-touch="true"] .commands .command-status {
   display: inline-block !important;
   margin-left: 0 !important;
-  font-size: 9.5px !important;
-  padding: 0 5px !important;
-  line-height: 1.35 !important;
+  font-size: 8.5px !important;
+  padding: 0 4px !important;
+  line-height: 1.3 !important;
 }
 body[data-touch="true"] #touch-fullscreen,
 body[data-touch="true"] #touch-pause {
   display: none !important;
 }
 body[data-touch="true"] .touch-stick {
-  width: 104px !important;
-  height: 104px !important;
+  width: 92px !important;
+  height: 92px !important;
   background: rgba(20, 17, 14, 0.82) !important;
   border: 2px solid rgba(220, 210, 190, 0.45) !important;
 }
 body[data-touch="true"] .touch-thumb {
-  width: 44px !important;
-  height: 44px !important;
-  margin: -22px 0 0 -22px !important;
+  width: 38px !important;
+  height: 38px !important;
+  margin: -19px 0 0 -19px !important;
   background: #dcd2be !important;
   border: 2px solid var(--paper-border) !important;
 }
 body[data-touch="true"] .touch-actions {
   display: flex !important;
   align-items: flex-end !important;
-  gap: 12px !important;
+  gap: 10px !important;
 }
 body[data-touch="true"] #touch-orientation {
-  min-width: 44px !important;
-  height: 44px !important;
+  min-width: 38px !important;
+  height: 38px !important;
   border-radius: 50% !important;
-  font-size: 11px !important;
+  font-size: 10px !important;
   background: #dcd2be !important;
   color: var(--paper-ink) !important;
   border: 1.5px solid var(--paper-border) !important;
 }
 body[data-touch="true"] #touch-sprint {
-  min-width: 72px !important;
-  height: 72px !important;
+  min-width: 60px !important;
+  height: 60px !important;
   border-radius: 50% !important;
-  font-size: 18px !important;
+  font-size: 16px !important;
   font-weight: 900 !important;
   background: #dcd2be !important;
   color: var(--paper-ink) !important;
   border: 2px solid var(--paper-stamp-red) !important;
+}
+
+/* ── 手机端：首屏片名比例适配 ── */
+body[data-touch="true"][data-phase="start"] .hero-title-lockup {
+  margin: 0 0 10px !important;
+}
+body[data-touch="true"][data-phase="start"] .hero-logo-cn {
+  font-size: clamp(38px, 6.2vw, 56px) !important;
+  letter-spacing: 0.2em !important;
+}
+body[data-touch="true"][data-phase="start"] .hero-logo-en-row {
+  margin-top: 6px !important;
+  gap: 10px !important;
+}
+body[data-touch="true"][data-phase="start"] .hero-logo-en {
+  font-size: 9.5px !important;
+  letter-spacing: 0.42em !important;
+}
+body[data-touch="true"][data-phase="start"] .briefing-copy {
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  margin: 8px 0 14px !important;
+  max-width: 300px !important;
+}
+body[data-touch="true"][data-phase="start"] .briefing-copy .highlight-timer {
+  font-size: 12.5px !important;
+}
+body[data-touch="true"][data-phase="start"] .briefing-copy .briefing-subcopy {
+  font-size: 10.5px !important;
+  margin-top: 4px !important;
+  line-height: 1.45 !important;
+}
+body[data-touch="true"][data-phase="start"] .tactical-menu-panel {
+  gap: 8px !important;
+  max-width: 270px !important;
+}
+body[data-touch="true"][data-phase="start"] .primary {
+  padding: 10px 16px !important;
+  font-size: 13.5px !important;
+}
+
+/* ── 手机端：结算动画与结算弹窗（通关/失败/暂停）全量比例适配 ── */
+body[data-touch="true"][data-phase="won"] .overlay,
+body[data-touch="true"][data-phase="lost"] .overlay,
+body[data-touch="true"][data-phase="paused"] .overlay {
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 8px 12px !important;
+}
+body[data-touch="true"][data-phase="won"] .briefing,
+body[data-touch="true"][data-phase="lost"] .briefing,
+body[data-touch="true"][data-phase="paused"] .briefing {
+  width: min(390px, 94vw) !important;
+  max-height: calc(100vh - 16px) !important;
+  overflow-y: auto !important;
+  padding: 12px 16px 10px !important;
+  border-radius: 1px !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.9), 0 0 0 2px #161310 !important;
+  animation: mobile-settle-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+@keyframes mobile-settle-in {
+  from { opacity: 0; transform: scale(0.93) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+body[data-touch="true"][data-phase="won"] .briefing::before,
+body[data-touch="true"][data-phase="lost"] .briefing::before,
+body[data-touch="true"][data-phase="paused"] .briefing::before {
+  font-size: 9px !important;
+  padding-bottom: 4px !important;
+  margin-bottom: 6px !important;
+  letter-spacing: 0.18em !important;
+}
+body[data-touch="true"] .eyebrow {
+  font-size: 9px !important;
+  padding: 2px 7px !important;
+  margin: 0 0 3px !important;
+  letter-spacing: 0.16em !important;
+}
+body[data-touch="true"] .briefing h1 {
+  font-size: 19px !important;
+  letter-spacing: 0.08em !important;
+  margin: 1px 0 5px !important;
+  line-height: 1.15 !important;
+}
+body[data-touch="true"] .result-stats {
+  margin: 6px 0 !important;
+  border-top-width: 1.5px !important;
+  border-bottom-width: 1.5px !important;
+}
+body[data-touch="true"] .stat-pill {
+  padding: 5px 3px !important;
+  gap: 2px !important;
+}
+body[data-touch="true"] .stat-pill .stat-label {
+  font-size: 8.5px !important;
+  letter-spacing: 0.08em !important;
+}
+body[data-touch="true"] .stat-pill .stat-value {
+  font-size: 14px !important;
+}
+body[data-touch="true"] .result-evaluation {
+  font-size: 11px !important;
+  margin: 0 0 8px !important;
+  padding-bottom: 5px !important;
+  line-height: 1.35 !important;
+}
+body[data-touch="true"] .difficulty-picker-container {
+  padding: 5px 8px !important;
+  margin-bottom: 5px !important;
+}
+body[data-touch="true"] .diff-label-title {
+  font-size: 9.5px !important;
+  margin-bottom: 3px !important;
+}
+body[data-touch="true"] .difficulty-picker {
+  gap: 4px !important;
+}
+body[data-touch="true"] .difficulty-card {
+  padding: 3px 6px !important;
+  font-size: 10px !important;
+  min-height: 26px !important;
+}
+body[data-touch="true"][data-phase="won"] .primary,
+body[data-touch="true"][data-phase="lost"] .primary,
+body[data-touch="true"][data-phase="paused"] .primary {
+  padding: 8px 16px !important;
+  font-size: 12.5px !important;
+  min-height: 36px !important;
+  border-left-width: 3px !important;
+  gap: 8px !important;
+}
+
+/* ── 手机端：5秒开局指南加载动画比例适配 ── */
+body[data-touch="true"] .intro-loader {
+  padding: 10px !important;
+}
+body[data-touch="true"] .intro-loader-stage {
+  max-width: min(480px, 94vw) !important;
+  max-height: calc(100vh - 16px) !important;
+  overflow-y: auto !important;
+  padding: 12px 16px 10px !important;
+  gap: 10px !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.95), 0 0 0 2px #161310 !important;
+}
+body[data-touch="true"] .intro-loader-head {
+  padding-left: 8px !important;
+  padding-bottom: 5px !important;
+  border-left-width: 3px !important;
+}
+body[data-touch="true"] .intro-title {
+  font-size: 17px !important;
+  letter-spacing: 0.14em !important;
+  margin-bottom: 2px !important;
+}
+body[data-touch="true"] .intro-sub {
+  font-size: 10.5px !important;
+  letter-spacing: 0.06em !important;
+}
+body[data-touch="true"] .intro-tutorial-grid {
+  grid-template-columns: 1fr 1fr !important;
+  gap: 6px !important;
+}
+body[data-touch="true"] .tutorial-panel {
+  padding: 6px 8px !important;
+  gap: 6px !important;
+}
+body[data-touch="true"] .tutorial-rows {
+  gap: 5px !important;
+}
+body[data-touch="true"] .tutorial-row {
+  gap: 6px !important;
+}
+body[data-touch="true"] .tut-keys {
+  min-width: 48px !important;
+  gap: 2px !important;
+}
+body[data-touch="true"] .tut-keys kbd {
+  min-width: 20px !important;
+  height: 20px !important;
+  padding: 0 4px !important;
+  font-size: 9px !important;
+}
+body[data-touch="true"] .tut-keys kbd.num {
+  width: 20px !important;
+  height: 20px !important;
+  font-size: 10px !important;
+}
+body[data-touch="true"] .tut-desc strong {
+  font-size: 11px !important;
+  letter-spacing: 0.05em !important;
+}
+body[data-touch="true"] .tut-desc span {
+  font-size: 9px !important;
+}
+body[data-touch="true"] .loader-pause-btn,
+body[data-touch="true"] .loader-skip-btn {
+  padding: 5px 10px !important;
+  font-size: 10.5px !important;
 }
