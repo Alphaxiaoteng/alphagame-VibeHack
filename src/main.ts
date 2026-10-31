@@ -467,6 +467,13 @@ function boot(): void {
   });
   canvas.addEventListener('pointerup', () => { dragging = false; });
   canvas.addEventListener('pointercancel', clearInput);
+  // 触摸板：双指横滑转镜头。wheel 监听必须非被动才能 preventDefault，避免页面滚动劫持手势。
+  canvas.addEventListener('wheel', event => {
+    if (game.phase !== 'playing') return;
+    event.preventDefault();
+    const delta = Math.max(-0.32, Math.min(0.32, event.deltaX * 0.009));
+    if (delta !== 0) follow.rotate(delta);
+  }, { passive: false });
   // ── 触控输入 ──────────────────────────────────────────────
   // 左半屏拖动 = 摇杆；右半屏拖动 = 转镜头；轻触（短距离短时间）= 不产生输入，避免误触打断移动。
   touchStick.addEventListener('pointerdown', event => {

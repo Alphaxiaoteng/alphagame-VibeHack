@@ -107,6 +107,7 @@ export class HospitalRenderer {
     this.buildLights();
     this.buildDepartments();
     this.buildFurniture();
+    this.buildProps();
     this.buildDoors();
     this.mergeStaticGeometry();
     this.scene.add(this.playerRig, this.guardRig, this.route);
@@ -424,6 +425,123 @@ export class HospitalRenderer {
         this.blockers.push(blocker); this.scene.add(blocker);
       }
     }
+  }
+
+  /**
+   * 走廊内容加密：悬挂指示牌、挂钟、海报、输液架、洗手液、绿植、摄像头与地面导引条。
+   * 全部是纯视觉件，不进碰撞与导航——贴墙件厚度 ≤0.3 m，落在玩家中心半径（0.35 m）够不到的死区，
+   * 不会出现穿模；新材质进入 staticRoots 后照常按材质合批。
+   */
+  private buildProps(): void {
+    const clockFace = new THREE.MeshStandardMaterial({ color: 0xf5f5ee, roughness: 0.4 });
+    const clockDark = new THREE.MeshStandardMaterial({ color: 0x3a423c, roughness: 0.5 });
+    const plantLeaf = new THREE.MeshStandardMaterial({ color: 0x4d7d55, roughness: 0.95, flatShading: true });
+    const ivBag = new THREE.MeshStandardMaterial({ color: 0xeff2e6, roughness: 0.55 });
+    const guide = new THREE.MeshStandardMaterial({ color: 0x86a891, roughness: 0.85 });
+
+    // 地面导引条：出生点 → 北走廊 → 东走廊 → 安全门，第一次游玩也能顺着绿线找到门。
+    const stripA = box(13.4, 0.004, 0.14, guide, 17.9, 0.0065, 3.78);
+    const stripB = box(0.14, 0.004, 7.2, guide, 24.55, 0.0065, 7.35);
+    for (const strip of [stripA, stripB]) { strip.castShadow = false; strip.receiveShadow = true; this.scene.add(strip); }
+    const props = new THREE.Group();
+
+    // 挂钟 ×2：中央建筑南北墙面。
+    for (const [x, z, flip] of [[8, 5.955, 1], [22, 16.045, -1]] as const) {
+      const clock = new THREE.Group(); clock.position.set(x, 2.02, z);
+      const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.03, 24), trim);
+      rim.rotation.x = Math.PI / 2; rim.castShadow = true; clock.add(rim);
+      const face = new THREE.Mesh(new THREE.CylinderGeometry(0.132, 0.132, 0.034, 24), clockFace);
+      face.rotation.x = Math.PI / 2; face.castShadow = false; clock.add(face);
+      const minute = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.1, 0.006), clockDark);
+      minute.position.set(0, 0.04 * flip, 0.021 * flip); minute.rotation.z = -0.7; clock.add(minute);
+      const hour = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.065, 0.006), clockDark);
+      hour.position.set(0, 0.028 * flip, 0.021 * flip); hour.rotation.z = 2.1; clock.add(hour);
+      props.add(clock);
+    }
+
+    // 悬挂指示牌 ×2：走廊中途，双面可读，指向安全门。
+    const hang = (x: number, z: number, alongZ: boolean, text: string, sub: string): void => {
+      const group = new THREE.Group(); group.position.set(x, 2.02, z);
+      const width = 1.35, height = 0.3;
+      for (const side of [-1, 1]) {
+        const face = plaque(text, sub, width, height, true);
+        face.rotation.y = alongZ ? (side > 0 ? 0 : Math.PI) : (side > 0 ? -Math.PI / 2 : Math.PI / 2);
+        face.position.x = alongZ ? 0 : side * 0.028;
+        face.position.z = alongZ ? side * 0.028 : 0;
+        group.add(face);
+      }
+      group.add(box(width, 0.035, 0.07, trim, 0, height / 2 + 0.02, 0, 0.012));
+      for (const side of [-1, 1]) {
+        const rod = box(0.018, 0.62, 0.018, metal, alongZ ? side * width * 0.35 : 0, height / 2 + 0.34, alongZ ? 0 : side * width * 0.35);
+        group.add(rod);
+      }
+      props.add(group);
+    };
+    hang(16.5, 4.5, false, '安全门 →', 'SAFETY EXIT / EAST');
+    hang(25.5, 8.2, true, '安全门 ↑', 'EXIT AHEAD');
+
+    // 输液架 ×3：病房门旁贴墙。
+    const ivStand = (x: number, z: number, lean: number): void => {
+      const group = new THREE.Group(); group.position.set(x, 0, z); group.rotation.y = lean;
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 1.72, 10), metal);
+      pole.position.y = 0.9; pole.castShadow = true; group.add(pole);
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.11, 0.025, 16), metal);
+      base.position.y = 0.012; base.castShadow = true; group.add(base);
+      group.add(box(0.24, 0.016, 0.016, metal, 0, 1.71, 0));
+      group.add(box(0.016, 0.05, 0.016, metal, 0.11, 1.68, 0));
+      const bag = box(0.075, 0.15, 0.032, ivBag, 0.105, 1.58, 0, 0.012);
+      group.add(bag);
+      props.add(group);
+    };
+    ivStand(5.8, 10.15, 0);
+    ivStand(5.8, 11.85, Math.PI);
+    ivStand(24.2, 10.3, 0);
+
+    // 洗手液 ×2：病房门侧墙面。
+    for (const [x, z, flip] of [[5.955, 9.35, 1], [24.045, 12.6, -1]] as const) {
+      const group = new THREE.Group(); group.position.set(x, 1.22, z);
+      group.add(box(0.09, 0.3, 0.13, sage, 0, 0, 0, 0.02));
+      group.add(box(0.02, 0.24, 0.08, clockDark, 0.045 * flip, 0, 0));
+      props.add(group);
+    }
+
+    // 绿植 ×3：护士站凹间两侧与东北角。
+    const plant = (x: number, z: number): void => {
+      const group = new THREE.Group(); group.position.set(x, 0, z);
+      const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.078, 0.24, 14), sage);
+      pot.position.y = 0.12; pot.castShadow = true; group.add(pot);
+      const lower = new THREE.Mesh(new THREE.IcosahedronGeometry(0.17, 0), plantLeaf);
+      lower.position.y = 0.36; lower.castShadow = true; group.add(lower);
+      const upper = new THREE.Mesh(new THREE.IcosahedronGeometry(0.12, 0), plantLeaf);
+      upper.position.set(0.04, 0.52, 0.02); upper.castShadow = true; group.add(upper);
+      props.add(group);
+    };
+    plant(11.35, 7.0);
+    plant(12.65, 7.0);
+    plant(26.45, 3.5);
+
+    // 摄像头 ×2：走廊两角俯瞰。
+    const camera = (x: number, z: number, yaw: number): void => {
+      const group = new THREE.Group(); group.position.set(x, 2.62, z); group.rotation.y = yaw;
+      group.add(box(0.028, 0.028, 0.2, metal, 0, 0.1, -0.06));
+      group.add(box(0.1, 0.075, 0.24, fixtureShell, 0, 0, 0.06, 0.015));
+      const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.03, 12), clockDark);
+      lens.rotation.x = Math.PI / 2; lens.position.set(0, 0, 0.19); group.add(lens);
+      props.add(group);
+    };
+    camera(26.85, 3.2, Math.PI * 0.75);
+    camera(3.15, 18.8, -Math.PI * 0.25);
+
+    this.staticRoots.push(props);
+    this.scene.add(props);
+
+    // 海报 ×3：外墙面（含安全门旁的消防疏散图）。
+    const hygiene = plaque('勤洗手 · 手卫生', 'HAND HYGIENE / 5 MOMENTS', 0.72, 0.5);
+    hygiene.position.set(13.5, 1.7, 3.015); this.scene.add(hygiene);
+    const evacuation = plaque('消防安全疏散图', 'EVACUATION MAP / EAST EXIT', 0.66, 0.56);
+    evacuation.position.set(26.985, 1.6, 12.3); evacuation.rotation.y = -Math.PI / 2; this.scene.add(evacuation);
+    const admission = plaque('住院须知', 'ADMISSION GUIDE', 0.72, 0.5);
+    admission.position.set(8.5, 1.7, 18.985); admission.rotation.y = Math.PI; this.scene.add(admission);
   }
 
   private buildDoors(): void {
