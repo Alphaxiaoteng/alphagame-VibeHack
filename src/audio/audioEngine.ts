@@ -16,7 +16,28 @@ export const VOICE_URLS = {
 };
 export type VoiceId = keyof typeof VOICE_URLS;
 
-/** 用户点击开始后才建立 AudioContext；没有网络接口、运行时 TTS 或密钥。 */
+export const BGM_URLS = {
+  menu: new URL('../../assets/audio/bgm/bgm_menu_theme.mp3', import.meta.url).href,
+  ambience: new URL('../../assets/audio/bgm/bgm_hospital_ambience.mp3', import.meta.url).href,
+};
+export type BgmId = keyof typeof BGM_URLS;
+
+export const SFX_URLS = {
+  walk: new URL('../../assets/audio/sfx/sfx_footstep_walk.mp3', import.meta.url).href,
+  sprint: new URL('../../assets/audio/sfx/sfx_footstep_sprint.mp3', import.meta.url).href,
+  wardenStep: new URL('../../assets/audio/sfx/sfx_warden_step.mp3', import.meta.url).href,
+  wardenBell: new URL('../../assets/audio/sfx/sfx_warden_bell.mp3', import.meta.url).href,
+  lightSwitch: new URL('../../assets/audio/sfx/sfx_light_switch.mp3', import.meta.url).href,
+  doorSlam: new URL('../../assets/audio/sfx/sfx_door_slam.mp3', import.meta.url).href,
+  doorOpen: new URL('../../assets/audio/sfx/sfx_door_open.mp3', import.meta.url).href,
+  paChime: new URL('../../assets/audio/sfx/sfx_pa_chime.mp3', import.meta.url).href,
+  dangerSting: new URL('../../assets/audio/sfx/sfx_danger_sting.mp3', import.meta.url).href,
+  escapeWin: new URL('../../assets/audio/sfx/sfx_escape_win.mp3', import.meta.url).href,
+  breathGasp: new URL('../../assets/audio/sfx/sfx_breath_gasp.mp3', import.meta.url).href,
+};
+export type SfxId = keyof typeof SFX_URLS;
+
+/** 用户手势后建立 AudioContext，驱动微恐医院 BGM、统一慢速阴冷广播语音与真实音效。 */
 export class AudioEngine {
   muted = false;
   ready = false;
@@ -24,29 +45,25 @@ export class AudioEngine {
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
   private buffers = new Map<VoiceId, AudioBuffer>();
+  private bgmBuffers = new Map<BgmId, AudioBuffer>();
+  private sfxBuffers = new Map<SfxId, AudioBuffer>();
   private loading: Promise<void> | null = null;
   private nodes = new Set<AudioScheduledSourceNode>();
   private currentVoice: AudioBufferSourceNode | null = null;
+  private currentBgm: AudioBufferSourceNode | null = null;
+  private currentBgmId: BgmId | null = null;
   private generation = 0;
   private active = false;
   private paused = false;
   private nextPlayerStep = 0;
   private nextGuardStep = 0;
   private nextBellStep = 0;
+  private nextBreathStep = 0;
   private lastPlayer: Point | null = null;
   private lastGuard: Point | null = null;
   private patrolSpoken = false;
 
-  startRound(): void {
-    this.stopRound();
-    this.active = true;
-    this.paused = false;
-    this.nextPlayerStep = 0;
-    this.nextGuardStep = 0;
-    this.nextBellStep = 0;
-    this.lastPlayer = null;
-    this.lastGuard = null;
-    this.patrolSpoken = false;
+  private ensureContext(): boolean {
     try {
       if (!this.context) {
         this.context = new AudioContext();
@@ -55,12 +72,37 @@ export class AudioEngine {
       }
       this.applyVolume();
       void this.context.resume().catch(() => { this.issue = '声音未能启动，游戏仍可继续'; });
-      this.startHum();
-      if (!this.loading) this.loading = this.loadVoices();
-      this.voice('start');
+      if (!this.loading) this.loading = this.loadAllAssets();
+      return true;
     } catch {
       this.issue = '此浏览器无法启用声音，游戏仍可继续';
+      return false;
     }
+  }
+
+  /** 首页交互后自动播放微恐深邃菜单主题 BGM */
+  startMenuBgm(): void {
+    if (this.active || this.currentBgmId === 'menu') return;
+    if (!this.ensureContext()) return;
+    this.playBgm('menu', 0.24);
+  }
+
+  startRound(): void {
+    this.stopRound();
+    this.active = true;
+    this.paused = false;
+    this.nextPlayerStep = 0;
+    this.nextGuardStep = 0;
+    this.nextBellStep = 0;
+    this.nextBreathStep = 0;
+    this.lastPlayer = null;
+    this.lastGuard = null;
+    this.patrolSpoken = false;
+    if (!this.ensureContext()) return;
+    this.startHum();
+    this.playBgm('ambience', 0.28);
+    this.paDing();
+    this.voice('start');
   }
 
   stopRound(): void {
@@ -71,6 +113,8 @@ export class AudioEngine {
     }
     this.nodes.clear();
     this.currentVoice = null;
+    this.currentBgm = null;
+    this.currentBgmId = null;
   }
 
   setPaused(paused: boolean): void {
@@ -87,6 +131,48 @@ export class AudioEngine {
     return this.muted;
   }
 
+  private playBgm(id: BgmId, volume: number): void {
+    if (!this.context || !this.master) return;
+    const generation = this.generation;
+    const startLoop = () => {
+      if (generation !== this.generation || !this.context || !this.master) return;
+      const buffer = this.bgmBuffers.get(id);
+      if (!buffer) return;
+      if (this.currentBgm) {
+        try { this.currentBgm.stop(); } catch { /* 忽略已停止节点 */ }
+      }
+      const source = this.context.createBufferSource();
+      const gain = this.context.createGain();
+      source.buffer = buffer;
+      source.loop = true;
+      gain.gain.value = volume;
+      source.connect(gain);
+      gain.connect(this.master);
+      this.track(source);
+      this.currentBgm = source;
+      this.currentBgmId = id;
+      source.start();
+    };
+    if (this.bgmBuffers.has(id)) startLoop();
+    else void this.loading?.then(startLoop);
+  }
+
+  private playSfx(id: SfxId, volume = 0.65, playbackRate = 1.0): boolean {
+    if (!this.context || !this.master || this.paused) return false;
+    const buffer = this.sfxBuffers.get(id);
+    if (!buffer) return false;
+    const source = this.context.createBufferSource();
+    const gain = this.context.createGain();
+    source.buffer = buffer;
+    source.playbackRate.value = playbackRate;
+    gain.gain.value = volume;
+    source.connect(gain);
+    gain.connect(this.master);
+    this.track(source);
+    source.start();
+    return true;
+  }
+
   voice(id: VoiceId): void {
     if (!this.context || !this.master) return;
     const generation = this.generation;
@@ -98,8 +184,11 @@ export class AudioEngine {
         try { this.currentVoice.stop(); } catch { /* 语音可能刚刚自然结束 */ }
       }
       const source = this.context.createBufferSource();
+      const gain = this.context.createGain();
       source.buffer = buffer;
-      source.connect(this.master);
+      gain.gain.value = 0.96;
+      source.connect(gain);
+      gain.connect(this.master);
       this.track(source);
       this.currentVoice = source;
       source.start();
@@ -109,34 +198,40 @@ export class AudioEngine {
   }
 
   doorSound(): void {
+    if (this.playSfx('doorSlam', 0.82)) return;
     this.tone(85, 0.22, 0.17, 'triangle');
     this.tone(160, 0.11, 0.09, 'triangle');
   }
 
-  /** 门重开：上升双音金属，比落门轻，形成“落下-升起”的配对反馈。 */
+  /** 门重开：电磁锁弹开与防火门滑轨音效 */
   doorOpenSound(): void {
+    if (this.playSfx('doorOpen', 0.72)) return;
     this.tone(150, 0.1, 0.09, 'triangle');
     this.tone(230, 0.16, 0.06, 'triangle');
   }
 
-  /** 开灯：继电器咔哒两声，替代通用提示音，让“合闸”有实感。 */
+  /** 开灯：工业断路器合闸与镇流器电流声 */
   lightSwitch(): void {
+    if (this.playSfx('lightSwitch', 0.75)) return;
     this.tone(1900, 0.022, 0.07, 'square');
     this.tone(1400, 0.03, 0.05, 'square');
   }
 
-  /** 广播前的 PA 提示短叮：先引人注意，语音随后接入。 */
+  /** 广播前的微恐失谐医院内线提示音 */
   paDing(): void {
+    if (this.playSfx('paChime', 0.62)) return;
     this.tone(660, 0.09, 0.075, 'sine');
     this.tone(880, 0.14, 0.055, 'sine');
   }
 
   alert(): void {
+    if (this.playSfx('dangerSting', 0.85)) return;
     this.tone(420, 0.16, 0.09, 'triangle');
     this.tone(600, 0.19, 0.045, 'sine');
   }
 
   chime(): void {
+    if (this.playSfx('escapeWin', 0.78)) return;
     this.tone(523.25, 0.24, 0.11);
     this.tone(659.25, 0.34, 0.07);
     this.tone(783.99, 0.4, 0.055);
@@ -147,15 +242,26 @@ export class AudioEngine {
     const moved = this.lastPlayer ? distance(this.lastPlayer, game.player.position) > 0.002 : false;
     const guardMoved = this.lastGuard ? distance(this.lastGuard, game.guard.position) > 0.002 : false;
     if (moved && game.elapsed >= this.nextPlayerStep) {
-      this.tone(game.player.sprinting ? 118 : 100, 0.075, 0.075);
-      this.nextPlayerStep = game.elapsed + (game.player.sprinting ? 0.25 : 0.4);
+      const rate = 0.94 + Math.random() * 0.12;
+      const played = game.player.sprinting
+        ? this.playSfx('sprint', 0.58, rate)
+        : this.playSfx('walk', 0.42, rate);
+      if (!played) this.tone(game.player.sprinting ? 118 : 100, 0.075, 0.075);
+      this.nextPlayerStep = game.elapsed + (game.player.sprinting ? 0.26 : 0.42);
+    }
+    if (game.player.sprinting && game.player.stamina < 18 && game.elapsed >= this.nextBreathStep) {
+      this.playSfx('breathGasp', 0.48);
+      this.nextBreathStep = game.elapsed + 5.5;
     }
     const gap = distance(game.player.position, game.guard.position);
-    // 脚步与追逐铃都按秒表排程，不靠逐帧计数，掉帧时节奏也不漂。
+    // 脚步与追逐心跳/钥匙声均按秒表排程，不靠逐帧计数。
     if (guardMoved && game.elapsed >= this.nextGuardStep) {
       const wait = secondsUntilFootstep(game.elapsed, game.guard.mode, gap);
       if (wait !== Infinity) {
-        this.tone(70, 0.1, 0.1 / (1 + gap * 0.35));
+        const vol = Math.min(0.85, 0.65 / (1 + gap * 0.25));
+        if (!this.playSfx('wardenStep', vol, 0.96 + Math.random() * 0.08)) {
+          this.tone(70, 0.1, 0.1 / (1 + gap * 0.35));
+        }
         this.nextGuardStep = game.elapsed + wait;
       } else {
         this.nextGuardStep = game.elapsed + 0.2;
@@ -164,7 +270,10 @@ export class AudioEngine {
     if (game.elapsed >= this.nextBellStep) {
       const wait = secondsUntilGuardBell(game.elapsed, game.guard.mode, gap);
       if (wait !== Infinity) {
-        this.tone(880, 0.06, 0.05, 'square');
+        const vol = Math.min(0.88, 0.72 / (1 + gap * 0.18));
+        if (!this.playSfx('wardenBell', vol)) {
+          this.tone(880, 0.06, 0.05, 'square');
+        }
         this.nextBellStep = game.elapsed + wait;
       } else {
         this.nextBellStep = game.elapsed + 0.2;
@@ -179,36 +288,52 @@ export class AudioEngine {
   }
 
   snapshot() {
-    return { ready: this.ready, muted: this.muted, issue: this.issue, context: this.context?.state ?? 'not-started', decodedVoices: this.buffers.size, liveSources: this.nodes.size };
+    return {
+      ready: this.ready,
+      muted: this.muted,
+      issue: this.issue,
+      context: this.context?.state ?? 'not-started',
+      decodedVoices: this.buffers.size,
+      decodedBgm: this.bgmBuffers.size,
+      decodedSfx: this.sfxBuffers.size,
+      liveSources: this.nodes.size,
+    };
   }
 
-  private async loadVoices(): Promise<void> {
+  private async loadAllAssets(): Promise<void> {
     const context = this.context;
     if (!context) return;
-    await Promise.all(Object.entries(VOICE_URLS).map(async ([id, url]) => {
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const buffer = await context.decodeAudioData(await response.arrayBuffer());
-        this.buffers.set(id as VoiceId, buffer);
-      } catch {
-        this.issue = '部分语音加载失败，游戏仍可继续';
-      }
-    }));
+    const decodeMap = async <K extends string>(entries: [K, string][], target: Map<K, AudioBuffer>, isVoice = false) => {
+      await Promise.all(entries.map(async ([id, url]) => {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const buffer = await context.decodeAudioData(await response.arrayBuffer());
+          target.set(id, buffer);
+        } catch {
+          if (isVoice) this.issue = '部分语音加载失败，游戏仍可继续';
+        }
+      }));
+    };
+    await Promise.all([
+      decodeMap(Object.entries(VOICE_URLS) as [VoiceId, string][], this.buffers, true),
+      decodeMap(Object.entries(BGM_URLS) as [BgmId, string][], this.bgmBuffers),
+      decodeMap(Object.entries(SFX_URLS) as [SfxId, string][], this.sfxBuffers),
+    ]);
     this.ready = true;
   }
 
   private applyVolume(): void {
-    if (this.context && this.master) this.master.gain.setValueAtTime(this.muted ? 0 : 0.32, this.context.currentTime);
+    if (this.context && this.master) this.master.gain.setValueAtTime(this.muted ? 0 : 0.62, this.context.currentTime);
   }
 
-  /** 医院底噪两层：空调低频隆隆 + 荧光灯镇流器嗡鸣，远低于一切操作反馈。 */
+  /** 医院底噪两层：空调低频隆隆 + 荧光灯镇流器嗡鸣，衬托 BGM 与脚步声。 */
   private startHum(): void {
     if (!this.context || !this.master) return;
     const rumble = this.context.createOscillator();
     const rumbleGain = this.context.createGain();
-    rumble.frequency.value = 58;
-    rumbleGain.gain.value = 0.011;
+    rumble.frequency.value = 54;
+    rumbleGain.gain.value = 0.008;
     rumble.connect(rumbleGain);
     rumbleGain.connect(this.master);
     this.track(rumble);
@@ -217,7 +342,7 @@ export class AudioEngine {
     const buzzGain = this.context.createGain();
     buzz.type = 'sawtooth';
     buzz.frequency.value = 119;
-    buzzGain.gain.value = 0.0035;
+    buzzGain.gain.value = 0.0025;
     buzz.connect(buzzGain);
     buzzGain.connect(this.master);
     this.track(buzz);
@@ -245,9 +370,8 @@ export class AudioEngine {
   /** 安全门推开与锁扣弹开的厚重气动沉浸音效 */
   playDoorOpenSound(): void {
     if (!this.context || !this.master || this.muted) return;
+    if (this.playSfx('doorOpen', 0.85)) return;
     const now = this.context.currentTime;
-    
-    // 1. 锁扣解开的清脆金属重音
     const clickOsc = this.context.createOscillator();
     const clickGain = this.context.createGain();
     clickOsc.type = 'triangle';
@@ -260,22 +384,6 @@ export class AudioEngine {
     this.track(clickOsc);
     clickOsc.start(now);
     clickOsc.stop(now + 0.14);
-
-    // 2. 厚重钢门向外推开的低沉门轴共鸣音
-    const swingOsc = this.context.createOscillator();
-    const swingGain = this.context.createGain();
-    swingOsc.type = 'sine';
-    swingOsc.frequency.setValueAtTime(95, now + 0.05);
-    swingOsc.frequency.linearRampToValueAtTime(145, now + 0.6);
-    swingOsc.frequency.exponentialRampToValueAtTime(65, now + 1.2);
-    swingGain.gain.setValueAtTime(0.001, now + 0.05);
-    swingGain.gain.linearRampToValueAtTime(0.22, now + 0.25);
-    swingGain.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
-    swingOsc.connect(swingGain);
-    swingGain.connect(this.master);
-    this.track(swingOsc);
-    swingOsc.start(now + 0.05);
-    swingOsc.stop(now + 1.35);
   }
 
   private track(source: AudioScheduledSourceNode): void {
@@ -284,6 +392,10 @@ export class AudioEngine {
       this.nodes.delete(source);
       source.disconnect();
       if (this.currentVoice === source) this.currentVoice = null;
+      if (this.currentBgm === source) {
+        this.currentBgm = null;
+        this.currentBgmId = null;
+      }
     };
   }
 }

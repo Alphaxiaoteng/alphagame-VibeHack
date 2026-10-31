@@ -365,6 +365,7 @@ function boot(): void {
       case 'caught':
         clearInput();
         audio.stopRound();
+        audio.alert();
         audio.voice('caught');
         recordRound('lost');
         break;
@@ -696,7 +697,8 @@ function boot(): void {
     document.body.dataset.intro = 'true';
     overlay.hidden = true;
     introLoader.hidden = false;
-    audio.chime();
+    audio.startMenuBgm();
+    audio.paDing();
     if (loaderPause) {
       loaderPause.setAttribute('aria-pressed', 'false');
       loaderPause.classList.remove('active');
@@ -732,6 +734,12 @@ function boot(): void {
       }
     }
   });
+
+  const unlockMenuBgm = (): void => {
+    if (game.phase === 'start') audio.startMenuBgm();
+  };
+  window.addEventListener('pointerdown', unlockMenuBgm, { once: true });
+  window.addEventListener('keydown', unlockMenuBgm, { once: true });
 
   const press = (button: HTMLButtonElement, handler: () => void): void => {
     button.addEventListener('click', () => {
