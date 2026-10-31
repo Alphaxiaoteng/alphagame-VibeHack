@@ -133,19 +133,19 @@ export interface DifficultyPreset {
 
 export const DIFFICULTIES: Record<DifficultyId, DifficultyPreset> = {
   intern: {
-    id: 'intern', name: '见习夜班', brief: '值班员刚接手 · 反应慢半拍',
+    id: 'intern', name: '一星难度', brief: '值班员走得慢 · 看得近',
     sightRange: 6.5, litSightRange: 10, hearingRange: 5.5,
     chaseSpeed: 3.9, patrolSpeed: 2.4,
     searchSeconds: 3, alertSearchSeconds: 4.5, graceSeconds: 8,
   },
   standard: {
-    id: 'standard', name: '标准夜班', brief: '他熟悉这栋楼 · 当前平衡',
+    id: 'standard', name: '二星难度', brief: '值班员正常巡逻',
     sightRange: SIGHT_RANGE, litSightRange: LIT_SIGHT_RANGE, hearingRange: HEARING_RANGE,
     chaseSpeed: CHASE_SPEED, patrolSpeed: PATROL_SPEED,
     searchSeconds: SEARCH_SECONDS, alertSearchSeconds: ALERT_SEARCH_SECONDS, graceSeconds: GRACE_SECONDS,
   },
   graveyard: {
-    id: 'graveyard', name: '高危夜巡', brief: '他守了十年 · 耳聪目明',
+    id: 'graveyard', name: '三星难度', brief: '值班员更快 · 看得更远',
     sightRange: 9.5, litSightRange: 14, hearingRange: 9,
     chaseSpeed: 4.5, patrolSpeed: 3.2,
     searchSeconds: 5, alertSearchSeconds: 7.5, graceSeconds: 3,
