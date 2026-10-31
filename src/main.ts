@@ -160,8 +160,8 @@ function boot(): void {
     toast.hidden = false;
     // 追逐警报直接由红色警示条承载全文，不再另弹一枚与正文叠压的“被发现了”胶囊。
     toast.classList.toggle('alert', alert);
-    // 使用游玩时钟，暂停时不偷偷让提示消失。
-    toastUntil = game.elapsed + 3.2;
+    // 使用游玩时钟，暂停时不偷偷让提示消失；手机端缩短停留时间避免遮挡画面。
+    toastUntil = game.elapsed + (hasTouch ? 2.0 : 3.2);
   }
 
   /** 新建一局必须由玩家手势触发；若检测到后台抖动导致的暂停，不擅自开局。 */
@@ -185,7 +185,7 @@ function boot(): void {
     uiTime = -1;
     previousGuardMode = game.guard.mode;
     lastFrame = performance.now();
-    canvas.focus({ preventScroll: true });
+    if (!hasTouch) canvas.focus({ preventScroll: true });
     updateUI();
   }
 
@@ -207,7 +207,7 @@ function boot(): void {
     game.resume();
     audio.setPaused(false);
     lastFrame = performance.now();
-    canvas.focus({ preventScroll: true });
+    if (!hasTouch) canvas.focus({ preventScroll: true });
     updateUI();
   }
 
@@ -568,6 +568,15 @@ function boot(): void {
     const time = game.exitUnlocked ? '逃生' : `${Math.ceil(game.remaining)}<span>s</span>`;
     if (timer.innerHTML !== time) timer.innerHTML = time;
     objective.textContent = game.exitUnlocked ? '东侧安全门已打开 · 立刻前往门口逃生' : '躲开值班员，等安全门通电';
+    const objectiveBox = objective.closest<HTMLElement>('.objective');
+    if (objectiveBox && hasTouch) {
+      // 手机端左上角目标提示仅在开局前 3 秒与安全门解锁后前 3.5 秒短暂展示，避免长驻遮挡画面
+      const showBriefOnMobile = game.phase === 'playing' && (
+        game.elapsed <= 3.0 ||
+        (game.exitUnlocked && game.elapsed <= game.difficulty.timeLimit + 3.5)
+      );
+      objectiveBox.hidden = !showBriefOnMobile;
+    }
     const liveGuardDist = distance(game.player.position, game.guard.position).toFixed(1);
     status.textContent = game.lightsOn ? `开灯透视：猎人在${corridor(game.guard.position)} · 距你 ${liveGuardDist}m` : {
       patrol: '巡查中 · 走路安静，奔跑会被听见',
@@ -823,11 +832,7 @@ function boot(): void {
     });
   };
   press(primary, () => {
-    // 手机扫码或触摸端点击开始时，自动发起全屏请求（用户显式手势上下文）
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    if (isTouchDevice && !document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
+    // 手机端不在点击开始/重来时强制触发浏览器原生全屏，避免弹出系统级「如需退出全屏模式…」长驻遮挡顶栏；玩家可按需点左上角「全屏」
     if (game.phase === 'paused') resumeGame();
     else if (game.phase === 'start') startIntroSequence();
     else beginRound();
@@ -981,17 +986,19 @@ function boot(): void {
     if (pitch !== 0) follow.tilt(-pitch);
   }, { passive: false });
   // ── 触控输入 ──────────────────────────────────────────────
-  // 左半屏拖动 = 摇杆；右半屏拖动 = 转镜头；轻触（短距离短时间）= 不产生输入，避免误触打断移动。
+  // 左半屏拖动 = 摇杆；右半屏拖动 = 转镜头；不使用 setPointerCapture，防止 Android 浏览器全屏系统提示条因指针捕获而冻结不消失。
   touchStick.addEventListener('pointerdown', event => {
     if (game.phase !== 'playing') return;
     const box = touchStick.getBoundingClientRect();
     touch.stickId = event.pointerId;
     touch.originX = box.left + box.width / 2;
     touch.originY = box.top + box.height / 2;
-    touchStick.setPointerCapture(event.pointerId);
+    if (event.pointerType === 'mouse') {
+      try { touchStick.setPointerCapture(event.pointerId); } catch {}
+    }
     event.preventDefault();
   });
-  touchStick.addEventListener('pointermove', event => {
+  window.addEventListener('pointermove', event => {
     if (event.pointerId !== touch.stickId) return;
     const radius = touchStick.getBoundingClientRect().width / 2;
     const axes = stickAxes(event.clientX - touch.originX, event.clientY - touch.originY, radius);
@@ -1001,7 +1008,6 @@ function boot(): void {
     const magnitude = Math.hypot(axes.right, axes.forward);
     const scale = magnitude * limit;
     touchThumb.style.transform = `translate(${axes.right * scale}px, ${-axes.forward * scale}px)`;
-    event.preventDefault();
   });
   const endStick = (event: PointerEvent) => {
     if (event.pointerId !== touch.stickId) return;
@@ -1010,8 +1016,8 @@ function boot(): void {
     touch.right = 0;
     touchThumb.style.transform = '';
   };
-  touchStick.addEventListener('pointerup', endStick);
-  touchStick.addEventListener('pointercancel', endStick);
+  window.addEventListener('pointerup', endStick);
+  window.addEventListener('pointercancel', endStick);
   touchSprint.addEventListener('click', () => {
     touchSprint.blur();
     touch.sprint = !touch.sprint;
@@ -1034,9 +1040,8 @@ function boot(): void {
     touch.dragY = event.clientY;
     touch.dragStartedAt = performance.now();
     touch.dragMoved = 0;
-    try { canvas.setPointerCapture(event.pointerId); } catch { /* 同上：捕获失败不阻断触控拖动 */ }
   });
-  canvas.addEventListener('pointermove', event => {
+  window.addEventListener('pointermove', event => {
     if (event.pointerId !== touch.dragId || game.phase !== 'playing') return;
     const dx = event.clientX - touch.dragX;
     const dy = event.clientY - touch.dragY;
@@ -1050,9 +1055,11 @@ function boot(): void {
       follow.tilt(-dy * 0.0035);
     }
   });
-  const endDrag = () => { touch.dragId = -1; };
-  canvas.addEventListener('pointerup', endDrag);
-  canvas.addEventListener('pointercancel', endDrag);
+  const endDrag = (event: PointerEvent) => {
+    if (event.pointerId === touch.dragId) touch.dragId = -1;
+  };
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
   // 只相信「持续躲在后台」：回到前台时用真实时间差判定。瞬时抖动与窗口失焦都不会冻结一局。
   window.addEventListener('blur', () => { clearInput(); });
   document.addEventListener('visibilitychange', () => {
