@@ -31,9 +31,9 @@ export const ROLE_AVATARS: Record<SkinId, string> = {
 };
 
 export const ROLE_TITLES: Record<SkinId, { role: string; desc: string }> = {
-  'standard': { role: '值班医师', desc: '巡查常规 · 白大褂' },
-  'shinobi-indigo': { role: '潜行干员', desc: '夜隐装束 · 静步高压' },
-  'scroll-vermilion': { role: '封印特派', desc: '朱印防具 · 禁术抗性' },
+  'standard': { role: '值班医师', desc: '白大褂 · 常规巡查' },
+  'shinobi-indigo': { role: '潜行干员', desc: '夜行装 · 暗影静步' },
+  'scroll-vermilion': { role: '封印特派', desc: '朱印衣 · 异常收容' },
 };
 
 export interface ShopHooks {
@@ -85,24 +85,24 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   let levelId: LevelId = 'ward-01';
   let skinId: SkinId = 'standard';
 
-  // 1. 首页轻量战备状态条（胶囊型）
+  // 1. 首页极简场景行
   const summaryBar = document.createElement('div');
   summaryBar.className = 'shop-summary-bar';
   summaryBar.innerHTML = `
     <div class="shop-summary-info">
-      <span class="shop-summary-tag">场景选择</span>
+      <span class="shop-summary-tag">场景</span>
       <strong class="shop-summary-level">01 住院部</strong>
-      <span class="shop-summary-role">· 免费畅玩</span>
+      <span class="shop-summary-role" hidden></span>
     </div>
     <button type="button" class="shop-summary-btn">
-      <span>场景切换</span>
+      <span>切换 ›</span>
     </button>
   `;
   const summaryLevel = summaryBar.querySelector('.shop-summary-level') as HTMLElement;
   const summaryRole = summaryBar.querySelector('.shop-summary-role') as HTMLElement;
   const openConfigBtn = summaryBar.querySelector('.shop-summary-btn') as HTMLButtonElement;
 
-  // 2. 独立弹窗：战备整备舱（Modal）
+  // 2. 独立弹窗：医院值班纸质档案袋（Dossier Modal）
   const configModal = document.createElement('div');
   configModal.className = 'modal-layer shop-config-layer';
   configModal.hidden = true;
@@ -118,10 +118,10 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   modalHead.className = 'modal-head';
   modalHead.innerHTML = `
     <div class="config-title-block">
-      <strong>战备整备舱 · 场景与干员选择</strong>
-      <span class="badge-mini">3D 动作已载入</span>
+      <strong>值班档案 · 区域与人员登记表</strong>
+      <span class="badge-mini">内部档案</span>
     </div>
-    <button type="button" class="modal-close" title="完成">&times;</button>
+    <button type="button" class="modal-close" title="关闭">&times;</button>
   `;
   const closeConfigBtn = modalHead.querySelector('.modal-close') as HTMLButtonElement;
 
@@ -147,7 +147,7 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   role3dContainer.className = 'shop-role-3d-box';
   const role3dBadge = document.createElement('span');
   role3dBadge.className = 'shop-role-3d-label';
-  role3dBadge.textContent = '3D 动态';
+  role3dBadge.textContent = '实况立绘';
   const role3d = new Role3DPreview(124, 124);
   role3dContainer.append(role3d.domElement, role3dBadge);
 
@@ -160,7 +160,7 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   groupHead.className = 'shop-group-head';
   const levelLabel = document.createElement('span');
   levelLabel.className = 'shop-label';
-  levelLabel.textContent = '场景选择 · 执勤区域';
+  levelLabel.textContent = '一、巡查区域档案';
   const levelNav = document.createElement('div');
   levelNav.className = 'shop-nav-arrows';
   const prevBtn = document.createElement('button');
@@ -182,7 +182,7 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   skinGroup.className = 'shop-group';
   const skinLabel = document.createElement('span');
   skinLabel.className = 'shop-label';
-  skinLabel.textContent = '出勤干员 · 角色配置 (全部免费)';
+  skinLabel.textContent = '二、当班人员证照';
   const skinRow = document.createElement('div');
   skinRow.className = 'shop-row shop-row-skins';
   skinGroup.append(skinLabel, skinRow);
@@ -199,7 +199,7 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   const confirmBtn = document.createElement('button');
   confirmBtn.type = 'button';
   confirmBtn.className = 'primary config-confirm-btn';
-  confirmBtn.innerHTML = '<span>保存并返回</span><span class="arrow-icon">&rarr;</span>';
+  confirmBtn.innerHTML = '<span>确认排班</span><span class="arrow-icon">&rarr;</span>';
   modalFooter.append(confirmBtn);
 
   modalContent.append(cover, group, skinGroup, buy, note);
@@ -351,10 +351,10 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
     avatar.alt = '';
     const swatch = document.createElement('i');
     swatch.className = 'shop-swatch';
-    swatch.style.background = `#${skin.swatch.toString(16).padStart(6, '0')}`;
+    swatch.textContent = '出勤';
     const text = document.createElement('span');
     const info = ROLE_TITLES[skin.id] ?? { role: skin.name, desc: '走廊主题' };
-    text.innerHTML = `<strong>${info.role}</strong><small>免费选用 · 备勤中</small>`;
+    text.innerHTML = `<strong>${info.role}</strong><small>${info.desc}</small>`;
     button.append(avatar, swatch, text);
     button.addEventListener('click', () => { selectSkin(skin.id); button.blur(); });
     skinRow.append(button);

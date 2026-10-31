@@ -6,6 +6,9 @@
     <meta name="theme-color" content="#e7ebe5" />
     <meta name="description" content="在医院改写灯光、通道与广播，躲避巡查并坚持 45 秒，抵达东侧安全门。" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23e7ebe5'/%3E%3Cpath d='M26 12h12v14h14v12H38v14H26V38H12V26h14z' fill='%233f7a55'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+SC:wght@600;700;900&display=swap" rel="stylesheet" />
     <title>查房 Rounds · 医院逃生</title>
   </head>
   <body data-phase="start">
@@ -92,16 +95,6 @@
           <div class="cover-backdrop"></div>
           <div class="cover-vignette"></div>
           <div class="cover-scanlines"></div>
-          <div class="cover-telemetry">
-            <div class="telemetry-top-right">
-              <span class="telemetry-rec"><i class="telemetry-dot"></i>CAM_04 // WARD_II_EAST</span>
-              <span class="telemetry-code">04:00:19:08 AM</span>
-            </div>
-            <div class="telemetry-bottom-right">
-              <span class="telemetry-stat">POWER_GRID: CHARGING [45.0s]</span>
-              <span class="telemetry-stat">ACOUSTIC_SENSOR: ACTIVE</span>
-            </div>
-          </div>
         </div>
 
         <div class="briefing">
@@ -122,7 +115,7 @@
 
           <p id="overlay-kicker" class="eyebrow">备用电源正在充能</p>
           <h1 id="overlay-title">今晚，走出医院。</h1>
-          <p id="overlay-copy" class="briefing-copy">躲开值班员，坚持 <strong class="highlight-timer">45 秒</strong> 通电逃生。</p>
+          <p id="overlay-copy" class="briefing-copy">屏息潜行 <strong class="highlight-timer">45 秒</strong>，走出医院。</p>
           
           <!-- 主机级底部通栏操作按键图例 -->
           <div id="start-help" class="gamepad-guide" aria-label="操作按键教程指南">
@@ -191,28 +184,24 @@
 
           <div class="tactical-menu-panel">
             <button id="primary" class="primary" type="button">
-              <span class="console-cursor" aria-hidden="true">◆</span>
               <span class="primary-label-main">开始逃生</span>
-              <span class="arrow-icon" aria-hidden="true">ENTER WARD →</span>
+              <span class="arrow-icon" aria-hidden="true">→</span>
             </button>
 
             <div class="difficulty-picker-container">
               <div class="diff-header-row">
-                <span class="diff-label-title">巡查难度</span>
+                <span class="diff-label-title">难度</span>
                 <strong id="diff-current-badge" hidden>中</strong>
               </div>
               <div id="difficulty-picker" class="difficulty-picker" aria-label="选择值班难度">
                 <button type="button" class="difficulty-card" data-difficulty="intern" title="简单">
-                  <span class="diff-stars">★☆☆</span>
                   <span class="diff-level-text">简单</span>
                 </button>
                 <button type="button" class="difficulty-card" data-difficulty="standard" title="中">
-                  <span class="diff-stars">★★☆</span>
                   <span class="diff-level-text">中</span>
                 </button>
                 <button type="button" class="difficulty-card" data-difficulty="graveyard" data-locked="true" title="极难">
                   <div class="diff-card-inner">
-                    <span class="diff-stars">★★★</span>
                     <span class="diff-level-text">极难</span>
                     <svg class="diff-lock-icon" viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -227,10 +216,9 @@
             <section id="shop" class="shop" aria-label="科室与出勤人员"></section>
 
             <div class="briefing-actions-secondary">
-              <button id="briefing-qr" type="button" class="subtle-link">
-                <span class="menu-sub-label">掌机模式</span>
-                <span class="menu-sub-action">手机扫码即玩 ↗</span>
-              </button>
+              <button id="briefing-pitch" type="button" class="subtle-link">游戏介绍</button>
+              <span class="menu-dot-sep" aria-hidden="true">·</span>
+              <button id="briefing-qr" type="button" class="subtle-link">手机扫码</button>
             </div>
           </div>
 
@@ -239,105 +227,58 @@
         </div>
       </section>
 
-      <!-- 5秒开局加载动画与战术操作教程 (点击「开始逃生」后触发) -->
+      <!-- 5秒开局加载动画与极简操作指南 (点击「开始逃生」后触发) -->
       <section id="intro-loader" class="intro-loader" hidden aria-label="潜行与战术操作指南">
         <div class="intro-loader-backdrop"></div>
         <div class="intro-loader-stage">
           <header class="intro-loader-head">
-            <span class="intro-kicker">WARD II // SURVEILLANCE &amp; TACTICAL BRIEFING</span>
-            <h2 class="intro-title">行动指南 <span>HOW TO SURVIVE</span></h2>
-            <p class="intro-sub">东侧安全门将在 <strong>45 秒</strong> 后通电解锁。善用医院掩体与三大控制系统躲避值班员。</p>
+            <h2 class="intro-title">操作指南</h2>
+            <p class="intro-sub">坚持 <strong>45 秒</strong>，待东侧安全门通电后离开医院。</p>
           </header>
 
           <div class="intro-tutorial-grid">
-            <!-- 左侧：基础移动与视线 -->
             <div class="tutorial-panel">
-              <div class="tutorial-panel-head">
-                <span class="panel-index">01</span>
-                <strong>潜行与观察</strong>
-                <small>MOVEMENT &amp; CAMERA</small>
-              </div>
               <div class="tutorial-rows">
                 <div class="tutorial-row">
-                  <div class="tut-keys">
-                    <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
-                  </div>
-                  <div class="tut-desc">
-                    <strong>静步走位</strong>
-                    <span>常规步行完全静音，可绕入病房、药房或屏风后躲避视线</span>
-                  </div>
+                  <div class="tut-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div>
+                  <div class="tut-desc"><strong>静步移动</strong><span>走路无声</span></div>
                 </div>
                 <div class="tutorial-row">
-                  <div class="tut-keys">
-                    <kbd class="wide">Shift</kbd>
-                  </div>
-                  <div class="tut-desc">
-                    <strong>奔跑冲刺</strong>
-                    <span>按住加速突围，但脚步声会暴露位置并持续消耗体力</span>
-                  </div>
+                  <div class="tut-keys"><kbd class="wide">Shift</kbd></div>
+                  <div class="tut-desc"><strong>奔跑冲刺</strong><span>会被听见</span></div>
                 </div>
                 <div class="tutorial-row">
-                  <div class="tut-keys">
-                    <kbd class="wide">鼠标右键拖动</kbd>
-                  </div>
-                  <div class="tut-desc">
-                    <strong>环视走廊</strong>
-                    <span>按住右键左右滑动，提前观察拐角与值班员手电筒光束</span>
-                  </div>
+                  <div class="tut-keys"><kbd class="wide">右键拖动</kbd></div>
+                  <div class="tut-desc"><strong>环视视角</strong><span>观察走廊</span></div>
                 </div>
               </div>
             </div>
 
-            <!-- 右侧：1 2 3 医院战术指令 -->
             <div class="tutorial-panel">
-              <div class="tutorial-panel-head">
-                <span class="panel-index">02</span>
-                <strong>医院控制指令</strong>
-                <small>TACTICAL KEYS · 按键 1 / 2 / 3 或点击底部按钮</small>
-              </div>
               <div class="tutorial-rows">
                 <div class="tutorial-row">
-                  <div class="tut-keys">
-                    <kbd class="num">1</kbd>
-                  </div>
-                  <div class="tut-desc">
-                    <strong>全院开灯</strong>
-                    <span>点亮全院顶灯 6 秒并透视值班员位置，但你也会暴露在强光下</span>
-                  </div>
+                  <div class="tut-keys"><kbd class="num">1</kbd></div>
+                  <div class="tut-desc"><strong>全院开灯</strong><span>点亮透视 6 秒</span></div>
                 </div>
                 <div class="tutorial-row">
-                  <div class="tut-keys">
-                    <kbd class="num">2</kbd>
-                  </div>
-                  <div class="tut-desc">
-                    <strong>封锁走廊</strong>
-                    <span>落下走廊防火门 5 秒阻断追捕路线，你与值班员均需绕行</span>
-                  </div>
+                  <div class="tut-keys"><kbd class="num">2</kbd></div>
+                  <div class="tut-desc"><strong>封锁走廊</strong><span>落下防火门 5 秒</span></div>
                 </div>
                 <div class="tutorial-row">
-                  <div class="tut-keys">
-                    <kbd class="num">3</kbd>
-                  </div>
-                  <div class="tut-desc">
-                    <strong>广播查房</strong>
-                    <span>呼叫远处病房引开值班员 6 秒（须先脱离其视线方可生效）</span>
-                  </div>
+                  <div class="tut-keys"><kbd class="num">3</kbd></div>
+                  <div class="tut-desc"><strong>广播查房</strong><span>引开值班员 6 秒</span></div>
                 </div>
               </div>
             </div>
           </div>
 
           <footer class="intro-loader-foot">
-            <div class="loader-progress-info">
-              <span class="loader-status-text"><i class="loader-pulse-dot"></i>正在同步住院部电力与声学传感器...</span>
-              <span id="loader-countdown" class="mono loader-time">5.0s</span>
-            </div>
             <div class="loader-bar-track">
               <div id="loader-fill" class="loader-bar-fill"></div>
             </div>
             <div class="loader-foot-actions">
-              <span class="loader-tip">提示：通电前切勿盲目奔跑，留存体力应对最后冲刺</span>
-              <button id="loader-skip" type="button" class="loader-skip-btn">立即进入病房 <kbd>Space</kbd> →</button>
+              <span id="loader-countdown" class="mono loader-time">5.0s</span>
+              <button id="loader-skip" type="button" class="loader-skip-btn">跳过 <kbd>Space</kbd> →</button>
             </div>
           </footer>
         </div>

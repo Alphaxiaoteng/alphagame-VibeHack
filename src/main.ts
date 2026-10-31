@@ -568,7 +568,7 @@ function boot(): void {
       primary.innerHTML = '<span>继续值班</span><span class="arrow-icon" aria-hidden="true">→</span>';
       footnote.textContent = '';
     } else if (game.phase === 'won') {
-      kicker.textContent = 'ROUNDS · 撤离成功';
+      kicker.textContent = '准予离院 · 撤离成功';
       title.textContent = '你走出了医院。';
       const verdict = game.commandsUsed === 0
         ? '零指令硬闯 · 身手干净利落'
@@ -590,7 +590,7 @@ function boot(): void {
       primary.innerHTML = '<span>再来一次</span><span class="arrow-icon" aria-hidden="true">→</span>';
       footnote.textContent = '';
     } else if (game.phase === 'lost') {
-      kicker.textContent = 'ROUNDS · 巡查中断';
+      kicker.textContent = '巡查截获 · 行动中断';
       title.textContent = '被值班员抓住。';
       const held = Math.floor(game.elapsed);
       const remainingSec = Math.max(0, Math.floor(TIME_LIMIT - held));
