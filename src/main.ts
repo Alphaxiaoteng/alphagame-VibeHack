@@ -3,7 +3,7 @@ import './style.css';
 import { AudioEngine, VOICE_URLS } from './audio/audioEngine';
 import { COMMANDS, COMMAND_IDS, DOORS, EXIT_POINT, FURNITURE_RECTS, GUARD_RADIUS, PLAYER_RADIUS, WALKABLE_RECTS } from './core/config';
 import type { CommandId, DoorId, PlayerInput, Point } from './core/config';
-import { levelById, skinById } from './core/economy';
+import { commandCopyFor, levelById, skinById } from './core/economy';
 import { dangerWindow, pauseAfterBackground } from './core/lifecycle';
 import { distance } from './core/map';
 import { RoundsGame } from './core/state';
@@ -85,6 +85,32 @@ function boot(): void {
   const mapNote = element('map-note');
   const corridorName = element('corridor-name');
   const commandButtons = Object.fromEntries(COMMAND_IDS.map(id => [id, element<HTMLButtonElement>(`command-${id}`)])) as Record<CommandId, HTMLButtonElement>;
+  /**
+   * 指令说法随关卡题材切换：逻辑时长、范围与冷却始终以 config 的 COMMANDS 为准，
+   * 这里只换玩家读到的字，所以换题材不需要动任何玩法常量。
+   */
+  let commandCopy = commandCopyFor('ward-01');
+  function applyCommandCopy(): void {
+    for (const id of COMMAND_IDS) {
+      const button = commandButtons[id];
+      const strong = button.querySelector('strong');
+      const small = button.querySelector('small');
+      if (strong) strong.textContent = commandCopy[id].name;
+      if (small) small.textContent = commandCopy[id].cost;
+      button.title = `${commandCopy[id].name}：${commandCopy[id].cost}。持续 ${COMMANDS[id].duration} 秒，冷却 ${game.rules.commandCooldown} 秒。`;
+    }
+    footnote.textContent = `1 ${commandCopy.lights.name}：${commandCopy.lights.cost} · 2 ${commandCopy.lockdown.name}：${commandCopy.lockdown.cost} · 3 ${commandCopy.broadcast.name}：${commandCopy.broadcast.cost}。可按键，也可点击下方卡片。`;
+  }
+  /**
+   * 指令播报前缀换题材：逻辑层给的后半句（视距、绕路、搜查）是机制事实，与题材无关，只换掉名字。
+   * 这样 core/state 不必知道皮肤与题材，规则与文案各守一层。
+   */
+  function themedNotice(message: string, id: CommandId | undefined): string {
+    if (!id) return message;
+    const name = commandCopy[id].name;
+    const at = message.indexOf(' · ');
+    return at < 0 ? `${name} · ${message}` : `${name}${message.slice(at)}`;
+  }
   const debugState = element('debug-state');
   const debugButtons = ['debug-a', 'debug-b', 'debug-time', 'debug-exit'].map(id => element<HTMLButtonElement>(id));
   element('debug-panel').hidden = !debug;
@@ -236,7 +262,7 @@ function boot(): void {
         break;
       case 'doorBlocked': notice('无法落门：门框被占用，或另一扇门仍关闭'); break;
       case 'commandStarted':
-        notice(event.message ?? '指令已发动');
+        notice(event.message ? themedNotice(event.message, event.command) : '指令已发动');
         if (event.command === 'broadcast') {
           audio.paDing();
           audio.voice('ward');
@@ -244,8 +270,8 @@ function boot(): void {
         else if (event.command === 'lights') audio.lightSwitch();
         break;
       case 'commandEnded':
-        if (event.command === 'lights') notice('开灯结束 · 视距恢复，注意走廊拐角');
-        else if (event.command === 'broadcast') notice(game.guard.broadcastInterrupted ? '广播未能继续引开值班员，保持距离' : '广播结束 · 值班员开始警觉搜索');
+        if (event.command === 'lights') notice(themedNotice('开灯结束 · 视距恢复，注意走廊拐角', 'lights'));
+        else if (event.command === 'broadcast') notice(game.guard.broadcastInterrupted ? '广播未能继续引开值班员，保持距离' : `${commandCopy.broadcast.name}结束 · 值班员开始警觉搜索`);
         break;
       case 'commandRejected':
         notice(event.message ?? '当前无法发动这条指令');
@@ -310,7 +336,7 @@ function boot(): void {
       ctx.fillStyle = '#a45b4c'; ctx.beginPath(); ctx.arc(x0+game.guard.position.x*s,z0+game.guard.position.z*s,4.1,0,Math.PI*2); ctx.fill();
     }
     corridorName.textContent = corridor(p);
-    mapNote.textContent = game.exitUnlocked ? '东侧安全门已通电 · 绿灯为逃生路线' : game.lightsOn ? `开灯定位：值班员在${corridor(game.guard.position)}` : '绿点：你 · 东侧：安全门';
+    mapNote.textContent = game.exitUnlocked ? '东侧安全门已通电 · 绿灯为逃生路线' : game.lightsOn ? `${commandCopy.lights.name}：值班员在${corridor(game.guard.position)}` : '绿点：你 · 东侧：安全门';
   }
 
   /** 追逐时画面外看不到威胁来源：一枚低强度红色箭头绕屏幕中心指向值班员方位，其余状态隐藏。 */
@@ -337,11 +363,11 @@ function boot(): void {
     const time = game.exitUnlocked ? '逃生' : `${Math.ceil(game.remaining)}<span>s</span>`;
     if (timer.innerHTML !== time) timer.innerHTML = time;
     objective.textContent = game.exitUnlocked ? '东侧安全门已通电 · 立刻前往门口逃生' : '躲开值班员，等安全门通电';
-    status.textContent = game.lightsOn ? `开灯定位：值班员在${corridor(game.guard.position)} · 视距 12m` : {
+    status.textContent = game.lightsOn ? `${commandCopy.lights.name}：值班员在${corridor(game.guard.position)} · 视距 12m` : {
       patrol: '巡查中 · 走路安静，奔跑会被听见',
-      chase: '被发现！转过墙角，或用 2 封锁追捕路线',
-      search: '正在搜索 · 先躲开视线，再用 3 广播引开',
-      broadcast: `广播核查中 · 值班员正赶往${(game.activeEffect?.target?.x ?? 15) > 15 ? '东' : '西'}侧病房`,
+      chase: `被发现！转过墙角，或用 2 ${commandCopy.lockdown.name} 拉开距离`,
+      search: `正在搜索 · 先躲开视线，再用 3 ${commandCopy.broadcast.name} 引开`,
+      broadcast: `${commandCopy.broadcast.name}生效中 · 值班员正赶往${(game.activeEffect?.target?.x ?? 15) > 15 ? '东' : '西'}侧病房`,
     }[game.guard.mode];
     danger.hidden = game.elapsed >= dangerUntil || game.phase !== 'playing';
     danger.dataset.on = String(!danger.hidden);
@@ -372,7 +398,7 @@ function boot(): void {
     const effect = game.activeEffect;
     effectPanel.hidden = !effect;
     if (effect) {
-      effectName.textContent = `${COMMANDS[effect.id].name}${effect.door ? ` · 门 ${effect.door}` : ''}`;
+      effectName.textContent = `${commandCopy[effect.id].name}${effect.door ? ` · 门 ${effect.door}` : ''}`;
       effectTime.textContent = `${effect.remaining.toFixed(1)}s`;
       const fraction = Math.max(0, Math.min(1, Math.round((effect.remaining / COMMANDS[effect.id].duration) * 20) / 20));
       if (effectFill.dataset.steps !== String(fraction)) {
@@ -659,15 +685,23 @@ function boot(): void {
   // 商店只负责选科室与外观；规则与配色都从 core/economy 的同一份目录取，不在这里硬编码。
   const stageLabel = document.querySelector<HTMLElement>('.stage-label');
   const identityIndex = document.querySelector<HTMLElement>('.identity > .mono');
+  const phaseBadge = document.querySelector<HTMLElement>('.phase-badge');
+  const mapLevel = document.getElementById('map-level');
+  applyCommandCopy();
   const shop = mountShop(element('shop'), {
     onSelect(levelId, skinId) {
       const level = levelById(levelId);
       const skin = skinById(skinId);
       if (!level || !skin) return;
       game.applyLevelRules(level.rules);
-      hospital.applySkin(skin);
+      // 皮肤管配色，题材管建筑：02/03 会在医院外壳上叠加忍者据点的木构与提灯。
+      hospital.applySkin(skin, level.theme);
+      commandCopy = commandCopyFor(level.id);
+      applyCommandCopy();
       if (identityIndex) identityIndex.textContent = `ROUNDS / ${level.index}`;
       if (stageLabel) stageLabel.textContent = `${level.ward} / ${level.name}`;
+      if (phaseBadge) phaseBadge.textContent = `${level.name} · ${level.ward}`;
+      if (mapLevel) mapLevel.textContent = `${level.name} / N ↑`;
       if (game.phase === 'start') {
         copy.innerHTML = `躲开值班员，活过 <strong>${level.rules.timeLimit} 秒</strong>。<br />安全门亮起后，跑到东侧门前逃生。`;
       }

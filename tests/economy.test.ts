@@ -8,6 +8,7 @@ import {
   SKINS,
   canPlayLevel,
   canUseSkin,
+  commandCopyFor,
   isProductSku,
   productForLevel,
   productForSkin,
@@ -41,12 +42,23 @@ describe('买断制商品目录', () => {
   });
 
   it('关卡之间只差规则数字，且都比免费关更紧或更长', () => {
-    const [ward, icu, pharmacy] = LEVELS;
+    const [ward, dojo, vault] = LEVELS;
     expect(ward.rules).toEqual({ timeLimit: 45, commandCooldown: 12, patrolSpeed: 2.8 });
-    expect(icu.rules).toEqual({ timeLimit: 60, commandCooldown: 12, patrolSpeed: 3.1 });
-    expect(pharmacy.rules).toEqual({ timeLimit: 50, commandCooldown: 10, patrolSpeed: 2.6 });
-    expect(icu.rules.patrolSpeed).toBeGreaterThan(ward.rules.patrolSpeed);
-    expect(pharmacy.rules.commandCooldown).toBeLessThan(ward.rules.commandCooldown);
+    expect(dojo.rules).toEqual({ timeLimit: 60, commandCooldown: 12, patrolSpeed: 3.2 });
+    expect(vault.rules).toEqual({ timeLimit: 50, commandCooldown: 8, patrolSpeed: 3.0 });
+    expect(dojo.rules.patrolSpeed).toBeGreaterThan(ward.rules.patrolSpeed);
+    expect(vault.rules.commandCooldown).toBeLessThan(ward.rules.commandCooldown);
+  });
+
+  it('免费关是医院题材，付费关叠忍者据点题材，且每关都有指令说法', () => {
+    expect(LEVELS.map(level => level.theme)).toEqual(['hospital', 'shinobi', 'shinobi']);
+    // 换题材只换展示文案：时长/冷却/范围仍以 config 的 COMMANDS 为准
+    expect(commandCopyFor('ward-01').lights.name).toBe('全院开灯');
+    expect(commandCopyFor('dojo-02').lights.name).toBe('照明符');
+    expect(commandCopyFor('vault-03').lockdown.name).toBe('岩壁封锁');
+    expect(commandCopyFor('vault-03').broadcast.name).toBe('替身诱敌');
+    // 关卡不存在时回落医院默认，保证 HUD 永远有字可写
+    expect(commandCopyFor('not-a-level').lights.name).toBe('全院开灯');
   });
 });
 
@@ -54,40 +66,40 @@ describe('权益折算', () => {
   it('未购买时只有免费关卡与标准皮肤可用', () => {
     const entitlements = resolveEntitlements([]);
     expect(canPlayLevel('ward-01', entitlements)).toBe(true);
-    expect(canPlayLevel('icu-02', entitlements)).toBe(false);
+    expect(canPlayLevel('dojo-02', entitlements)).toBe(false);
     expect(canUseSkin('standard', entitlements)).toBe(true);
-    expect(canUseSkin('chief-white', entitlements)).toBe(false);
-    expect(resolveSkin('icu-02', entitlements).id).toBe('standard');
+    expect(canUseSkin('shinobi-indigo', entitlements)).toBe(false);
+    expect(resolveSkin('dojo-02', entitlements).id).toBe('standard');
   });
 
   it('单买关卡只解锁该关卡，不动皮肤', () => {
-    const entitlements = resolveEntitlements(['LEVEL_ICU']);
-    expect(canPlayLevel('icu-02', entitlements)).toBe(true);
-    expect(canPlayLevel('pharmacy-03', entitlements)).toBe(false);
+    const entitlements = resolveEntitlements(['LEVEL_DOJO']);
+    expect(canPlayLevel('dojo-02', entitlements)).toBe(true);
+    expect(canPlayLevel('vault-03', entitlements)).toBe(false);
     // 皮肤是单独的商品，买关卡不会顺带送皮肤
-    expect(canUseSkin('chief-white', entitlements)).toBe(false);
-    expect(resolveSkin('icu-02', entitlements).id).toBe('standard');
+    expect(canUseSkin('shinobi-indigo', entitlements)).toBe(false);
+    expect(resolveSkin('dojo-02', entitlements).id).toBe('standard');
   });
 
   it('买了皮肤包后，对应关卡的推荐皮肤自动生效', () => {
-    const entitlements = resolveEntitlements(['LEVEL_ICU', 'SKIN_PACK']);
-    expect(resolveSkin('icu-02', entitlements).id).toBe('chief-white');
-    expect(resolveSkin('pharmacy-03', entitlements).id).toBe('hazmat-amber');
+    const entitlements = resolveEntitlements(['LEVEL_DOJO', 'SKIN_PACK']);
+    expect(resolveSkin('dojo-02', entitlements).id).toBe('shinobi-indigo');
+    expect(resolveSkin('vault-03', entitlements).id).toBe('scroll-vermilion');
     expect(resolveSkin('ward-01', entitlements).id).toBe('standard');
   });
 
   it('全院解锁包一次给到全部付费内容', () => {
     const entitlements = resolveEntitlements(['BUNDLE_ALL']);
-    expect(canPlayLevel('icu-02', entitlements)).toBe(true);
-    expect(canPlayLevel('pharmacy-03', entitlements)).toBe(true);
-    expect(canUseSkin('chief-white', entitlements)).toBe(true);
-    expect(canUseSkin('hazmat-amber', entitlements)).toBe(true);
+    expect(canPlayLevel('dojo-02', entitlements)).toBe(true);
+    expect(canPlayLevel('vault-03', entitlements)).toBe(true);
+    expect(canUseSkin('shinobi-indigo', entitlements)).toBe(true);
+    expect(canUseSkin('scroll-vermilion', entitlements)).toBe(true);
   });
 
   it('未知 SKU 与重复 SKU 都被安全处理：目录下架旧商品不该让老玩家权益崩掉', () => {
-    const entitlements = resolveEntitlements(['LEVEL_ICU', 'LEVEL_ICU', 'LEGACY_PACK', '']);
-    expect(entitlements.skus).toEqual(['LEVEL_ICU']);
-    expect(entitlements.levels).toEqual(['icu-02']);
+    const entitlements = resolveEntitlements(['LEVEL_DOJO', 'LEVEL_DOJO', 'LEGACY_PACK', '']);
+    expect(entitlements.skus).toEqual(['LEVEL_DOJO']);
+    expect(entitlements.levels).toEqual(['dojo-02']);
     expect(canPlayLevel('ward-01', entitlements)).toBe(true);
   });
 
@@ -98,10 +110,10 @@ describe('权益折算', () => {
   });
 
   it('锁定项能找到对应的买断商品，且免费项没有可卖的商品', () => {
-    expect(productForLevel('icu-02')?.sku).toBe('LEVEL_ICU');
-    expect(productForLevel('pharmacy-03')?.sku).toBe('LEVEL_PHARMACY');
-    expect(productForSkin('chief-white')?.sku).toBe('SKIN_PACK');
-    expect(productForSkin('hazmat-amber')?.sku).toBe('SKIN_PACK');
+    expect(productForLevel('dojo-02')?.sku).toBe('LEVEL_DOJO');
+    expect(productForLevel('vault-03')?.sku).toBe('LEVEL_VAULT');
+    expect(productForSkin('shinobi-indigo')?.sku).toBe('SKIN_PACK');
+    expect(productForSkin('scroll-vermilion')?.sku).toBe('SKIN_PACK');
     expect(productForLevel('ward-01')).toBeUndefined();
     expect(productForSkin('standard')).toBeUndefined();
   });
@@ -113,9 +125,9 @@ describe('关卡规则注入', () => {
     expect(game.rules).toEqual(LEVELS[0].rules);
     expect(game.guard.patrolSpeed).toBe(LEVELS[0].rules.patrolSpeed);
 
-    const pharmacy = LEVELS[2];
-    game.applyLevelRules(pharmacy.rules);
-    expect(game.guard.patrolSpeed).toBe(2.6);
+    const vault = LEVELS[2];
+    game.applyLevelRules(vault.rules);
+    expect(game.guard.patrolSpeed).toBe(3.0);
     game.start();
     expect(game.remaining).toBe(50);
 
@@ -128,10 +140,10 @@ describe('关卡规则注入', () => {
 describe('账本与幂等入账', () => {
   it('同一 ref 重复购买同一 SKU 不产生重复权益', () => {
     const ledger = emptyLedger();
-    expect(grant(ledger, 'p_0123456789abcdef', 'LEVEL_ICU')).toBe(true);
-    expect(grant(ledger, 'p_0123456789abcdef', 'LEVEL_ICU')).toBe(false);
+    expect(grant(ledger, 'p_0123456789abcdef', 'LEVEL_DOJO')).toBe(true);
+    expect(grant(ledger, 'p_0123456789abcdef', 'LEVEL_DOJO')).toBe(false);
     expect(grant(ledger, 'p_0123456789abcdef', 'BUNDLE_ALL')).toBe(true);
-    expect(ownedSkus(ledger, 'p_0123456789abcdef')).toEqual(['LEVEL_ICU', 'BUNDLE_ALL']);
+    expect(ownedSkus(ledger, 'p_0123456789abcdef')).toEqual(['LEVEL_DOJO', 'BUNDLE_ALL']);
     expect(ownedSkus(ledger, 'p_ffffffffffffffff')).toEqual([]);
   });
 
@@ -142,7 +154,7 @@ describe('账本与幂等入账', () => {
       const ledger = emptyLedger();
       grant(ledger, 'p_0123456789abcdef', 'SKIN_PACK');
       ledger.handledEvents.push('evt-1');
-      ledger.products = { LEVEL_ICU: 'PROD_1' };
+      ledger.products = { LEVEL_DOJO: 'PROD_1' };
       writeLedger(path, ledger);
       expect(readLedger(path)).toEqual(ledger);
     } finally {

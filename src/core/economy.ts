@@ -6,11 +6,17 @@
  * 本文件里的价格只是展示串（Waffo 要求金额用展示格式，如 "0.99"），权威价格以店铺商品为准。
  */
 
-import type { RoundRules } from './config';
+import type { CommandId, RoundRules } from './config';
 
-export type LevelId = 'ward-01' | 'icu-02' | 'pharmacy-03';
-export type SkinId = 'standard' | 'chief-white' | 'hazmat-amber';
-export type ProductSku = 'LEVEL_ICU' | 'LEVEL_PHARMACY' | 'SKIN_PACK' | 'BUNDLE_ALL';
+/**
+ * 建筑题材。这栋楼表面是公立医院，02 起被「夜隐寮」占为据点：
+ * 医院本体（墙裙、标识、护士站）是免费关卡的基准，也是付费关卡的掩护外壳；
+ * 忍者题材在它之上叠加木构梁柱、和纸提灯与结界符，不改地图几何与碰撞。
+ */
+export type ThemeId = 'hospital' | 'shinobi';
+export type LevelId = 'ward-01' | 'dojo-02' | 'vault-03';
+export type SkinId = 'standard' | 'shinobi-indigo' | 'scroll-vermilion';
+export type ProductSku = 'LEVEL_DOJO' | 'LEVEL_VAULT' | 'SKIN_PACK' | 'BUNDLE_ALL';
 
 export type { RoundRules };
 
@@ -23,6 +29,8 @@ export interface LevelDef {
   ward: string;
   /** 免费关卡无需任何权益 */
   free: boolean;
+  /** 该关卡的建筑题材：决定走廊里是病房构件还是忍者据点的木构与提灯 */
+  theme: ThemeId;
   rules: RoundRules;
   /** 该科室的推荐皮肤，进入关卡时自动套用（未解锁则回落标准皮肤） */
   skin: SkinId;
@@ -53,6 +61,11 @@ export interface ProductDef {
   grants: { levels: LevelId[]; skins: SkinId[] };
 }
 
+/**
+ * 三个关卡的规则只在三个数字上分档，地图几何与碰撞完全一致：
+ * 01 是免费基准局；02 把时长和守卫速度一起抬上去，考的是耐力；
+ * 03 把指令冷却压到 8 秒，逼玩家靠忍术而不是靠跑位活下来。
+ */
 export const LEVELS: readonly LevelDef[] = [
   {
     id: 'ward-01',
@@ -60,70 +73,95 @@ export const LEVELS: readonly LevelDef[] = [
     name: '住院部',
     ward: '夜间巡查',
     free: true,
+    theme: 'hospital',
     rules: { timeLimit: 45, commandCooldown: 12, patrolSpeed: 2.8 },
     skin: 'standard',
   },
   {
-    id: 'icu-02',
+    id: 'dojo-02',
     index: '02',
-    name: '重症监护室',
-    ward: '重点监护',
+    name: '夜隐寮',
+    ward: '影巡潜入',
     free: false,
-    rules: { timeLimit: 60, commandCooldown: 12, patrolSpeed: 3.1 },
-    skin: 'chief-white',
+    theme: 'shinobi',
+    rules: { timeLimit: 60, commandCooldown: 12, patrolSpeed: 3.2 },
+    skin: 'shinobi-indigo',
   },
   {
-    id: 'pharmacy-03',
+    id: 'vault-03',
     index: '03',
-    name: '地下药库',
-    ward: '夜间盘库',
+    name: '封印殿',
+    ward: '禁术封锁',
     free: false,
-    rules: { timeLimit: 50, commandCooldown: 10, patrolSpeed: 2.6 },
-    skin: 'hazmat-amber',
+    theme: 'shinobi',
+    rules: { timeLimit: 50, commandCooldown: 8, patrolSpeed: 3.0 },
+    skin: 'scroll-vermilion',
   },
 ];
 
 export const SKINS: readonly SkinDef[] = [
   { id: 'standard', name: '标准外科', free: true, swatch: 0x2f7d70, cloth: 0x2f7d70, wallSkirt: 0xb9c8bb, lamp: 0xebf3ef },
-  { id: 'chief-white', name: '主任白大褂', free: false, swatch: 0xf1f4ef, cloth: 0xf1f4ef, wallSkirt: 0xb4c7d4, lamp: 0xe6f2fa },
-  { id: 'hazmat-amber', name: '特护巡检服', free: false, swatch: 0xcad6dc, cloth: 0xcad6dc, wallSkirt: 0xc5c2b8, lamp: 0xf7ead2 },
+  { id: 'shinobi-indigo', name: '夜行装束', free: false, swatch: 0x2b3a52, cloth: 0x2b3a52, wallSkirt: 0x5a6a7c, lamp: 0xe6eff7 },
+  { id: 'scroll-vermilion', name: '卷轴朱印', free: false, swatch: 0x8c3a2e, cloth: 0x8c3a2e, wallSkirt: 0x8a6a4a, lamp: 0xf7e2b4 },
 ];
 
 /** 全部买断，无订阅：单买关卡 / 单买皮肤 / 一次性全院解锁包。 */
 export const PRODUCTS: readonly ProductDef[] = [
   {
-    sku: 'LEVEL_ICU',
-    name: '02 重症监护室',
-    description: '60 秒高压局，值班员巡查更快',
+    sku: 'LEVEL_DOJO',
+    name: '02 夜隐寮',
+    description: '60 秒耐力局，守卫巡逻更快',
     price: '0.99',
     currency: 'USD',
-    grants: { levels: ['icu-02'], skins: [] },
+    grants: { levels: ['dojo-02'], skins: [] },
   },
   {
-    sku: 'LEVEL_PHARMACY',
-    name: '03 地下药库',
-    description: '50 秒紧凑局，指令冷却缩短',
+    sku: 'LEVEL_VAULT',
+    name: '03 封印殿',
+    description: '50 秒高压局，忍术冷却缩短到 8 秒',
     price: '0.99',
     currency: 'USD',
-    grants: { levels: ['pharmacy-03'], skins: [] },
+    grants: { levels: ['vault-03'], skins: [] },
   },
   {
     sku: 'SKIN_PACK',
-    name: '夜班联动皮肤包',
-    description: '主任白大褂 + 特护巡检服，含对应走廊主题',
+    name: '夜隐联动外观包',
+    description: '夜行装束 + 卷轴朱印，含对应走廊主题',
     price: '0.99',
     currency: 'USD',
-    grants: { levels: [], skins: ['chief-white', 'hazmat-amber'] },
+    grants: { levels: [], skins: ['shinobi-indigo', 'scroll-vermilion'] },
   },
   {
     sku: 'BUNDLE_ALL',
-    name: '全院解锁包',
-    description: '一次买断 02 / 03 关卡与全部联动皮肤',
+    name: '夜隐全解锁包',
+    description: '一次买断 02 / 03 关卡与全部联动外观',
     price: '1.99',
     currency: 'USD',
-    grants: { levels: ['icu-02', 'pharmacy-03'], skins: ['chief-white', 'hazmat-amber'] },
+    grants: { levels: ['dojo-02', 'vault-03'], skins: ['shinobi-indigo', 'scroll-vermilion'] },
   },
 ];
+
+export interface CommandCopy {
+  name: string;
+  cost: string;
+}
+
+/**
+ * 同一个指令在不同题材下的说法。逻辑（时长、作用范围、冷却）始终以 config 的 COMMANDS 为准，
+ * 这里只覆盖玩家读到的字，避免「换题材」被迫改玩法常量。
+ */
+export const COMMAND_COPY: Record<ThemeId, Record<CommandId, CommandCopy>> = {
+  hospital: {
+    lights: { name: '全院开灯', cost: '你也更容易暴露' },
+    lockdown: { name: '封锁走廊', cost: '你也需要绕路' },
+    broadcast: { name: '广播查房', cost: '先躲开视线才能引开' },
+  },
+  shinobi: {
+    lights: { name: '照明符', cost: '你也更容易暴露' },
+    lockdown: { name: '岩壁封锁', cost: '你也需要绕路' },
+    broadcast: { name: '替身诱敌', cost: '先躲开视线才能引开' },
+  },
+};
 
 export interface Entitlements {
   /** 已解锁的付费关卡（免费关卡不列在此处） */
@@ -148,6 +186,11 @@ export function levelById(id: string): LevelDef | undefined {
 
 export function skinById(id: string): SkinDef | undefined {
   return SKINS.find(skin => skin.id === id);
+}
+
+/** 关卡题材对应的指令文案。关卡不存在时回落医院默认，保证 HUD 永远有字可写。 */
+export function commandCopyFor(levelId: string): Record<CommandId, CommandCopy> {
+  return COMMAND_COPY[levelById(levelId)?.theme ?? 'hospital'];
 }
 
 /**
