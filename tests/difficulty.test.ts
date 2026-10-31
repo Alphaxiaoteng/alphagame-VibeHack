@@ -10,6 +10,7 @@ import {
   PATROL_SPEED,
   SEARCH_SECONDS,
   SIGHT_RANGE,
+  BASE_TUNING,
 } from '../src/core/config';
 import { RoundsGame } from '../src/core/state';
 import { NO_INPUT } from '../src/core/config';
@@ -33,6 +34,22 @@ describe('三档难度', () => {
       graceSeconds: GRACE_SECONDS,
     });
     expect(DIFFICULTY_ORDER).toEqual(['intern', 'standard', 'graveyard']);
+  });
+
+  it('预设表 = 基准值 + 覆盖项：标准档全回落基准，各档无缺失字段', () => {
+    // 标准档应完全回落基准（8 个调参键逐键相等）
+    const standard = DIFFICULTIES.standard;
+    for (const key of Object.keys(BASE_TUNING) as (keyof typeof BASE_TUNING)[]) {
+      expect(standard[key]).toBe(BASE_TUNING[key]);
+    }
+    expect(standard.id).toBe('standard');
+    for (const id of DIFFICULTY_ORDER) {
+      const preset = DIFFICULTIES[id];
+      for (const key of Object.keys(BASE_TUNING) as (keyof typeof BASE_TUNING)[]) {
+        expect(typeof preset[key]).toBe('number');
+        expect(Number.isFinite(preset[key])).toBe(true);
+      }
+    }
   });
 
   it('难度数值层层递进：视距、速度、搜索随档位单调增加', () => {

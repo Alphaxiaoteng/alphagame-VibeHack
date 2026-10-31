@@ -33,12 +33,51 @@ export const TIME_LIMIT = 45;
 /** 单帧最大模拟步长，避免切后台回来瞬间跳过几秒玩法 */
 export const MAX_STEP = 0.1;
 
+/** 值班员调参基准 = 二星（标准）档。各难度只写与基准的差异项，缺省回落基准；
+ *  调平衡 / 加新档只动这里和 DIFFICULTY_OVERRIDES，不散落在代码各处。 */
+export const BASE_TUNING = {
+  sightRange: 8,
+  litSightRange: 12,
+  hearingRange: 7,
+  chaseSpeed: 4.2,
+  patrolSpeed: 2.8,
+  searchSeconds: 4,
+  alertSearchSeconds: 6,
+  graceSeconds: 6,
+} as const;
+
+type TuningOverrides = Partial<{ [K in keyof typeof BASE_TUNING]: number }>;
+
+const DIFFICULTY_NAMES: Record<DifficultyId, string> = {
+  intern: '一星难度',
+  standard: '二星难度',
+  graveyard: '三星难度',
+};
+const DIFFICULTY_BRIEFS: Record<DifficultyId, string> = {
+  intern: '值班员走得慢 · 看得近',
+  standard: '值班员正常巡逻',
+  graveyard: '值班员更快 · 看得更远',
+};
+const DIFFICULTY_OVERRIDES: Record<DifficultyId, TuningOverrides> = {
+  intern: {
+    sightRange: 6.5, litSightRange: 10, hearingRange: 5.5,
+    chaseSpeed: 3.9, patrolSpeed: 2.4,
+    searchSeconds: 3, alertSearchSeconds: 4.5, graceSeconds: 8,
+  },
+  standard: {},
+  graveyard: {
+    sightRange: 9.5, litSightRange: 14, hearingRange: 9,
+    chaseSpeed: 4.5, patrolSpeed: 3.2,
+    searchSeconds: 5, alertSearchSeconds: 7.5, graceSeconds: 3,
+  },
+};
+
 export const WALK_SPEED = 3.4;
 export const RUN_SPEED = 5.0;
 export const STAMINA_DRAIN_SECONDS = 3;
 export const STAMINA_RECOVER_SECONDS = 6;
 
-export const PATROL_SPEED = 2.8;
+export const PATROL_SPEED = BASE_TUNING.patrolSpeed;
 export const CATCH_RADIUS = 0.8;
 
 export const PLAYER_RADIUS = 0.35;
@@ -103,14 +142,14 @@ export const DOORS: Record<DoorId, Rect & { center: Point; label: string }> = {
 /** 门框 1 m 内有角色时禁止落门 */
 export const DOOR_CLEARANCE = 1.0;
 
-export const CHASE_SPEED = 4.2;
-export const SIGHT_RANGE = 8;
-export const LIT_SIGHT_RANGE = 12;
-export const HEARING_RANGE = 7;
-export const SEARCH_SECONDS = 4;
-export const ALERT_SEARCH_SECONDS = 6;
+export const CHASE_SPEED = BASE_TUNING.chaseSpeed;
+export const SIGHT_RANGE = BASE_TUNING.sightRange;
+export const LIT_SIGHT_RANGE = BASE_TUNING.litSightRange;
+export const HEARING_RANGE = BASE_TUNING.hearingRange;
+export const SEARCH_SECONDS = BASE_TUNING.searchSeconds;
+export const ALERT_SEARCH_SECONDS = BASE_TUNING.alertSearchSeconds;
 /** 开局宽限：随机巡逻不可预判，前几秒值班员可能路过出生点；宽限期内直接目视不转追逐，站着不动绝不开局即死。 */
-export const GRACE_SECONDS = 6;
+export const GRACE_SECONDS = BASE_TUNING.graceSeconds;
 
 /** 三档难度：同一张地图，靠值班员感知与节奏递进；标准档 = 上表现值（零漂移事实源）。 */
 export type DifficultyId = 'intern' | 'standard' | 'graveyard';
@@ -131,28 +170,17 @@ export interface DifficultyPreset {
   graceSeconds: number;
 }
 
-export const DIFFICULTIES: Record<DifficultyId, DifficultyPreset> = {
-  intern: {
-    id: 'intern', name: '一星难度', brief: '值班员走得慢 · 看得近',
-    sightRange: 6.5, litSightRange: 10, hearingRange: 5.5,
-    chaseSpeed: 3.9, patrolSpeed: 2.4,
-    searchSeconds: 3, alertSearchSeconds: 4.5, graceSeconds: 8,
-  },
-  standard: {
-    id: 'standard', name: '二星难度', brief: '值班员正常巡逻',
-    sightRange: SIGHT_RANGE, litSightRange: LIT_SIGHT_RANGE, hearingRange: HEARING_RANGE,
-    chaseSpeed: CHASE_SPEED, patrolSpeed: PATROL_SPEED,
-    searchSeconds: SEARCH_SECONDS, alertSearchSeconds: ALERT_SEARCH_SECONDS, graceSeconds: GRACE_SECONDS,
-  },
-  graveyard: {
-    id: 'graveyard', name: '三星难度', brief: '值班员更快 · 看得更远',
-    sightRange: 9.5, litSightRange: 14, hearingRange: 9,
-    chaseSpeed: 4.5, patrolSpeed: 3.2,
-    searchSeconds: 5, alertSearchSeconds: 7.5, graceSeconds: 3,
-  },
-};
-
 export const DIFFICULTY_ORDER: readonly DifficultyId[] = ['intern', 'standard', 'graveyard'];
+export const DIFFICULTIES: Record<DifficultyId, DifficultyPreset> = Object.fromEntries(
+  DIFFICULTY_ORDER.map(id => [id, {
+    id,
+    name: DIFFICULTY_NAMES[id],
+    brief: DIFFICULTY_BRIEFS[id],
+    ...BASE_TUNING,
+    ...DIFFICULTY_OVERRIDES[id],
+  }]),
+) as Record<DifficultyId, DifficultyPreset>;
+
 
 export type CommandId = 'lights' | 'lockdown' | 'broadcast';
 export const COMMAND_IDS: readonly CommandId[] = ['lights', 'lockdown', 'broadcast'];
