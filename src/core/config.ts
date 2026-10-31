@@ -93,7 +93,7 @@ export const PLAYER_SPAWN: Point = { x: 10, z: 4.5 };
 /** 巡逻选路时出生点周围的安全圈：直线方向穿过该圈的候选路点被排除，防止对角线路沿北走廊碾过出生点。 */
 export const SPAWN_SAFE_RADIUS = 3;
 /** 值班员开局出生在对角线南走廊，隔着建筑群与防火门，绝不开局直线冲出撞脸。 */
-export const GUARD_SPAWN: Point = { x: 19, z: 17.5 };
+export const GUARD_SPAWN: Point = { x: 22, z: 4.5 };
 
 export const EXIT_POINT: Point = { x: 27, z: 11 };
 export const EXIT_TRIGGER_RADIUS = 1.0;
@@ -145,6 +145,13 @@ export const DOORS: Record<DoorId, Rect & { center: Point; label: string }> = {
   A: { minX: 14.9, maxX: 15.1, minZ: 3, maxZ: 6, center: { x: 15, z: 4.5 }, label: '防火门 A（北走廊）' },
   B: { minX: 14.9, maxX: 15.1, minZ: 16, maxZ: 19, center: { x: 15, z: 17.5 }, label: '防火门 B（南走廊）' },
 };
+
+/** 医用隔帘：挡视线、不挡移动——玩家钻帘进凹间即从值班员视野消失（经典躲藏循环博弈）。 */
+export const CURTAIN_RECTS: readonly Rect[] = [
+  { minX: 5.9, maxX: 6.1, minZ: 9.9, maxZ: 12.1 }, // 病房 01 开口
+  { minX: 23.9, maxX: 24.1, minZ: 9.9, maxZ: 12.1 }, // 病房 02 开口
+  { minX: 18.9, maxX: 21.1, minZ: 15.9, maxZ: 16.1 }, // 药房开口
+];
 
 /** 门框 1 m 内有角色时禁止落门 */
 export const DOOR_CLEARANCE = 1.0;

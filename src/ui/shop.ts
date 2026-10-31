@@ -90,12 +90,12 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   summaryBar.className = 'shop-summary-bar';
   summaryBar.innerHTML = `
     <div class="shop-summary-info">
-      <span class="shop-summary-tag">关卡选择</span>
+      <span class="shop-summary-tag">场景选择</span>
       <strong class="shop-summary-level">01 住院部</strong>
       <span class="shop-summary-role">· 免费畅玩</span>
     </div>
     <button type="button" class="shop-summary-btn">
-      <span>关卡切换</span>
+      <span>场景切换</span>
     </button>
   `;
   const summaryLevel = summaryBar.querySelector('.shop-summary-level') as HTMLElement;
@@ -118,7 +118,7 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   modalHead.className = 'modal-head';
   modalHead.innerHTML = `
     <div class="config-title-block">
-      <strong>战备整备舱 · 关卡与干员选择</strong>
+      <strong>战备整备舱 · 场景与干员选择</strong>
       <span class="badge-mini">3D 动作已载入</span>
     </div>
     <button type="button" class="modal-close" title="完成">&times;</button>
@@ -160,7 +160,7 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   groupHead.className = 'shop-group-head';
   const levelLabel = document.createElement('span');
   levelLabel.className = 'shop-label';
-  levelLabel.textContent = '科室选择 · 执勤区域';
+  levelLabel.textContent = '场景选择 · 执勤区域';
   const levelNav = document.createElement('div');
   levelNav.className = 'shop-nav-arrows';
   const prevBtn = document.createElement('button');
@@ -228,8 +228,6 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   function paint(): void {
     const currentLevel = levelById(levelId);
     const levelLocked = !canPlayLevel(levelId, entitlements);
-    const currentSkin = SKINS.find(s => s.id === skinId);
-    const roleInfo = ROLE_TITLES[skinId] ?? { role: currentSkin?.name ?? '', desc: '' };
 
     // 同步首页摘要胶囊
     summaryLevel.textContent = `${currentLevel?.index ?? ''} ${currentLevel?.name ?? ''}`;

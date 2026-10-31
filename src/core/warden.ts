@@ -211,8 +211,8 @@ export class Warden extends PatrolGuard {
   private searchScan = 0;
   private searchBaseFacing = 0;
 
-  constructor(map: HospitalMap, readonly perception = true) {
-    super(map);
+  constructor(map: HospitalMap, readonly perception = true, rand: () => number = Math.random) {
+    super(map, rand);
   }
 
   override reset(map: HospitalMap): void {

@@ -86,18 +86,46 @@
         </aside>
       </div>
       <section id="overlay" class="overlay" aria-labelledby="overlay-title">
+        <!-- 全屏电影级主视觉封面舞台 (仅在 start 阶段呈现) -->
+        <div class="cover-stage" aria-hidden="true">
+          <div class="cover-backdrop"></div>
+          <div class="cover-vignette"></div>
+          <div class="cover-scanlines"></div>
+          <div class="cover-telemetry">
+            <div class="telemetry-top-right">
+              <span class="telemetry-rec"><i class="telemetry-dot"></i>CAM_04 // WARD_II_EAST</span>
+              <span class="telemetry-code">04:00:19:08 AM</span>
+            </div>
+            <div class="telemetry-bottom-right">
+              <span class="telemetry-stat">POWER_GRID: CHARGING [45.0s]</span>
+              <span class="telemetry-stat">ACOUSTIC_SENSOR: ACTIVE</span>
+            </div>
+          </div>
+        </div>
+
         <div class="briefing">
           <div class="briefing-head">
-            <div class="brand-pill"><span class="brand-name">ROUNDS</span><span class="sep">/</span><span class="mono">查房</span></div>
-            <span class="phase-badge">夜班巡查 · 01</span>
+            <div class="brand-pill"><span class="rec-dot"></span><span class="brand-name">WARD II</span><span class="sep">//</span><span class="mono">04:00 AM</span></div>
+            <span class="phase-badge">NIGHT SHIFT · 01</span>
           </div>
+
+          <!-- 游戏主视觉巨幅片名 (Start 封面专属展示) -->
+          <div class="hero-title-lockup" aria-hidden="true">
+            <div class="hero-logo-cn">查 房</div>
+            <div class="hero-logo-en-row">
+              <span class="hero-logo-line"></span>
+              <span class="hero-logo-en">R O U N D S</span>
+              <span class="hero-logo-line"></span>
+            </div>
+          </div>
+
           <p id="overlay-kicker" class="eyebrow">备用电源正在充能</p>
           <h1 id="overlay-title">今晚，走出医院。</h1>
           <p id="overlay-copy" class="briefing-copy">躲开值班员，坚持 <strong class="highlight-timer">45 秒</strong> 通电逃生。</p>
           
-          <!-- 硬核战术按键教程：上下分层，宽绰优雅 -->
+          <!-- 主机级底部通栏操作按键图例 -->
           <div id="start-help" class="gamepad-guide" aria-label="操作按键教程指南">
-            <!-- 上排：基础身法与视线 -->
+            <!-- 基础身法与视线 -->
             <div class="guide-row guide-row-basic">
               <div class="key-cluster wasd-group">
                 <div class="wasd-layout">
@@ -137,7 +165,7 @@
 
             <div class="guide-divider-h" aria-hidden="true"></div>
 
-            <!-- 下排：1 2 3 战术按键指令槽 -->
+            <!-- 1 2 3 战术按键指令槽 -->
             <div class="guide-row guide-row-tactical">
               <span class="tactical-lead-tag">战术指令</span>
               <div class="tactical-item">
@@ -160,42 +188,44 @@
             </div>
           </div>
 
-          <div class="difficulty-picker-container">
-            <div class="diff-header-row">
-              <span class="diff-label-title">难度：<strong id="diff-current-badge">中</strong></span>
+          <div class="tactical-menu-panel">
+            <div class="difficulty-picker-container">
+              <div class="diff-header-row">
+                <span class="diff-label-title">巡查强度：<strong id="diff-current-badge">中</strong></span>
+              </div>
+              <div id="difficulty-picker" class="difficulty-picker" aria-label="选择值班难度">
+                <button type="button" class="difficulty-card" data-difficulty="intern" title="简单">
+                  <span class="diff-stars">★☆☆</span>
+                  <span class="diff-level-text">简单</span>
+                </button>
+                <button type="button" class="difficulty-card" data-difficulty="standard" title="中">
+                  <span class="diff-stars">★★☆</span>
+                  <span class="diff-level-text">中</span>
+                </button>
+                <button type="button" class="difficulty-card" data-difficulty="graveyard" data-locked="true" title="极难">
+                  <div class="diff-card-inner">
+                    <span class="diff-stars">★★★</span>
+                    <span class="diff-level-text">极难</span>
+                    <svg class="diff-lock-icon" viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                  </div>
+                </button>
+              </div>
             </div>
-            <div id="difficulty-picker" class="difficulty-picker" aria-label="选择值班难度">
-              <button type="button" class="difficulty-card" data-difficulty="intern" title="简单">
-                <span class="diff-stars">★☆☆</span>
-                <span class="diff-level-text">简单</span>
-              </button>
-              <button type="button" class="difficulty-card" data-difficulty="standard" title="中">
-                <span class="diff-stars">★★☆</span>
-                <span class="diff-level-text">中</span>
-              </button>
-              <button type="button" class="difficulty-card" data-difficulty="graveyard" data-locked="true" title="极难">
-                <div class="diff-card-inner">
-                  <span class="diff-stars">★★★</span>
-                  <span class="diff-level-text">极难</span>
-                  <svg class="diff-lock-icon" viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                  </svg>
-                </div>
-              </button>
+
+            <!-- 战备选择：轻量状态摘要，点击弹出独立 3D 动作整备舱 -->
+            <section id="shop" class="shop" aria-label="科室与出勤人员"></section>
+
+            <button id="primary" class="primary" type="button">
+              <span>开始逃生</span>
+              <span class="arrow-icon" aria-hidden="true">ENTER WARD →</span>
+            </button>
+
+            <div class="briefing-actions-secondary">
+              <button id="briefing-qr" type="button" class="subtle-link">手机扫码即玩</button>
             </div>
-          </div>
-
-          <!-- 战备选择：轻量状态摘要胶囊，点击弹出独立 3D 动作整备舱 -->
-          <section id="shop" class="shop" aria-label="科室与出勤人员"></section>
-
-          <button id="primary" class="primary" type="button">
-            <span>开始逃生</span>
-            <span class="arrow-icon" aria-hidden="true">→</span>
-          </button>
-
-          <div class="briefing-actions-secondary">
-            <button id="briefing-qr" type="button" class="subtle-link">手机扫码即玩</button>
           </div>
 
           <p id="overlay-footnote" class="briefing-footnote" hidden></p>

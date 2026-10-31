@@ -676,15 +676,17 @@ body[data-touch="true"] .map-panel { display: none; }
   color: #ffffff;
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
 }
+.diff-stars {
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  line-height: 1;
+}
 .diff-level-text {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: 0.5px;
-}
-.diff-level-sub {
-  font-size: 10px;
-  color: var(--text-dim);
 }
 .diff-card-inner {
   display: flex;
@@ -700,11 +702,12 @@ body[data-touch="true"] .map-panel { display: none; }
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 16px rgba(0, 0, 0, 0.4);
   color: #ffffff;
 }
+.difficulty-card[data-selected="true"] .diff-stars {
+  color: #f59e0b;
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+}
 .difficulty-card[data-selected="true"] .diff-level-text {
   color: #ffffff;
-}
-.difficulty-card[data-selected="true"] .diff-level-sub {
-  color: rgba(255, 255, 255, 0.85);
 }
 .difficulty-card[data-locked="true"] { opacity: 0.45; cursor: default; }
 .difficulty-card:not([data-locked="true"]):hover {

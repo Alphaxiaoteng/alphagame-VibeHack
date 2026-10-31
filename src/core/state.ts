@@ -75,8 +75,9 @@ export class RoundsGame {
   private warned10 = false;
   private exitAnnounced = false;
 
-  constructor(options: { perception?: boolean } = {}) {
-    this.guard = new Warden(this.map, options.perception ?? true);
+  constructor(options: { perception?: boolean; difficulty?: DifficultyId; rand?: () => number } = {}) {
+    this.guard = new Warden(this.map, options.perception ?? true, options.rand);
+    if (options.difficulty) this.setDifficulty(options.difficulty);
   }
 
   applyLevelRules(rules: RoundRules): void {

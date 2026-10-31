@@ -1,4 +1,5 @@
 import {
+  CURTAIN_RECTS,
   DOORS,
   DOOR_CLEARANCE,
   FURNITURE_RECTS,
@@ -132,7 +133,20 @@ export class HospitalMap {
   }
 
   hasLineOfSight(a: Point, b: Point): boolean {
-    return this.clearSegment(a, b, 0);
+    // 隔帘只挡视线（radius 0 的视线检测），不挡移动与寻路
+    return this.clearSegment(a, b, 0) && !this.crossesCurtain(a, b);
+  }
+
+  /** 线段是否穿过医用隔帘（点到矩形距离 < 0.05 即视为穿过） */
+  private crossesCurtain(a: Point, b: Point): boolean {
+    const length = distance(a, b);
+    const steps = Math.max(1, Math.ceil(length / 0.1));
+    for (let step = 0; step <= steps; step += 1) {
+      const t = steps === 0 ? 0 : step / steps;
+      const point = { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
+      if (CURTAIN_RECTS.some(rect => pointInRect(point, rect))) return true;
+    }
+    return false;
   }
 
   segmentClear(a: Point, b: Point, radius: number): boolean {
