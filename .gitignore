@@ -16,3 +16,5 @@ assets/art/models/*.glb
 !assets/art/models/role_*.glb
 assets/art/models/*/
 .waffo-ledger.json
+docs/screenshots/*.png
+
