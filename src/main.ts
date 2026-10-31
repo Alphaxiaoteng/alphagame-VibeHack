@@ -799,6 +799,9 @@ function boot(): void {
       setStamina(value: number) {
         game.player.stamina = Math.max(0, Math.min(1, value));
       },
+      setYaw(yaw: number) {
+        follow.yaw = yaw;
+      },
       forceContextLoss() { renderer.forceContextLoss(); },
       forceContextRestore() { renderer.forceContextRestore(); },
     };
