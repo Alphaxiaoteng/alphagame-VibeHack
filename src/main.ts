@@ -532,6 +532,7 @@ function boot(): void {
   }
 
   function updateUI(): void {
+    overlay.hidden = game.phase === 'playing' || escapingCutscene.active;
     if (game.phase === 'playing') {
       drawMap();
       // 每帧实时更新技能冷却遮罩动画与倒计时读数，消除无冷却动画的问题
@@ -634,10 +635,10 @@ function boot(): void {
       debugState.textContent = `${game.phase} / ${game.remaining.toFixed(2)}s\n玩家 (${game.player.position.x.toFixed(2)}, ${game.player.position.z.toFixed(2)})\n值班员 (${game.guard.position.x.toFixed(2)}, ${game.guard.position.z.toFixed(2)})\n视角 yaw ${follow.yaw.toFixed(2)} pitch ${follow.pitch.toFixed(2)}\n门：${game.map.closedDoor ?? '全开'} / 语音 ${audio.snapshot().decodedVoices}/8`;
       for (const button of debugButtons) button.disabled = game.phase !== 'playing';
     }
-    if (previousPhase === game.phase && !escapingCutscene.active) return;
+    overlay.hidden = game.phase === 'playing' || escapingCutscene.active;
+    if (previousPhase === game.phase) return;
     previousPhase = game.phase;
     document.body.dataset.phase = game.phase;
-    overlay.hidden = game.phase === 'playing' || escapingCutscene.active;
     renderShiftLog(game.phase);
     renderDifficultyCards();
     if (restartRoundBtn) restartRoundBtn.hidden = game.phase !== 'paused';
@@ -659,13 +660,13 @@ function boot(): void {
         ? '一击改写路线 · 成功突围'
         : '掌控全院规则 · 成功脱身';
       const diffName = DIFFICULTIES[game.difficulty.id]?.name || '中';
-      const timeLimitSec = game.difficulty.timeLimit;
+      const actualElapsedSec = Math.max(0.1, game.elapsed).toFixed(1);
       const unlockPill = unlockNotice
         ? `<div class="stat-pill"><span class="stat-label">解锁</span><strong class="stat-value">${unlockNotice.replace('已解锁：', '')}</strong></div>`
         : '';
       copy.innerHTML = `
         <div class="result-stats">
-          <div class="stat-pill"><span class="stat-label">用时</span><strong class="stat-value">${timeLimitSec.toFixed(1)}s</strong></div>
+          <div class="stat-pill"><span class="stat-label">用时</span><strong class="stat-value">${actualElapsedSec}s</strong></div>
           <div class="stat-pill"><span class="stat-label">指令</span><strong class="stat-value">${game.commandsUsed}次</strong></div>
           <div class="stat-pill"><span class="stat-label">难度</span><strong class="stat-value">${diffName}</strong></div>${unlockPill}
         </div>
@@ -676,12 +677,12 @@ function boot(): void {
     } else if (game.phase === 'lost') {
       kicker.textContent = '巡查截获 · 行动中断';
       title.textContent = '被值班员抓住。';
-      const held = Math.floor(game.elapsed);
-      const remainingSec = Math.max(0, Math.floor(game.difficulty.timeLimit - held));
-      const tip = held < 15 ? '先看清巡查路线再行动' : '通电前切忌奔跑 · 留好体力';
+      const heldSec = Math.max(0.1, game.elapsed).toFixed(1);
+      const remainingSec = Math.max(0, Math.ceil(game.remaining));
+      const tip = game.elapsed < 15 ? '先看清巡查路线再行动' : '通电前切忌奔跑 · 留好体力';
       copy.innerHTML = `
         <div class="result-stats">
-          <div class="stat-pill"><span class="stat-label">坚持</span><strong class="stat-value">${held}s</strong></div>
+          <div class="stat-pill"><span class="stat-label">用时</span><strong class="stat-value">${heldSec}s</strong></div>
           <div class="stat-pill"><span class="stat-label">距通电</span><strong class="stat-value">${remainingSec}s</strong></div>
           <div class="stat-pill"><span class="stat-label">区域</span><strong class="stat-value">${corridor(game.player.position)}</strong></div>
         </div>

@@ -16,6 +16,17 @@ export const VOICE_URLS = {
 };
 export type VoiceId = keyof typeof VOICE_URLS;
 
+export const VOICE_TEXT: Record<VoiceId, string> = {
+  start: '夜间巡查已开始，请保持安静，等待东侧安全门解锁。',
+  door: '注意，走廊防火门已降下封锁。',
+  warning30: '距离东侧安全门解锁还有三十秒。',
+  warning10: '最后十秒，准备前往东侧安全门。',
+  unlocked: '东侧安全门已解锁，门已打开，请立即撤离。',
+  ward: '各科室注意，广播查房已启动，值班员已转向大厅。',
+  patrol: '谁在那边？夜间严禁在走廊逗留。',
+  caught: '抓到你了，立刻返回病房。',
+};
+
 export const BGM_URLS = {
   menu: new URL('../../assets/audio/bgm/bgm_menu_theme.mp3', import.meta.url).href,
   ambience: new URL('../../assets/audio/bgm/bgm_hospital_ambience.mp3', import.meta.url).href,
@@ -55,6 +66,8 @@ export class AudioEngine {
   private currentBgmId: BgmId | null = null;
   private bgmElement: HTMLAudioElement | null = null;
   private voiceElement: HTMLAudioElement | null = null;
+  private pendingVoice: VoiceId | null = null;
+  private voiceDucking = false;
   private targetBgmVolume = 0.78;
   private unlockBound = false;
   private generation = 0;
@@ -312,20 +325,26 @@ export class AudioEngine {
     if (this.context && this.context.state === 'suspended') {
       void this.context.resume().catch(() => {});
     }
+    this.pendingVoice = id;
     const generation = this.generation;
     const play = () => {
-      if (generation !== this.generation || this.paused || this.muted) return;
+      if (generation !== this.generation || this.paused || this.muted || this.pendingVoice !== id) return;
       const buffer = this.buffers.get(id);
       if (buffer && this.context && this.master && this.context.state === 'running') {
+        this.pendingVoice = null;
+        if (this.voiceElement) {
+          try { this.voiceElement.pause(); } catch {}
+        }
         if (this.currentVoice) {
           try { this.currentVoice.stop(); } catch { /* 语音可能刚刚自然结束 */ }
         }
         const source = this.context.createBufferSource();
         const gain = this.context.createGain();
         source.buffer = buffer;
-        gain.gain.value = 1.55;
+        gain.gain.value = 1.65;
         source.connect(gain);
         gain.connect(this.master);
+        this.setVoiceDucking(true);
         this.track(source);
         this.currentVoice = source;
         source.start();
@@ -336,19 +355,53 @@ export class AudioEngine {
           if (this.voiceElement) {
             this.voiceElement.pause();
           }
-          this.voiceElement = new Audio(VOICE_URLS[id]);
-          this.voiceElement.volume = 1.0;
-          void this.voiceElement.play().catch(() => {});
+          const el = new Audio(VOICE_URLS[id]);
+          el.preload = 'auto';
+          el.volume = 1.0;
+          this.voiceElement = el;
+          this.setVoiceDucking(true);
+          el.onended = () => {
+            if (this.voiceElement === el) this.setVoiceDucking(false);
+          };
+          void el.play().then(() => {
+            if (this.pendingVoice === id) this.pendingVoice = null;
+          }).catch(() => {
+            this.setVoiceDucking(false);
+            this.speakFallback(id);
+          });
+          return;
         } catch {}
       }
+      this.speakFallback(id);
     };
-    if (this.ready || this.buffers.has(id)) play();
-    else {
-      play();
-      void this.loading?.then(() => {
-        if (!this.voiceElement || this.voiceElement.paused) play();
-      });
-    }
+    play();
+  }
+
+  /** 零体积浏览器原生语音合成兜底（仅当音频流被拦截或解码未就绪时触发） */
+  private speakFallback(id: VoiceId): void {
+    if (this.muted || this.paused || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(VOICE_TEXT[id]);
+      utter.lang = 'zh-CN';
+      utter.rate = 1.05;
+      utter.pitch = 0.88;
+      utter.volume = 1.0;
+      utter.onstart = () => this.setVoiceDucking(true);
+      utter.onend = () => {
+        if (this.pendingVoice === id) this.pendingVoice = null;
+        this.setVoiceDucking(false);
+      };
+      utter.onerror = () => this.setVoiceDucking(false);
+      window.speechSynthesis.speak(utter);
+    } catch {}
+  }
+
+  /** TTS 播报期间自动压低背景乐（Ducking），确保人声清晰突出 */
+  private setVoiceDucking(ducking: boolean): void {
+    if (this.voiceDucking === ducking) return;
+    this.voiceDucking = ducking;
+    this.applyVolume();
   }
 
   doorSound(): void {
@@ -459,7 +512,7 @@ export class AudioEngine {
   private async loadAllAssets(): Promise<void> {
     const context = this.context;
     if (!context) return;
-    // 严格限制音频并发请求数为 2，优先加载短小高频音效与开局人声，避免首屏 21 路并发占满带宽与主线程解码卡顿
+    // 严格限制音频并发请求数为 2，最优先加载极轻量 TTS 语音（单条仅 23~49KB），确保开局与关键倒计时 TTS 零延迟瞬发
     type Task = () => Promise<void>;
     const tasks: Task[] = [];
     const enqueue = <K extends string>(entries: [K, string][], target: Map<K, AudioBuffer>, isVoice = false) => {
@@ -470,14 +523,22 @@ export class AudioEngine {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const buffer = await context.decodeAudioData(await response.arrayBuffer());
             target.set(id, buffer);
+            if (isVoice && this.pendingVoice === (id as unknown as VoiceId)) {
+              this.voice(id as unknown as VoiceId);
+            }
           } catch {
-            if (isVoice) this.issue = '部分语音加载失败，游戏仍可继续';
+            if (isVoice) {
+              this.issue = '部分语音加载失败，游戏仍可继续';
+              if (this.pendingVoice === (id as unknown as VoiceId)) {
+                this.speakFallback(id as unknown as VoiceId);
+              }
+            }
           }
         });
       }
     };
-    enqueue(Object.entries(SFX_URLS) as [SfxId, string][], this.sfxBuffers);
     enqueue(Object.entries(VOICE_URLS) as [VoiceId, string][], this.buffers, true);
+    enqueue(Object.entries(SFX_URLS) as [SfxId, string][], this.sfxBuffers);
     enqueue(Object.entries(BGM_URLS) as [BgmId, string][], this.bgmBuffers);
 
     const concurrency = 2;
@@ -493,19 +554,21 @@ export class AudioEngine {
   }
 
   private applyVolume(): void {
+    const duckFactor = this.voiceDucking ? 0.35 : 1;
+    const effectiveBgmVol = (this.paused ? this.targetBgmVolume * 0.45 : this.targetBgmVolume) * duckFactor;
     if (this.context && this.master) {
       this.master.gain.setValueAtTime(this.muted ? 0 : 1.35, this.context.currentTime);
     }
     if (this.currentBgmGain && this.context) {
       this.currentBgmGain.gain.setValueAtTime(
-        this.muted ? 0 : (this.paused ? this.targetBgmVolume * 0.45 : this.targetBgmVolume),
+        this.muted ? 0 : effectiveBgmVol,
         this.context.currentTime,
       );
     }
     if (this.bgmElement) {
       const webAudioPlaying = Boolean(this.currentBgm && this.context?.state === 'running');
       this.bgmElement.muted = this.muted;
-      this.bgmElement.volume = (this.muted || webAudioPlaying) ? 0 : (this.paused ? this.targetBgmVolume * 0.45 : this.targetBgmVolume);
+      this.bgmElement.volume = (this.muted || webAudioPlaying) ? 0 : effectiveBgmVol;
       if (!this.muted && !this.paused && !webAudioPlaying && this.bgmElement.paused) {
         void this.bgmElement.play().catch(() => {});
       }
@@ -580,7 +643,10 @@ export class AudioEngine {
     source.onended = () => {
       this.nodes.delete(source);
       source.disconnect();
-      if (this.currentVoice === source) this.currentVoice = null;
+      if (this.currentVoice === source) {
+        this.currentVoice = null;
+        this.setVoiceDucking(false);
+      }
       if (this.currentBgm === source) {
         this.currentBgm = null;
       }
