@@ -211,3 +211,17 @@
 - 账本在 Vite 插件创建时读一次，改账本必须重启 dev server 才生效。
 
 验证：`npm run typecheck` Exit Code 0；`npm run test` 8 文件 / 94 测试通过；`npm run build` Exit Code 0，`dist` 中 `waffo|PRIVATE KEY|MER_|STO_` 命中 0。ego-browser 实测 01 保持医院题材、02/03 叠忍者构件、指令卡与 toast 随题材换说法、同机位 draw call 276 → 287。**未验证**：缺真实 `WAFFO_PRIVATE_KEY`，真实收银台与 Webhook 未跑通。
+
+### 2026-10-31 · 轮次 10（分支 `feat/waffo-payments`）：v2fun 生成付费关封面并接入商店
+
+1. **打通 v2fun API**：base `https://api.v2fun.art/api/v1`，`Authorization: Bearer <key>`。`GET /balance` → `{"balance":100.0000}`，`POST /images/generations` → `HTTP 201` + `task_uuid`，轮询 `GET /images/generations/{uuid}` 约 15 秒转 `COMPLETED`，结果落在 `result[]`，签名下载地址在 `metadata.downloads[0].download_url`（有效期 1 小时）。计费 1 积分 / 张（`qwen-image`）。
+2. **两张付费关主视觉**：02 夜隐寮（木构走廊 + 和纸提灯 + 靛蓝墙裙）与 03 封印殿（石制封印碑 + 朱红符纸 + 结界纹路），与各自皮肤配色对齐。母版存 `assets/art/v2fun/*.png`，540×720 网页版存 `assets/art/v2fun/web/*.jpg`（94 KB / 124 KB）。
+3. **商店接入**：`src/ui/shop.ts` 新增 `COVERS` 映射与 `.shop-cover` hero 条，按选中科室切换；免费科室无封面，整条 `hidden` 收起。`object-position: center 42%` 让竖构图裁出的横带正好落在木构与提灯上。
+
+踩坑记录：
+- v2fun 文档页整页 HTML 极长，`webfetch` 会灌爆上下文；改用 `curl | python3` 去标签后按锚点切片。
+- `sips` 在本机不支持 webp 输出，退回 jpeg（`-Z 720` 把最长边压到 720，实际出 540×720）。
+- 封面在锁定态也照常显示（`paint()` 只看 `levelId`，不看权益），这是有意的：未购买时更要让玩家看见买的是什么。
+- `refresh()` 在 three.js 场景载入完成后会再跑一次，锁定科室会被回落成 01 导致封面收起；测封面要在场景载入完成后点击。
+
+验证：`npm run typecheck` Exit Code 0；`npm run test` 8 文件 / 94 测试通过；`npm run build` Exit Code 0，封面进 bundle（`dojo-02-cover` 94.08 kB、`vault-03-cover` 123.57 kB）。ego-browser 实测：选中 02 → `src=dojo-02-cover.jpg`、渲染盒 416×148、`naturalWidth 540`；选中 03 → `vault-03-cover.jpg`；选中 01 → `hidden` 且 0×0；两张图 `HTTP 200`，控制台仅一条与本次改动无关的 three.js 旧警告。v2fun 余额 100 → 98（2 张封面）。

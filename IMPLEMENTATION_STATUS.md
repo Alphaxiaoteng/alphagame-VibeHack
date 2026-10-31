@@ -103,6 +103,7 @@
 - 关卡规则：`ward-01` 45 s / 冷却 12 s / 巡逻 2.8（免费，医院题材）；`dojo-02` 60 s / 12 s / 3.2；`vault-03` 50 s / 8 s / 3.0。
 - 忍者构件：贴墙立柱 ×16、跨廊横梁 ×18、和纸提灯 ×18、结界符 ×4、护士站暖帘 ×1。提灯只用自发光材质，**不新增实时光源**（场景已有 13 盏点光）。整组按题材切显隐，因此不参与全局静态合批，单独在组内按材质合并。
 - 未配置密钥时：`/api/catalog` 照常返回目录，下单返回 503，玩家侧显示「支付暂未开通，免费科室可正常游玩。」，原始原因写 `console.error`。
+- 付费关封面：两张关卡主视觉由 **v2fun 文生图**产出（`assets/art/v2fun/*.png` 为母版，`assets/art/v2fun/web/*.jpg` 为 540×720 网页版），在 `#shop` 顶部按选中科室显示 hero 条（416×148，`object-fit: cover`）。免费科室无封面，选中时整条收起——不用额外写提示，界面自己说明「这一栏是买来的」。
 
 自动验证：`npm run typecheck` Exit Code 0；`npm run test` 8 文件 / 94 测试通过；`npm run build` Exit Code 0；`dist` 中 `waffo|PRIVATE KEY|MER_|STO_` 命中 0。
 
@@ -116,8 +117,9 @@
 | 外观联动 | 切 02 自动套 `shinobi-indigo`，切 03 自动套 `scroll-vermilion`；`phase-badge` 与地图关卡名同步为「夜隐寮 · 影巡潜入」「封印殿 / N ↑」 |
 | 渲染开销 | 同机位 draw call 276 → 287（+11），走廊截图确认木构横梁、和纸提灯、靛蓝墙裙与贴墙结界符均已渲染 |
 | 锁定与文案 | 未购买时 02 / 03 / 两款皮肤均显示「未解锁」；免费关选中时不出现购买按钮 |
+| 付费关封面 | 选中 02 → `.shop-cover` 显示且 `src=dojo-02-cover.jpg`（渲染盒 416×148，`naturalWidth 540`）；选中 03 → `vault-03-cover.jpg`；选中 01 → 整条 `hidden` 且渲染盒 0×0。两张图均 `HTTP 200`，控制台无报错 |
 
-**尚未验证**：`.env.local` 缺真实 `WAFFO_PRIVATE_KEY`，因此 `POST /api/checkout` 只验到 503，真实收银台跳转、支付回调与 Webhook 入账**未经真机验证**；付费关封面等美术资产尚未生成。
+**尚未验证**：`.env.local` 缺真实 `WAFFO_PRIVATE_KEY`，因此 `POST /api/checkout` 只验到 503，真实收银台跳转、支付回调与 Webhook 入账**未经真机验证**。
 
 ## 启动与下一步
 

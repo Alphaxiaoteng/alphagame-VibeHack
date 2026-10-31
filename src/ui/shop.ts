@@ -4,11 +4,24 @@
  * 只负责 DOM 与网络请求；解锁判定全部复用 core/economy，避免前端与 Webhook 各写一套规则后漂移。
  * 本模块不持有任何密钥：下单只把 SKU 与玩家标识发给同源 /api/checkout，私钥始终留在 Node 侧。
  */
-import { LEVELS, SKINS, canPlayLevel, canUseSkin, productBySku, productForLevel, productForSkin, resolveEntitlements } from '../core/economy';
+import { LEVELS, SKINS, canPlayLevel, canUseSkin, levelById, productBySku, productForLevel, productForSkin, resolveEntitlements } from '../core/economy';
 import type { Entitlements, LevelId, ProductSku, SkinId } from '../core/economy';
+import dojoCover from '../../assets/art/v2fun/web/dojo-02-cover.jpg';
+import vaultCover from '../../assets/art/v2fun/web/vault-03-cover.jpg';
 
 const REF_KEY = 'rounds.payer-ref';
 const REF_PATTERN = /^p_[0-9a-f]{32}$/;
+
+/**
+ * 付费科室的封面图（由 v2fun 生成，见 assets/art/v2fun/）。
+ *
+ * 只有付费科室有封面：免费科室是基准局，不需要额外说明；选到它时整条预览收起，
+ * 反过来也让「这一栏是买来的」在界面上自证，不用再写一句提示。
+ */
+const COVERS: Partial<Record<LevelId, string>> = {
+  'dojo-02': dojoCover,
+  'vault-03': vaultCover,
+};
 
 export interface ShopHooks {
   /** 选中的科室可玩：把该关规则与外观交给游戏 */
@@ -72,6 +85,13 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   let levelId: LevelId = 'ward-01';
   let skinId: SkinId = 'standard';
 
+  const cover = document.createElement('figure');
+  cover.className = 'shop-cover';
+  cover.hidden = true;
+  const coverImage = document.createElement('img');
+  coverImage.alt = '';
+  cover.append(coverImage);
+
   const levelRow = document.createElement('div');
   levelRow.className = 'shop-row';
   const skinRow = document.createElement('div');
@@ -94,7 +114,7 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   skinGroup.className = 'shop-group';
   skinGroup.append(skinLabel, skinRow);
 
-  root.replaceChildren(group, skinGroup, buy, note);
+  root.replaceChildren(cover, group, skinGroup, buy, note);
 
   /** 当前选中项被锁时，挂上它对应的买断商品 */
   function pendingProduct(): ProductSku | null {
@@ -104,6 +124,14 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   }
 
   function paint(): void {
+    const art = COVERS[levelId];
+    cover.hidden = !art;
+    if (art && coverImage.getAttribute('src') !== art) {
+      // 只在切换科室时改 src：重复赋同值不会重新请求，但会让浏览器每次重新解码。
+      coverImage.src = art;
+      coverImage.alt = `${levelById(levelId)?.name ?? '科室'} 封面`;
+    }
+
     for (const button of levelRow.querySelectorAll<HTMLButtonElement>('button')) {
       const id = button.dataset.level as LevelId;
       const locked = !canPlayLevel(id, entitlements);
