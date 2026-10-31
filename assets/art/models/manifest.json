@@ -1,0 +1,183 @@
+{
+  "version": "1.0.0",
+  "updated_at": "2026-10-31T10:28:00+08:00",
+  "total_models": 16,
+  "themes": {
+    "modern": {
+      "name": "标准现代公立 (Standard Modern Public)",
+      "subtitle": "写实克制 · 浅米淡灰绿",
+      "palette": {
+        "wall": "#ebe8e1",
+        "floor": "#4f5e58",
+        "accent": "#3a7d65"
+      },
+      "lighting": "4500K 冷白荧光",
+      "models": [
+        {
+          "id": "modern_exit_door",
+          "filename": "exit_door.glb",
+          "path": "/assets/art/models/modern/exit_door.glb",
+          "preview": "/assets/art/models/modern/exit_door_preview.png",
+          "size_bytes": 44066652,
+          "size_mb": 42.03
+        },
+        {
+          "id": "modern_fire_door",
+          "filename": "fire_door.glb",
+          "path": "/assets/art/models/modern/fire_door.glb",
+          "preview": "/assets/art/models/modern/fire_door_preview.png",
+          "size_bytes": 43475084,
+          "size_mb": 41.46
+        },
+        {
+          "id": "modern_hospital_bed",
+          "filename": "hospital_bed.glb",
+          "path": "/assets/art/models/modern/hospital_bed.glb",
+          "preview": "/assets/art/models/modern/hospital_bed_preview.png",
+          "size_bytes": 43133820,
+          "size_mb": 41.14
+        },
+        {
+          "id": "modern_medicine_cabinet",
+          "filename": "medicine_cabinet.glb",
+          "path": "/assets/art/models/modern/medicine_cabinet.glb",
+          "preview": "/assets/art/models/modern/medicine_cabinet_preview.png",
+          "size_bytes": 43450100,
+          "size_mb": 41.44
+        },
+        {
+          "id": "modern_nurse_counter",
+          "filename": "nurse_counter.glb",
+          "path": "/assets/art/models/modern/nurse_counter.glb",
+          "preview": "/assets/art/models/modern/nurse_counter_preview.png",
+          "size_bytes": 43539668,
+          "size_mb": 41.52
+        },
+        {
+          "id": "modern_warden",
+          "filename": "warden.glb",
+          "path": "/assets/art/models/modern/warden.glb",
+          "preview": "/assets/art/models/modern/warden_preview.png",
+          "size_bytes": 44258816,
+          "size_mb": 42.21
+        },
+        {
+          "id": "modern_wheelchair",
+          "filename": "wheelchair.glb",
+          "path": "/assets/art/models/modern/wheelchair.glb",
+          "preview": "/assets/art/models/modern/wheelchair_preview.png",
+          "size_bytes": 43791772,
+          "size_mb": 41.76
+        }
+      ]
+    },
+    "vintage": {
+      "name": "80年代经典复古 (Classic Vintage 80s)",
+      "subtitle": "老式水磨石 · 军绿半截墙",
+      "palette": {
+        "wall": "#dfd8c8",
+        "floor": "#444c42",
+        "accent": "#4d6950"
+      },
+      "lighting": "3200K 暖黄旧日光灯",
+      "models": [
+        {
+          "id": "vintage_retro_hospital_bed",
+          "filename": "retro_hospital_bed.glb",
+          "path": "/assets/art/models/vintage/retro_hospital_bed.glb",
+          "preview": "/assets/art/models/vintage/retro_hospital_bed_preview.png",
+          "size_bytes": 44449092,
+          "size_mb": 42.39
+        },
+        {
+          "id": "vintage_retro_medicine_cabinet",
+          "filename": "retro_medicine_cabinet.glb",
+          "path": "/assets/art/models/vintage/retro_medicine_cabinet.glb",
+          "preview": "/assets/art/models/vintage/retro_medicine_cabinet_preview.png",
+          "size_bytes": 41250376,
+          "size_mb": 39.34
+        },
+        {
+          "id": "vintage_retro_wheelchair",
+          "filename": "retro_wheelchair.glb",
+          "path": "/assets/art/models/vintage/retro_wheelchair.glb",
+          "preview": "/assets/art/models/vintage/retro_wheelchair_preview.png",
+          "size_bytes": 44298644,
+          "size_mb": 42.25
+        }
+      ]
+    },
+    "lowpoly": {
+      "name": "经典极简低多边形 (Classic Low-Poly)",
+      "subtitle": "多边形硬表面 · 纯粹几何切面",
+      "palette": {
+        "wall": "#e0e4e7",
+        "floor": "#3d4a54",
+        "accent": "#2b8a78"
+      },
+      "lighting": "5000K 纯净无衰减",
+      "models": [
+        {
+          "id": "lowpoly_lowpoly_fire_door",
+          "filename": "lowpoly_fire_door.glb",
+          "path": "/assets/art/models/lowpoly/lowpoly_fire_door.glb",
+          "preview": "/assets/art/models/lowpoly/lowpoly_fire_door_preview.png",
+          "size_bytes": 43060180,
+          "size_mb": 41.07
+        },
+        {
+          "id": "lowpoly_lowpoly_hospital_bed",
+          "filename": "lowpoly_hospital_bed.glb",
+          "path": "/assets/art/models/lowpoly/lowpoly_hospital_bed.glb",
+          "preview": "/assets/art/models/lowpoly/lowpoly_hospital_bed_preview.png",
+          "size_bytes": 41753412,
+          "size_mb": 39.82
+        },
+        {
+          "id": "lowpoly_lowpoly_nurse_counter",
+          "filename": "lowpoly_nurse_counter.glb",
+          "path": "/assets/art/models/lowpoly/lowpoly_nurse_counter.glb",
+          "preview": "/assets/art/models/lowpoly/lowpoly_nurse_counter_preview.png",
+          "size_bytes": 41961412,
+          "size_mb": 40.02
+        }
+      ]
+    },
+    "industrial": {
+      "name": "经典硬核重工业医疗 (Classic Industrial)",
+      "subtitle": "深灰碳素钢 · 警示斜纹防爆",
+      "palette": {
+        "wall": "#cfd2d6",
+        "floor": "#2c3035",
+        "accent": "#c49a2a"
+      },
+      "lighting": "4000K 工业高照度探照",
+      "models": [
+        {
+          "id": "industrial_industrial_fire_door",
+          "filename": "industrial_fire_door.glb",
+          "path": "/assets/art/models/industrial/industrial_fire_door.glb",
+          "preview": "/assets/art/models/industrial/industrial_fire_door_preview.png",
+          "size_bytes": 44668432,
+          "size_mb": 42.6
+        },
+        {
+          "id": "industrial_industrial_medicine_cabinet",
+          "filename": "industrial_medicine_cabinet.glb",
+          "path": "/assets/art/models/industrial/industrial_medicine_cabinet.glb",
+          "preview": "/assets/art/models/industrial/industrial_medicine_cabinet_preview.png",
+          "size_bytes": 44111628,
+          "size_mb": 42.07
+        },
+        {
+          "id": "industrial_industrial_warden",
+          "filename": "industrial_warden.glb",
+          "path": "/assets/art/models/industrial/industrial_warden.glb",
+          "preview": "/assets/art/models/industrial/industrial_warden_preview.png",
+          "size_bytes": 42732704,
+          "size_mb": 40.75
+        }
+      ]
+    }
+  }
+}

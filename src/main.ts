@@ -9,6 +9,7 @@ import { RoundsGame } from './core/state';
 import type { GameEvent, Phase } from './core/state';
 import { FirstPersonCamera } from './render/camera';
 import { HospitalRenderer } from './render/scene';
+import { AssetManagerModal } from './render/assetManagerModal';
 import { SPRINT_EXHAUSTED_BELOW, isTap, sprintEngaged, stickAxes, touchControlsVisible } from './render/touch';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
@@ -35,6 +36,13 @@ function boot(): void {
   const audio = new AudioEngine();
   const hospital = new HospitalRenderer();
   const follow = new FirstPersonCamera();
+  const assetModal = new AssetManagerModal({
+    onPauseRequest: (shouldPause) => {
+      if (shouldPause && game.phase === 'running') {
+        game.pause();
+      }
+    }
+  });
   // 第一人称：玩家模型不再出镜，只保留值班员。
   hospital.playerRig.visible = false;
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -301,10 +309,30 @@ function boot(): void {
     }
     ctx.fillStyle = game.exitUnlocked ? '#2f9257' : '#a06b45';
     ctx.fillRect(x0+EXIT_POINT.x*s-2,z0+EXIT_POINT.z*s-5,4,10);
+    if (game.exitUnlocked) {
+      ctx.fillStyle = '#eaf6ec';
+      ctx.font = 'bold 7px sans-serif';
+      ctx.fillText('出', x0+EXIT_POINT.x*s-3.5, z0+EXIT_POINT.z*s+2.5);
+    }
     const p = game.player.position;
     ctx.fillStyle = '#2d7967'; ctx.beginPath(); ctx.arc(x0+p.x*s,z0+p.z*s,4.2,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#2d7967'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0+p.x*s,z0+p.z*s); ctx.lineTo(x0+(p.x+Math.cos(follow.yaw)*1.2)*s,z0+(p.z+Math.sin(follow.yaw)*1.2)*s); ctx.stroke();
-    if (game.lightsOn || (distance(p,game.guard.position)<10 && game.map.hasLineOfSight(p,game.guard.position))) {
+    // 搜索状态：黄圈标出值班员的搜索中心——玩家知道他正在翻哪里，而不是实时坐标。
+    if (game.guard.mode === 'search' || game.guard.mode === 'broadcast') {
+      const marker = game.guard.targetPoint ?? game.guard.position;
+      ctx.strokeStyle = '#b98a2f'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.arc(x0+marker.x*s, z0+marker.z*s, 6.5, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = '#b98a2f'; ctx.font = 'bold 7px sans-serif';
+      ctx.fillText('搜', x0+marker.x*s-3.5, z0+marker.z*s-8);
+    }
+    // 广播诱导：目标病房绿框脉动，一眼看出他被引去哪间。
+    if (game.activeEffect?.id === 'broadcast' && game.activeEffect.target) {
+      const t = game.activeEffect.target;
+      ctx.strokeStyle = '#2f9257'; ctx.lineWidth = 1.8;
+      ctx.strokeRect(x0+t.x*s-7, z0+t.z*s-7, 14, 14);
+    }
+    // 值班员实时位置：开灯定位、近距离目视或正在追逐时可见。
+    if (game.lightsOn || game.guard.mode === 'chase' || (distance(p,game.guard.position)<10 && game.map.hasLineOfSight(p,game.guard.position))) {
       ctx.fillStyle = '#a45b4c'; ctx.beginPath(); ctx.arc(x0+game.guard.position.x*s,z0+game.guard.position.z*s,4.1,0,Math.PI*2); ctx.fill();
     }
     corridorName.textContent = corridor(p);
@@ -337,7 +365,7 @@ function boot(): void {
     objective.textContent = game.exitUnlocked ? '东侧安全门已通电 · 立刻前往门口逃生' : '躲开值班员，等安全门通电';
     status.textContent = game.lightsOn ? `开灯定位：值班员在${corridor(game.guard.position)} · 视距 12m` : {
       patrol: '巡查中 · 走路安静，奔跑会被听见',
-      chase: '被发现！转过墙角，或用 2 封锁追捕路线',
+      chase: '被发现！转进病房、药房或屏风后，或用 2 封锁追捕路线',
       search: '正在搜索 · 先躲开视线，再用 3 广播引开',
       broadcast: `广播核查中 · 值班员正赶往${(game.activeEffect?.target?.x ?? 15) > 15 ? '东' : '西'}侧病房`,
     }[game.guard.mode];

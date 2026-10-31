@@ -7,6 +7,7 @@ import { distance } from '../core/map';
 import type { RoundsGame } from '../core/state';
 import { HumanRig } from './character';
 import { ceilingMaterial, clothMaterial, plasterMaterial, tileMaterial } from './materials';
+import { AssetRegistry } from '../core/assetRegistry';
 
 const HEIGHT = 2.8;
 const metal = new THREE.MeshStandardMaterial({ color: 0xb7bec0, roughness: 0.36, metalness: 0.65 });
@@ -78,6 +79,13 @@ export class HospitalRenderer {
     const delta = Math.atan2(Math.sin(target - current), Math.cos(target - current));
     return current + delta * (1 - Math.exp(-14 * Math.max(0, dt)));
   }
+
+  public applyTheme(): void {
+    const theme = AssetRegistry.get().getActiveTheme();
+    this.scene.background = new THREE.Color(theme.wallColor);
+    this.ambient.color.set(theme.wallColor);
+    this.ambient.groundColor.set(theme.floorColor);
+  }
   private readonly routeMaterial = new THREE.MeshBasicMaterial({ color: 0x2fa765, transparent: true, opacity: 0.95, depthWrite: false });
   private readonly arrowGeometry: THREE.ShapeGeometry;
   /** 需要静态合批的容器：构造完成后按材质把小网格合并，减少 draw call。 */
@@ -99,6 +107,8 @@ export class HospitalRenderer {
 
   constructor() {
     this.scene.background = new THREE.Color(0xced7d2);
+    this.applyTheme();
+    AssetRegistry.get().subscribe(() => this.applyTheme());
     const arrow = new THREE.Shape();
     arrow.moveTo(-0.11, -0.18); arrow.lineTo(-0.11, 0.03); arrow.lineTo(-0.23, 0.03);
     arrow.lineTo(0, 0.27); arrow.lineTo(0.23, 0.03); arrow.lineTo(0.11, 0.03); arrow.lineTo(0.11, -0.18); arrow.closePath();
@@ -221,15 +231,19 @@ export class HospitalRenderer {
     const walls = [
       [30, HEIGHT, 0.25, 15, HEIGHT / 2, 2.875], [30, HEIGHT, 0.25, 15, HEIGHT / 2, 19.125],
       [0.25, HEIGHT, 16, 2.875, HEIGHT / 2, 11], [0.25, HEIGHT, 16, 27.125, HEIGHT / 2, 11],
-      // 中央建筑两块实体：病房凹间（z 9.7–12.3）从走廊侧挖开口，实体按上下两段保留。
+      // 中央建筑两块实体：病房凹间（z 9.7–12.3）与药房凹间（x 18.7–21.3, z 15–16）从走廊侧挖开口。
       [5, HEIGHT, 3.7, 8.5, HEIGHT / 2, 7.85], [5, HEIGHT, 3.7, 8.5, HEIGHT / 2, 14.15],
-      [11, HEIGHT, 3.7, 18.5, HEIGHT / 2, 7.85], [11, HEIGHT, 3.7, 18.5, HEIGHT / 2, 14.15],
+      [11, HEIGHT, 3.7, 18.5, HEIGHT / 2, 7.85],
+      [5.7, HEIGHT, 3.7, 15.85, HEIGHT / 2, 14.15], [2.7, HEIGHT, 3.7, 22.65, HEIGHT / 2, 14.15],
       [2, HEIGHT, 8.8, 12, HEIGHT / 2, 11.6],
       // 病房凹间的侧墙与后墙：厚度 0.25，全部落在不可行走区，不产生新的视觉/碰撞错位。
       [2.6, HEIGHT, 0.25, 7.3, HEIGHT / 2, 9.575], [2.6, HEIGHT, 0.25, 7.3, HEIGHT / 2, 12.425],
       [0.25, HEIGHT, 2.85, 8.475, HEIGHT / 2, 11],
       [2.6, HEIGHT, 0.25, 22.7, HEIGHT / 2, 9.575], [2.6, HEIGHT, 0.25, 22.7, HEIGHT / 2, 12.425],
       [0.25, HEIGHT, 2.85, 21.525, HEIGHT / 2, 11],
+      // 药房凹间：北墙（后墙）+ 两侧短墙，z 15–16 落在中央建筑实体内。
+      [2.6, HEIGHT, 0.25, 20, HEIGHT / 2, 15.0],
+      [0.25, HEIGHT, 1.0, 18.7, HEIGHT / 2, 15.5], [0.25, HEIGHT, 1.0, 21.3, HEIGHT / 2, 15.5],
     ];
     for (const [w,h,d,x,y,z] of walls) {
       const wall = box(w,h,d,plaster,x,y,z); this.scene.add(wall); this.blockers.push(wall);
@@ -239,13 +253,16 @@ export class HospitalRenderer {
     this.wallFace(3.003,11,16,Math.PI/2); this.wallFace(26.997,11,16,-Math.PI/2);
     this.wallFace(8.5,5.997,5,Math.PI); this.wallFace(18.5,5.997,11,Math.PI);
     this.wallFace(15,16.003,18,0);
-    // 西/东走廊内墙带在病房凹间处断开，凹间自身三面补齐墙裙。
+    // 西/东走廊内墙带在病房凹间处断开，凹间自身三面补齐墙裙；南走廊内墙带在药房开口处断开。
     this.wallFace(5.997,7.85,3.7,-Math.PI/2); this.wallFace(5.997,14.15,3.7,-Math.PI/2);
     this.wallFace(24.003,7.85,3.7,Math.PI/2); this.wallFace(24.003,14.15,3.7,Math.PI/2);
     this.wallFace(7.3,9.697,2.6,Math.PI); this.wallFace(7.3,12.303,2.6,0);
     this.wallFace(8.473,11,2.6,-Math.PI/2);
     this.wallFace(22.7,9.697,2.6,Math.PI); this.wallFace(22.7,12.303,2.6,0);
     this.wallFace(21.527,11,2.6,Math.PI/2);
+    // 药房凹间三面墙裙 + 南走廊内墙带按开口劈段。
+    this.wallFace(12.35,16.003,12.7,0); this.wallFace(22.65,16.003,2.7,0);
+    this.wallFace(20,15.127,2.6,Math.PI); this.wallFace(18.827,15.5,1.0,-Math.PI/2); this.wallFace(21.173,15.5,1.0,Math.PI/2);
     this.wallFace(12,7.197,2,Math.PI);
     // 每 3 m 的竖向墙板缝：让长走廊有真实尺度，而不是一整面灰墙。
     const seamMaterial = new THREE.MeshStandardMaterial({ color: 0xd8ddd3, roughness: 0.9 });
@@ -371,10 +388,24 @@ export class HospitalRenderer {
     this.scene.add(box(0.018,0.85,0.022,metal,12,1.48,7.155));
     const chart = plaque('值班记录', '02:00 巡查 / 03:00 交班',0.85,0.56);
     chart.position.set(8.3,1.85,5.977); chart.rotation.y = Math.PI; this.scene.add(chart);
-    const pharmacy = plaque('药房', 'PHARMACY / 配药窗口',1.8,0.52,true);
-    pharmacy.position.set(20,2.17,16.02); this.scene.add(pharmacy);
-    const pharmacyWindow = box(1.85,0.85,0.018,glass,20,1.48,16.025); pharmacyWindow.castShadow = false; this.scene.add(pharmacyWindow);
-    this.scene.add(box(1.9,0.045,0.04,trim,20,1.02,16.03));
+    const pharmacyCasings = new THREE.Group(); pharmacyCasings.position.set(20, 0, 16.0); pharmacyCasings.rotation.y = Math.PI;
+    // 药房门套：与病房同一套语言（横楣 + 边框 + 号码牌）。
+    pharmacyCasings.add(box(2.72, 0.1, 0.06, trim, 0, 2.18, 0.006));
+    for (const side of [-1, 1]) pharmacyCasings.add(box(0.07, 2.2, 0.06, trim, side * 1.31, 1.1, 0.006));
+    const pharmacySign = plaque('药房', 'PHARMACY / 配药窗口', 1.16, 0.37, true); pharmacySign.position.set(0, 2.47, 0.018); pharmacyCasings.add(pharmacySign);
+    this.scene.add(pharmacyCasings);
+    // 凹间内的配药台与层架：贴北墙，深度 0.35 m 落在玩家碰撞半径之外。
+    const counterGroup = new THREE.Group(); counterGroup.position.set(20, 0, 15.18);
+    counterGroup.add(box(2.3, 0.9, 0.35, sage, 0, 0.45, 0, 0.012));
+    counterGroup.add(box(2.34, 0.04, 0.38, trim, 0, 0.92, 0));
+    const counterSign = plaque('取药窗口', 'MEDICATION PICKUP', 0.7, 0.2); counterSign.position.set(0, 1.62, 0.012); counterSign.rotation.y = Math.PI; counterGroup.add(counterSign);
+    const vials = [0xd5e8e7, 0xdce6c9, 0xc7d5df, 0xe3cfb4];
+    for (let i = 0; i < 6; i++) {
+      const vial = box(0.05, 0.11, 0.05, new THREE.MeshStandardMaterial({ color: vials[i % 4], roughness: 0.35 }), -0.9 + i * 0.36, 1.0, 0.02, 0.008);
+      counterGroup.add(vial);
+    }
+    this.staticRoots.push(counterGroup);
+    this.scene.add(counterGroup);
     const directions = plaque('住院部 01    → 安全门', 'INPATIENT DEPARTMENT / EAST EXIT',2.35,0.56,true);
     directions.position.set(9.2,2.1,3.01); this.scene.add(directions);
     const south = plaque('← 病房 01     安全门 →','SOUTH CORRIDOR',2.15,0.51,true);
@@ -463,7 +494,60 @@ export class HospitalRenderer {
     const stripA = box(13.4, 0.004, 0.14, guide, 17.9, 0.0065, 3.78);
     const stripB = box(0.14, 0.004, 7.2, guide, 24.55, 0.0065, 7.35);
     for (const strip of [stripA, stripB]) { strip.castShadow = false; strip.receiveShadow = true; this.scene.add(strip); }
+    // 躲避指示：病房 / 药房 / 护士站门口横贴一条浅绿地面标记，第一眼看出“这里能躲”。
+    const hideMark = new THREE.MeshStandardMaterial({ color: 0x9dbfa8, roughness: 0.88 });
+    const hideStrip = (x: number, z: number, w: number, d: number): void => {
+      const strip = box(w, 0.004, d, hideMark, x, 0.0075, z);
+      strip.castShadow = false; strip.receiveShadow = true; this.scene.add(strip);
+    };
+    hideStrip(7.05, 10.0, 2.4, 0.34); // 病房 01 开口
+    hideStrip(22.95, 10.0, 2.4, 0.34); // 病房 02 开口
+    hideStrip(20, 16.6, 2.4, 0.34); // 药房开口
+    hideStrip(12, 6.6, 1.8, 0.34); // 护士站凹间
     const props = new THREE.Group();
+
+    // 医用屏风 ×3：贴墙隔断，淡绿布面 + 金属框架 + 底部脚轮，与 FURNITURE_RECTS 一一对应。
+    const screenFrame = new THREE.MeshStandardMaterial({ color: 0xb9c4bc, roughness: 0.5, metalness: 0.4 });
+    const screenCloth = clothMaterial(0xa8c8b0);
+    const medicalScreen = (cx: number, cz: number, w: number, d: number, alongX: boolean): void => {
+      const group = new THREE.Group(); group.position.set(cx, 0, cz);
+      const long = alongX ? w : d;
+      const short = alongX ? d : w;
+      // 三片折叠屏：布面以 0.02 m 内收避免与碰撞矩形边缘穿模。
+      for (let panel = 0; panel < 3; panel++) {
+        const segLong = (long - 0.06) / 3;
+        const center = -long / 2 + segLong * (panel + 0.5) + 0.03;
+        const px = alongX ? center : 0;
+        const pz = alongX ? 0 : center;
+        const cw = alongX ? segLong : short - 0.06;
+        const cd = alongX ? short - 0.06 : segLong;
+        group.add(box(cw, 1.62, cd, screenCloth, px, 1.02, pz, 0.01));
+        if (alongX) {
+          group.add(box(0.03, 1.78, 0.03, screenFrame, center, 0.95, 0));
+          group.add(box(0.035, 1.66, short - 0.02, screenFrame, center - segLong / 2 + 0.015, 0.95, 0));
+        } else {
+          group.add(box(0.03, 1.78, 0.03, screenFrame, 0, 0.95, center));
+          group.add(box(short - 0.02, 1.66, 0.035, screenFrame, 0, 0.95, center - segLong / 2 + 0.015));
+        }
+      }
+      // 顶部滚边与底部脚轮。
+      group.add(alongX ? box(long - 0.04, 0.05, 0.05, screenFrame, 0, 1.86, 0) : box(0.05, 0.05, long - 0.04, screenFrame, 0, 1.86, 0));
+      for (const side of [-1, 1]) {
+        const wx = alongX ? side * (long / 2 - 0.08) : 0;
+        const wz = alongX ? 0 : side * (long / 2 - 0.08);
+        for (const offset of [-short / 2 + 0.12, short / 2 - 0.12]) {
+          const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.03, 10), screenFrame);
+          wheel.rotation.z = Math.PI / 2;
+          wheel.position.set(alongX ? wx : offset, 0.05, alongX ? offset : wz);
+          wheel.castShadow = true;
+          group.add(wheel);
+        }
+      }
+      props.add(group);
+    };
+    medicalScreen(26.5, 7.4, 1.0, 1.8, false); // 东走廊屏风
+    medicalScreen(6.5, 18.1, 2.0, 1.8, true); // 南走廊屏风
+    medicalScreen(3.9, 14.5, 1.8, 2.0, false); // 西走廊屏风
 
     // 挂钟 ×2：中央建筑南北墙面。
     for (const [x, z, flip] of [[8, 5.955, 1], [22, 16.045, -1]] as const) {
