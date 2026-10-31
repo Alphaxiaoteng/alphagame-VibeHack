@@ -272,5 +272,7 @@ export class RoundsGame {
     this.map.openAll();
     this.player.reset();
     this.guard.reset(this.map);
+    // 开局宽限只属于“新一局”：resetRound 之外的 guard.reset（测试中途复位）不享有。
+    this.guard.beginGrace();
   }
 }

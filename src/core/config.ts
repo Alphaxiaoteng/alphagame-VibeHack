@@ -45,6 +45,8 @@ export const PLAYER_RADIUS = 0.35;
 export const GUARD_RADIUS = 0.4;
 
 export const PLAYER_SPAWN: Point = { x: 10, z: 4.5 };
+/** 巡逻选路时出生点周围的安全圈：直线方向穿过该圈的候选路点被排除，防止对角线路沿北走廊碾过出生点。 */
+export const SPAWN_SAFE_RADIUS = 3;
 export const GUARD_SPAWN: Point = { x: 22, z: 4.5 };
 
 export const EXIT_POINT: Point = { x: 27, z: 11 };
@@ -52,13 +54,13 @@ export const EXIT_TRIGGER_RADIUS = 1.0;
 /** 玩家能站到的、最贴近安全门的合法位置 */
 export const EXIT_APPROACH: Point = { x: 26.5, z: 11 };
 
-/** 巡逻路点池：四角 + 两间病房门口。到达后随机挑下一个可达点，不再按固定环序走。 */
+/** 巡逻路点池：远离出生点的三个角 + 病房 02 门口。到达后随机挑下一个可达点。
+ *  西北角 (4.5,4.5) 与出生点同走廊；病房 01 门口 (4.5,11) 距出生点仅 8.5m 且是
+ *  西南走廊的必经中间点——两者都会造成“开局即死”路线，均不入池。开局另有 6 秒目视宽限兜底。 */
 export const PATROL_WAYPOINTS: readonly Point[] = [
   { x: 25, z: 4.5 },
   { x: 25.5, z: 17.5 },
   { x: 4.5, z: 17.5 },
-  { x: 4.5, z: 4.5 },
-  { x: 4.5, z: 11 },
   { x: 25.5, z: 11 },
 ];
 
@@ -102,6 +104,8 @@ export const LIT_SIGHT_RANGE = 12;
 export const HEARING_RANGE = 7;
 export const SEARCH_SECONDS = 4;
 export const ALERT_SEARCH_SECONDS = 6;
+/** 开局宽限：随机巡逻不可预判，前几秒值班员可能路过出生点；宽限期内直接目视不转追逐，站着不动绝不开局即死。 */
+export const GRACE_SECONDS = 6;
 
 export type CommandId = 'lights' | 'lockdown' | 'broadcast';
 export const COMMAND_IDS: readonly CommandId[] = ['lights', 'lockdown', 'broadcast'];

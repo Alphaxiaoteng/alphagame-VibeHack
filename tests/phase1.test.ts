@@ -293,7 +293,8 @@ describe('临时路点巡逻（不是第二阶段感知 AI）', () => {
     guardB.path = [];
     guardB.update(1 / 60, map);
     expect(guardB.targetIndex).not.toBe(2);
-    expect(guardB.targetIndex).toBe(0);
+    // 2→0 的最短折线沿北走廊穿过出生点保护圈，被过滤；rand=0 落在首个安全候选。
+    expect(guardB.targetIndex).toBe(1);
   });
 
   it('随机巡逻不穿墙、不传送，长距离移动持续合法', () => {

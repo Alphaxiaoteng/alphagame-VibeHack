@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NO_INPUT } from '../src/core/config';
+import { GRACE_SECONDS, NO_INPUT } from '../src/core/config';
 import { HospitalMap, distance } from '../src/core/map';
 import { Player } from '../src/core/player';
 import { Warden } from '../src/core/warden';
@@ -39,7 +39,7 @@ describe('三条指令是真实规则，不是禁用按钮', () => {
     const game = commandGame();
     game.player.position = { x: 12, z: 4.5 };
     game.guard.position = { x: 20, z: 4.5 };
-    game.guard.setPatrolTarget(3, game.map);
+    game.guard.setPatrolTarget(2, game.map);
     expect(game.useCommand('lockdown')).toBe(true);
     expect(game.map.closedDoor).toBe('A');
     expect(game.guard.path.some(p => p.z >= 16.5)).toBe(true);
@@ -94,6 +94,33 @@ describe('三条指令是真实规则，不是禁用按钮', () => {
     expect(game.activeEffect).toBeNull();
     expect(game.commandStatus('broadcast').cooldown).toBe(0);
     expect(game.drainEvents().some(e => e.type === 'commandStarted')).toBe(false);
+  });
+
+  it('开局宽限：直接目视不切换追逐，但奔跑声与抓捕照常生效', () => {
+    const game = new RoundsGame();
+    game.start();
+    // 无遮挡对视 3m——宽限期内不进追逐
+    game.player.position = { x: 12, z: 4.5 };
+    game.guard.position = { x: 15, z: 4.5 };
+    game.guard.facing = Math.PI;
+    advance(game, 1);
+    expect(game.guard.mode).toBe('patrol');
+    // 宽限期后同样对视立即追逐
+    advance(game, GRACE_SECONDS + 0.5);
+    game.player.position = { x: 12, z: 4.5 };
+    game.guard.position = { x: 15, z: 4.5 };
+    game.guard.facing = Math.PI;
+    game.tick(1 / 60);
+    expect(game.guard.mode).toBe('chase');
+    // 宽限期内近身无遮挡仍会被抓：乱跑作死不死保底
+    const gameB = new RoundsGame();
+    gameB.start();
+    gameB.guard.graceImmunity = false;
+    gameB.player.position = { x: 10.5, z: 4.5 };
+    gameB.guard.position = { x: 11.3, z: 4.5 };
+    gameB.guard.facing = Math.PI;
+    gameB.tick(1 / 60);
+    expect(gameB.phase).toBe('lost');
   });
 
   it('暂停冻结主效果、门、冷却及 AI；重开清空全部残留', () => {

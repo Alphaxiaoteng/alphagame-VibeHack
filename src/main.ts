@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import './style.css';
 import { AudioEngine, VOICE_URLS } from './audio/audioEngine';
-import { COMMANDS, COMMAND_COOLDOWN, COMMAND_IDS, DOORS, EXIT_POINT, FURNITURE_RECTS, GUARD_RADIUS, PLAYER_RADIUS, WALKABLE_RECTS } from './core/config';
+import { COMMANDS, COMMAND_COOLDOWN, COMMAND_IDS, DOORS, EXIT_POINT, FURNITURE_RECTS, GUARD_RADIUS, PLAYER_RADIUS, TIME_LIMIT, WALKABLE_RECTS } from './core/config';
 import type { CommandId, DoorId, PlayerInput, Point } from './core/config';
 import { dangerWindow, pauseAfterBackground } from './core/lifecycle';
 import { distance } from './core/map';
@@ -421,19 +421,22 @@ function boot(): void {
       title.textContent = '值班暂停。';
       copy.textContent = resumeNote || '返回页面不会自动继续。准备好后，再回到走廊。';
       primary.innerHTML = '继续值班 <span aria-hidden="true">→</span>';
-      footnote.textContent = `本局已进行 ${(60 - game.remaining).toFixed(0)} 秒 · 已发动 ${game.commandsUsed} 次指令 · 倒计时、体力和主要音效在暂停时不推进。`;
+      footnote.textContent = `本局已进行 ${(TIME_LIMIT - game.remaining).toFixed(0)} 秒 · 已发动 ${game.commandsUsed} 次指令 · 倒计时、体力和主要音效在暂停时不推进。`;
     } else if (game.phase === 'won') {
       kicker.textContent = '值班记录 / 撤离成功';
       title.textContent = '你走出了医院。';
-      copy.textContent = `安全门已抵达，逃离成功。本局发动 ${game.commandsUsed} 次指令，走出了住院部。`;
+      const verdict = game.commandsUsed === 0 ? '零指令硬闯，今晚你是真的会躲。' : game.commandsUsed === 1 ? '一击改写路线，干净利落。' : '把医院规则玩弄于股掌。';
+      copy.textContent = `安全门已抵达，逃离成功。本局发动 ${game.commandsUsed} 次指令——${verdict}`;
       primary.innerHTML = '再来一次 <span aria-hidden="true">→</span>';
       footnote.textContent = 'R 也可重开：位置、门、体力、倒计时与音效全部复位。';
     } else if (game.phase === 'lost') {
       kicker.textContent = '值班记录 / 巡查中断';
       title.textContent = '被值班员抓住。';
-      copy.textContent = '下次留出一点距离。沿环形走廊绕行，不要和他迎面碰上。';
+      const held = Math.floor(game.elapsed);
+      const verdict = held < 10 ? '刚接班就被按住——先看清他的路线再动。' : held < 30 ? '坚持了一阵。下次贴着墙角走，用指令改他的路线。' : '就差一点。门通电前的最后一段最危险，留好体力。';
+      copy.textContent = `${verdict}（坚持 ${held} 秒）`;
       primary.innerHTML = '再来一次 <span aria-hidden="true">→</span>';
-      footnote.textContent = `本局坚持 ${Math.floor(game.elapsed)} 秒。按 R 或点击按钮重开。`;
+      footnote.textContent = '按 R 或点击按钮重开。';
     }
   }
 

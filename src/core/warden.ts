@@ -1,4 +1,4 @@
-import { ALERT_SEARCH_SECONDS, CHASE_SPEED, GUARD_RADIUS, GUARD_SPAWN, HEARING_RANGE, PATROL_SPEED, PATROL_WAYPOINTS, SEARCH_SECONDS, SIGHT_RANGE } from './config';
+import { ALERT_SEARCH_SECONDS, CHASE_SPEED, GRACE_SECONDS, GUARD_RADIUS, GUARD_SPAWN, HEARING_RANGE, PATROL_SPEED, PATROL_WAYPOINTS, PLAYER_SPAWN, SEARCH_SECONDS, SIGHT_RANGE, SPAWN_SAFE_RADIUS } from './config';
 import type { Player } from './player';
 import type { Point } from './config';
 import { distance, moveCircle } from './map';
@@ -22,6 +22,8 @@ export class PatrolGuard {
 
   reset(map: HospitalMap): void {
     this.position = { ...GUARD_SPAWN };
+    // 出生段固定先向东（路点 0，远离玩家出生点）：随机选点从到达第一个路点后才开始，
+    // 否则开局就可能沿北走廊穿过玩家，造成“上来就死”。
     this.targetIndex = 0;
     this.facing = 0;
     this.path = [];
@@ -50,15 +52,50 @@ export class PatrolGuard {
     this.revision = map.revision;
   }
 
-  /** 到达路点后随机挑下一个：不重复当前点，只从当前可达的路点里选，路线不再固定成环。 */
+  /** 到达路点后随机挑下一个：不重复当前点，只从当前可达的路点里选，路线不再固定成环。
+   *  排除“直线方向穿过出生点保护圈”的候选：对角线路（如东上→西南）的最短路会沿北走廊
+   *  穿过玩家出生点，造成开局即死；绕行成本由值班员自己承担（寻路自动走南走廊）。 */
   private pickNextWaypoint(map: HospitalMap): number {
     const candidates: number[] = [];
     for (let index = 0; index < PATROL_WAYPOINTS.length; index += 1) {
       if (index === this.targetIndex) continue;
-      if (map.findPath(this.position, PATROL_WAYPOINTS[index], GUARD_RADIUS).length > 0) candidates.push(index);
+      if (map.findPath(this.position, PATROL_WAYPOINTS[index], GUARD_RADIUS).length === 0) continue;
+      // 用实际寻路结果判定是否碾过出生点：检查整条折线的每一段（含拐点间拉直线段），不只看拐点。
+      const path = map.findPath(this.position, PATROL_WAYPOINTS[index], GUARD_RADIUS);
+      if (this.pathNearSpawn(this.position, path)) continue;
+      candidates.push(index);
     }
-    if (candidates.length === 0) return (this.targetIndex + 1) % PATROL_WAYPOINTS.length;
+    if (candidates.length === 0) {
+      const fallback: number[] = [];
+      for (let index = 0; index < PATROL_WAYPOINTS.length; index += 1) {
+        if (index === this.targetIndex) continue;
+        if (map.findPath(this.position, PATROL_WAYPOINTS[index], GUARD_RADIUS).length > 0) fallback.push(index);
+      }
+      if (fallback.length > 0) return fallback[Math.min(fallback.length - 1, Math.floor(this.rand() * fallback.length))];
+      return (this.targetIndex + 1) % PATROL_WAYPOINTS.length;
+    }
     return candidates[Math.min(candidates.length - 1, Math.floor(this.rand() * candidates.length))];
+  }
+
+  /** 折线（起点 + 各拐点）任意一段是否进入出生点保护圈：点到线段的最近距离判定。 */
+  private pathNearSpawn(start: Point, path: readonly Point[]): boolean {
+    let previous = start;
+    for (const point of path) {
+      if (this.segmentNearSpawn(previous, point)) return true;
+      previous = point;
+    }
+    return false;
+  }
+
+  /** 线段是否穿过出生点周围的保护圈（圆与线段的最近距离判定）。 */
+  private segmentNearSpawn(a: Point, b: Point): boolean {
+    const abx = b.x - a.x, abz = b.z - a.z;
+    const lengthSq = abx * abx + abz * abz;
+    let t = 0;
+    if (lengthSq > 1e-9) t = Math.max(0, Math.min(1, ((PLAYER_SPAWN.x - a.x) * abx + (PLAYER_SPAWN.z - a.z) * abz) / lengthSq));
+    const cx = a.x + abx * t - PLAYER_SPAWN.x;
+    const cz = a.z + abz * t - PLAYER_SPAWN.z;
+    return Math.hypot(cx, cz) < SPAWN_SAFE_RADIUS;
   }
 
   update(dt: number, map: HospitalMap): void {
@@ -161,6 +198,12 @@ export class Warden extends PatrolGuard {
     super.setPatrolTarget(index, map);
   }
 
+  /** 新一局调用：开局几秒直接目视不转追逐，杜绝随机巡逻撞上出生点的“开局即死”。 */
+  beginGrace(): void {
+    this.graceImmunity = true;
+    this.graceRemaining = GRACE_SECONDS;
+  }
+
   canSeePlayer(map: HospitalMap, player: Player, range = SIGHT_RANGE): boolean {
     const dx = player.position.x - this.position.x;
     const dz = player.position.z - this.position.z;
@@ -206,10 +249,18 @@ export class Warden extends PatrolGuard {
     this.routeRevision = map.revision;
   }
 
+  /** 开局宽限：true 时直接目视不触发追逐（奔跑声/广播/主动接近不受影响）。 */
+  graceImmunity = false;
+  private graceRemaining = 0;
+
   override update(dt: number, map: HospitalMap, player?: Player, sightRange = SIGHT_RANGE): void {
     this.pathTimer += dt;
-    this.seesPlayer = !!player && this.perception && this.canSeePlayer(map, player, sightRange);
+    if (this.graceRemaining > 0) this.graceRemaining = Math.max(0, this.graceRemaining - dt);
+    else this.graceImmunity = false;
+    const visible = !!player && this.perception && this.canSeePlayer(map, player, sightRange);
     const heard = !!player && this.perception && player.sprinting && distance(this.position, player.position) <= HEARING_RANGE;
+    this.seesPlayer = visible && !this.graceImmunity;
+    if (heard) this.graceImmunity = false;
     if (player && (this.seesPlayer || heard)) {
       const changed = this.mode !== 'chase';
       if (this.seesPlayer && (this.broadcastTarget || this.pendingAlertTarget)) {
