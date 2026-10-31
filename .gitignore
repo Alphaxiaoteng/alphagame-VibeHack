@@ -7,6 +7,8 @@ build/
 .env
 .env.*
 !.env.example
+# Waffo 买断账本：本地权益落盘，不进仓库
+.waffo-*.json
 tripo-out/
 # Tripo 3D 生成中间产物：模型体积达数十 MB 且未被游戏引用，不入库
 .tripo/

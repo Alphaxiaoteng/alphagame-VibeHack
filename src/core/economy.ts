@@ -151,6 +151,18 @@ export function skinById(id: string): SkinDef | undefined {
 }
 
 /**
+ * 找出能解锁该关卡的买断商品：商店的锁定项靠它挂购买按钮。
+ * 目录里同一权益可能被多个商品覆盖（单买与全院包），返回目录顺序里的第一个，即最便宜的单买项。
+ */
+export function productForLevel(levelId: LevelId): ProductDef | undefined {
+  return PRODUCTS.find(product => product.grants.levels.includes(levelId));
+}
+
+export function productForSkin(skinId: SkinId): ProductDef | undefined {
+  return PRODUCTS.find(product => product.grants.skins.includes(skinId));
+}
+
+/**
  * 把「已买断的 SKU 列表」折算成权益。未知 SKU 忽略而不是报错：
  * 目录里删掉的旧商品不应让老玩家的权益判定整体崩掉。
  */

@@ -3,6 +3,7 @@ import './style.css';
 import { AudioEngine, VOICE_URLS } from './audio/audioEngine';
 import { COMMANDS, COMMAND_IDS, DOORS, EXIT_POINT, FURNITURE_RECTS, GUARD_RADIUS, PLAYER_RADIUS, WALKABLE_RECTS } from './core/config';
 import type { CommandId, DoorId, PlayerInput, Point } from './core/config';
+import { levelById, skinById } from './core/economy';
 import { dangerWindow, pauseAfterBackground } from './core/lifecycle';
 import { distance } from './core/map';
 import { RoundsGame } from './core/state';
@@ -11,6 +12,7 @@ import { FirstPersonCamera } from './render/camera';
 import { HospitalRenderer } from './render/scene';
 import { SPRINT_EXHAUSTED_BELOW, isTap, sprintEngaged, stickAxes, touchControlsVisible } from './render/touch';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { mountShop, paidReturnNotice } from './ui/shop';
 
 function element<T extends HTMLElement>(id: string): T {
   const found = document.getElementById(id);
@@ -653,6 +655,28 @@ function boot(): void {
   updateUI();
   document.body.dataset.ready = 'true';
   document.body.dataset.touch = String(hasTouch);
+
+  // 商店只负责选科室与外观；规则与配色都从 core/economy 的同一份目录取，不在这里硬编码。
+  const stageLabel = document.querySelector<HTMLElement>('.stage-label');
+  const identityIndex = document.querySelector<HTMLElement>('.identity > .mono');
+  const shop = mountShop(element('shop'), {
+    onSelect(levelId, skinId) {
+      const level = levelById(levelId);
+      const skin = skinById(skinId);
+      if (!level || !skin) return;
+      game.applyLevelRules(level.rules);
+      hospital.applySkin(skin);
+      if (identityIndex) identityIndex.textContent = `ROUNDS / ${level.index}`;
+      if (stageLabel) stageLabel.textContent = `${level.ward} / ${level.name}`;
+      if (game.phase === 'start') {
+        copy.innerHTML = `躲开值班员，活过 <strong>${level.rules.timeLimit} 秒</strong>。<br />安全门亮起后，跑到东侧门前逃生。`;
+      }
+    },
+    onNotice(text) { notice(text, true); },
+  });
+  const paidNotice = paidReturnNotice();
+  if (paidNotice) notice(paidNotice);
+  void shop.refresh();
 
   if (debug) {
     const state = () => ({

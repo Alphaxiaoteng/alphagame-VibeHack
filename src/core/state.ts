@@ -63,7 +63,7 @@ export class RoundsGame {
   readonly player = new Player();
   readonly guard: Warden;
   /** 本局生效的规则：关卡之间只差这几个数字，默认等于 01 住院部。 */
-  readonly rules: RoundRules;
+  rules: RoundRules;
   phase: Phase = 'start';
   elapsed = 0;
   activeEffect: CommandEffect | null = null;
@@ -260,6 +260,15 @@ export class RoundsGame {
       this.exitAnnounced = true;
       this.events.push({ type: 'exitUnlocked' });
     }
+  }
+
+  /**
+   * 切换关卡规则。三个关卡地图几何与碰撞完全一致，只差时长、指令冷却与巡逻速度，
+   * 因此换关卡不需要重建地图，只需换掉这几个数字并把巡逻速度同步给值班员。
+   */
+  applyLevelRules(rules: RoundRules): void {
+    this.rules = rules;
+    this.guard.patrolSpeed = rules.patrolSpeed;
   }
 
   private resetRound(): void {

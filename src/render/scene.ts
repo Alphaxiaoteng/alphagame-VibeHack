@@ -4,6 +4,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { DOORS, EXIT_APPROACH, EXIT_POINT, FURNITURE_RECTS, MAP_DEPTH, MAP_WIDTH, PLAYER_RADIUS } from '../core/config';
 import type { DoorId, Point } from '../core/config';
 import { distance } from '../core/map';
+import type { SkinDef } from '../core/economy';
 import type { RoundsGame } from '../core/state';
 import { HumanRig } from './character';
 import { ceilingMaterial, clothMaterial, plasterMaterial, tileMaterial } from './materials';
@@ -66,6 +67,11 @@ export class HospitalRenderer {
   private readonly doors = new Map<DoorId, { panel: THREE.Mesh; progress: number }>();
   private readonly wardLamps: { lamp: THREE.Mesh; light: THREE.PointLight; point: Point }[] = [];
   private readonly route = new THREE.Group();
+  /**
+   * 墙裙材质单独持有：皮肤包会改它的颜色，而模块级 sage 同时被盆栽复用，
+   * 直接改 sage 会连绿植一起变色。
+   */
+  private readonly skirt = new THREE.MeshStandardMaterial({ color: 0xb9c8bb, roughness: 0.78 });
   private readonly ambient = new THREE.HemisphereLight(0xf4f6ef, 0x7c8883, 1.05);
   private readonly key = new THREE.DirectionalLight(0xf9fbf1, 1.15);
   /** 开灯效果 0→1 的混合值：实现“啪一下亮起”的短过渡，同时让环境光让位形成光池节奏。 */
@@ -119,6 +125,17 @@ export class HospitalRenderer {
     this.searchRing.position.y = 0.02;
     this.searchRing.visible = false;
     this.scene.add(this.searchRing);
+  }
+
+  /**
+   * 套用皮肤主题。第一人称下玩家模型不出镜，皮肤真正可见的部分是走廊墙裙色与顶灯色温；
+   * `cloth` 同时同步给角色模型，供第三人称或后续复用。
+   */
+  applySkin(skin: SkinDef): void {
+    this.skirt.color.setHex(skin.wallSkirt);
+    for (const lamp of this.lamps) lamp.color.setHex(skin.lamp);
+    for (const ward of this.wardLamps) ward.light.color.setHex(skin.lamp);
+    this.playerHuman.setCloth(skin.cloth);
   }
 
   sync(game: RoundsGame, dt: number): void {
@@ -277,7 +294,7 @@ export class HospitalRenderer {
 
   private wallFace(x: number, z: number, length: number, yaw: number): void {
     const group = new THREE.Group(); group.position.set(x,0,z); group.rotation.y = yaw;
-    group.add(box(length,0.88,0.008,sage,0,0.51,0));
+    group.add(box(length,0.88,0.008,this.skirt,0,0.51,0));
     group.add(box(length,0.042,0.035,trim,0,0.99,0.02,0.008));
     group.add(box(length,0.085,0.016,rubber,0,0.048,0.012));
     this.staticRoots.push(group);
@@ -365,7 +382,7 @@ export class HospitalRenderer {
   private buildDepartments(): void {
     const nursing = plaque('护士站', 'NURSE STATION / 01', 1.8,0.5,true);
     nursing.position.set(12,2.21,7.18); nursing.rotation.y = Math.PI; this.scene.add(nursing);
-    this.scene.add(box(1.9,0.92,0.035,sage,12,0.46,7.177));
+    this.scene.add(box(1.9,0.92,0.035,this.skirt,12,0.46,7.177));
     this.scene.add(box(1.98,0.04,0.055,trim,12,0.95,7.168,0.008));
     const window = box(1.75,0.83,0.015,glass,12,1.48,7.17); window.castShadow = false; this.scene.add(window);
     this.scene.add(box(0.018,0.85,0.022,metal,12,1.48,7.155));

@@ -18,6 +18,8 @@ export class HumanRig {
   private readonly elbows: THREE.Group[] = [];
   private readonly legs: THREE.Group[] = [];
   private readonly knees: THREE.Group[] = [];
+  /** 上衣材质单独持有，皮肤包通过 setCloth 改它的颜色（袖口、口袋同料，一起变色）。 */
+  private readonly shirt: THREE.MeshStandardMaterial;
   private stride = 0;
   private weight = 0;
 
@@ -25,6 +27,7 @@ export class HumanRig {
     const skin = new THREE.MeshStandardMaterial({ color: 0xd6b395, roughness: 0.78 });
     const hair = new THREE.MeshStandardMaterial({ color: warden ? 0x39332c : 0x272522, roughness: 0.95 });
     const shirt = clothMaterial(warden ? 0x4f6a75 : 0x2f7d70);
+    this.shirt = shirt;
     const pants = clothMaterial(warden ? 0x1f2c35 : 0x22363b);
     const shoes = new THREE.MeshStandardMaterial({ color: 0x202623, roughness: 0.68 });
     const badge = new THREE.MeshStandardMaterial({ color: 0xe9ece1, roughness: 0.5 });
@@ -78,6 +81,11 @@ export class HumanRig {
       leg.add(knee); this.body.add(leg); this.legs.push(leg); this.knees.push(knee);
     }
     this.group.name = warden ? 'human-warden' : 'human-player';
+  }
+
+  /** 换肤：只改衣料颜色，几何与骨架不动。 */
+  setCloth(color: number): void {
+    this.shirt.color.setHex(color);
   }
 
   animate(meters: number, dt: number, running: boolean): void {

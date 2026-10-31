@@ -101,6 +101,25 @@ body[data-touch="true"] .map-panel { display: none; }
 .briefing-help { display: grid; gap: 11px; margin: 0 0 25px; padding: 16px 0; border-top: 1px solid #cdd5c5; border-bottom: 1px solid #cdd5c5; }
 .briefing-help > div { display: flex; align-items: center; gap: 15px; font-size: 11px; color: #68785f; }
 .briefing-help kbd { min-width: 100px; display: inline-block; text-align: center; background: #ebefdf; }
+/* 科室 / 外观选择条：买断制，锁定的选项在下方给出对应购买按钮 */
+.shop { display: grid; gap: 12px; margin: 0 0 18px; }
+.shop-group { display: grid; gap: 7px; }
+.shop-label { font-size: 10px; letter-spacing: 2px; color: #7b876e; }
+.shop-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.shop-chip { display: flex; align-items: center; gap: 7px; padding: 8px 9px; text-align: left; background: #f7f8f1; border: 1px solid #cdd5c5; border-radius: 2px; }
+.shop-chip:hover { border-color: #93ab93; }
+.shop-chip.active { border-color: #315e45; background: #e8eee2; box-shadow: inset 0 0 0 1px #315e45; }
+.shop-chip.locked { color: #8d968a; background: #f1f2ec; }
+.shop-chip > span { display: grid; gap: 2px; min-width: 0; }
+.shop-chip strong { font-size: 11px; font-weight: 600; white-space: nowrap; }
+.shop-chip small { font-size: 9px; color: #7b876e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shop-chip.locked small { color: #a0968a; }
+.shop-swatch { width: 14px; height: 14px; flex: none; border-radius: 2px; border: 1px solid #b7c1b4; }
+.shop-buy { width: 100%; padding: 11px 14px; background: #f0f3e8; color: #24422f; border: 1px solid #8fa88f; border-radius: 2px; font-size: 12px; font-weight: 600; letter-spacing: 1px; }
+.shop-buy:hover:not(:disabled) { background: #e4ebd8; }
+.shop-buy:disabled { opacity: .55; }
+.shop-note { font-size: 10px; line-height: 1.6; color: #7b876e; margin: 0; }
+.shop-note.warn { color: #8a5a3c; }
 .primary { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: #2e4e37; color: #f6f5ec; border: 1px solid #2e4e37; border-radius: 2px; font-size: 14px; font-weight: 500; letter-spacing: 2px; }
 .primary:hover { background: #3a6344; }
 .primary span { font-size: 18px; font-weight: 400; }

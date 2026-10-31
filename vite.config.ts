@@ -1,8 +1,12 @@
+import { loadEnv } from 'vite';
 import { defineConfig } from 'vitest/config';
+import { waffoApiPlugin } from './src/server/apiPlugin';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   // 相对路径打包：同一份 dist 既能部署到 GitHub Pages 子路径，也能本地局域网直接访问
   base: './',
+  // 空前缀＝读全量变量：Waffo 私钥只有 Node 侧中间件用得到，绝不能带 VITE_ 前缀暴露给浏览器
+  plugins: [waffoApiPlugin(loadEnv(mode, process.cwd(), ''))],
   server: {
     host: true,
     port: 5174,
@@ -26,4 +30,4 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     maxWorkers: 2,
   },
-});
+}));
