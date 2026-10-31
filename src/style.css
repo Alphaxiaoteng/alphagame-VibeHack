@@ -1,0 +1,201 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #243831;
+  background: #dce2d9;
+  font-synthesis: none;
+  --paper: #f2f4ec;
+  --ink: #233c32;
+  --muted: #65746b;
+  --green: #315e45;
+  --line: #cbd3c5;
+}
+* { box-sizing: border-box; }
+body { margin: 0; overflow: hidden; }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:disabled { cursor: default; }
+button:focus-visible { outline: 3px solid #508269; outline-offset: 3px; }
+[hidden] { display: none !important; }
+.mono, kbd { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-variant-numeric: tabular-nums; }
+kbd { padding: 3px 5px; border: 1px solid #bdc9be; border-radius: 3px; font-size: 11px; line-height: 1.4; white-space: nowrap; }
+#app, #scene { position: fixed; inset: 0; width: 100%; height: 100%; }
+#scene canvas { display: block; width: 100%; height: 100%; outline: none; touch-action: none; }
+.hud { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
+.hud button { pointer-events: auto; }
+.topbar { height: 82px; display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: linear-gradient(#edf1e9f5, #edf1e9b5); border-bottom: 1px solid #abbdaa66; }
+.identity { display: flex; gap: 15px; align-items: baseline; }
+.identity strong { font-size: 25px; font-weight: 700; letter-spacing: 5px; }
+.identity > .mono { font-size: 10px; letter-spacing: 2px; color: var(--muted); }
+.stage-label { font-size: 10px; color: #68776b; border-left: 1px solid #aab9ad; padding-left: 12px; }
+.timer-block { position: absolute; top: 13px; left: 50%; transform: translateX(-50%); text-align: center; min-width: 115px; }
+.timer-block > span { display: block; font-size: 10px; letter-spacing: 2px; color: #596b5c; }
+#timer { display: block; font-size: 37px; line-height: 1.15; font-weight: 600; }
+#timer span { font-size: 13px; font-weight: 400; margin-left: 3px; }
+.toolbar { display: flex; gap: 9px; }
+.toolbar button { background: #f1f4ecb5; border: 1px solid #afbdad; border-radius: 3px; padding: 8px 11px; font-size: 12px; }
+.toolbar button:hover { background: #ffffff; }
+.toolbar button:disabled { opacity: .45; }
+.toolbar kbd { border: 0; padding: 0 0 0 5px; color: #687f70; }
+.objective { position: absolute; top: 106px; left: 28px; display: flex; align-items: flex-start; gap: 9px; background: #edf2e7d9; padding: 12px 16px; border-left: 2px solid #76937d; border-radius: 0 3px 3px 0; max-width: 355px; }
+.objective strong { font-size: 13px; font-weight: 600; display: block; }
+.objective span:not(.status-dot) { display: block; margin-top: 5px; font-size: 11px; color: #64756b; }
+.status-dot { width: 6px; height: 6px; background: #688673; border-radius: 50%; margin-top: 6px; flex: none; }
+.toast { position: absolute; top: 112px; left: 50%; transform: translateX(-50%); padding: 11px 18px; background: #f3f5ecf5; border: 1px solid #c4d3bf; box-shadow: 0 3px 16px #2d41381c; font-size: 13px; max-width: 520px; text-align: center; }
+.bottom-hud { position: absolute; bottom: 22px; left: 28px; right: 28px; display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; }
+.stamina-panel { width: 174px; flex: none; padding: 12px 14px; border: 1px solid #acbca6a3; background: #edf2e7e8; border-radius: 3px; }
+.stamina-panel > div:first-child { display: flex; justify-content: space-between; font-size: 12px; }
+.stamina-track { height: 5px; background: #bdc9b6; margin: 9px 0; border-radius: 1px; overflow: hidden; }
+#stamina-fill { width: 100%; height: 100%; background: #486f50; transform-origin: left; }
+.stamina-panel small { display: block; font-size: 10px; color: #647960; line-height: 1.5; }
+.commands { display: flex; gap: 7px; margin: 0 auto; }
+.commands button { position: relative; overflow: hidden; display: flex; gap: 9px; align-items: center; text-align: left; padding: 11px; width: 187px; background: #f3f6eed8; border: 1px solid #9fb3a3; border-radius: 3px; transition: background .14s, border-color .14s, transform .14s; }
+.commands button:hover:not(:disabled) { background: #fffef6; border-color: #6d9179; transform: translateY(-1px); }
+.commands button:active:not(:disabled) { transform: translateY(0); }
+.commands button:disabled { opacity: .68; }
+.commands kbd { padding: 6px 9px; font-size: 12px; background: #e7eee0; border-color: #a7b9a8; }
+.commands strong { display: block; font-size: 12px; font-weight: 600; color: #345241; }
+.commands small { display: block; font-size: 10px; color: #738270; margin-top: 4px; }
+.commands .command-status { margin-left: auto; font-size: 9px; color: #486a51; white-space: nowrap; }
+.commands button:disabled .command-status { color: #948d6e; }
+.commands .cooldown-fill { position: absolute; left: 0; bottom: 0; height: 4px; width: var(--progress, 0%); background: #6f9674; opacity: .85; }
+.commands button.denied { animation: denied .32s ease; }
+@keyframes denied { 25% { border-color: #ad6153; } 60% { transform: translateX(3px); } }
+.effect-panel { position: absolute; left: 50%; bottom: 133px; transform: translateX(-50%); min-width: 292px; display: flex; align-items: center; gap: 10px; padding: 9px 13px; background: #f6f7eedf; border-left: 2px solid #6d9477; font-size: 11px; color: #3b5543; }
+.effect-panel strong { font-weight: 600; }
+.effect-panel .mono { margin-left: auto; color: #67816a; font-size: 10px; }
+.effect-track { width: 62px; height: 3px; background: #c6d1bf; overflow: hidden; }
+#effect-fill { height: 100%; background: #58886a; transform-origin: left; }
+.map-panel { position: absolute; right: 28px; top: 106px; width: 200px; padding: 9px 9px 7px; background: #f1f4eae5; border: 1px solid #b9c6b2; border-radius: 2px; }
+.map-panel > div { display: flex; justify-content: space-between; font-size: 9px; letter-spacing: .5px; color: #6d7e68; padding: 0 2px 6px; }
+.map-panel canvas { display: block; width: 200px; height: 146px; background: #e4e9de; }
+.map-panel small { display: block; margin-top: 5px; font-size: 9px; color: #7a8a74; }
+.danger { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 90px 12px #a9564a5c; opacity: 0; transition: opacity .2s; }
+.danger[data-on="true"] { opacity: 1; }
+.danger[data-on="true"]::after { content: "被发现了"; position: absolute; top: 96px; left: 50%; transform: translateX(-50%); padding: 7px 16px; background: #9d4c40; color: #fff6f1; font-size: 12px; letter-spacing: 3px; border-radius: 2px; box-shadow: 0 4px 18px #7c3c322e; }
+.touch-controls { position: absolute; left: 20px; right: 20px; bottom: 18px; display: flex; align-items: flex-end; justify-content: space-between; pointer-events: none; }
+.touch-stick { position: relative; width: 132px; height: 132px; border-radius: 50%; background: #edf2e7a6; border: 1px solid #9fb3a3; pointer-events: auto; touch-action: none; box-shadow: 0 4px 18px #243a2e1f; }
+.touch-thumb { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; background: #4f7d61d9; box-shadow: 0 2px 10px #243a2e33; }
+.touch-actions { display: flex; gap: 10px; pointer-events: auto; }
+.touch-actions button { position: relative; min-width: 64px; height: 64px; border-radius: 50%; border: 1px solid #9fb3a3; background: #edf2e7d9; font-size: 15px; font-weight: 600; color: #345241; touch-action: manipulation; }
+.touch-actions button[aria-pressed="true"] { background: #47775a; color: #f3f7ee; border-color: #3a6349; }
+/* 跑按钮外圈即体力环（触屏没有独立体力条）：--stamina 由 updateUI 按 5% 一格写入。 */
+#touch-sprint::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(#3f7a55 calc(var(--stamina, 1) * 1turn), #cdd8cd 0); -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 3.5px), #000 calc(100% - 2.5px)); mask: radial-gradient(closest-side, transparent calc(100% - 3.5px), #000 calc(100% - 2.5px)); }
+#touch-sprint.exhausted { color: #9aa896; }
+body[data-touch="true"] .bottom-hud .stamina-panel { display: none; }
+body[data-touch="true"] .controls-note { display: none; }
+body[data-touch="true"] .map-panel { display: none; }
+.controls-note { display: flex; flex-direction: column; gap: 7px; text-align: right; font-size: 10px; color: #40563e; text-shadow: 0 1px 1px #ffffff; min-width: 120px; }
+.controls-note kbd { font-size: 9px; padding: 2px 4px; background: #eef2e4ad; }
+.overlay { position: fixed; inset: 0; z-index: 3; display: flex; align-items: center; padding: 100px 8vw 120px; background: linear-gradient(90deg, #283c3540, #283c3512 55%, transparent); pointer-events: none; }
+.briefing { pointer-events: auto; width: 490px; padding: 30px 36px 25px; background: #f3f4ecef; border: 1px solid #ffffff; box-shadow: 0 16px 60px #1d36252a; border-radius: 4px; }
+.briefing-head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid #c6d0be; }
+.briefing-head > .mono { font-size: 10px; color: #6b7b67; letter-spacing: 1px; }
+.phase-badge { padding: 4px 6px; font-size: 9px; border: 1px solid #b6c3ae; color: #677a5f; }
+.eyebrow { margin: 25px 0 10px; font-size: 11px; letter-spacing: 3px; color: #607254; }
+.briefing h1 { font-size: clamp(28px, 3vw, 39px); letter-spacing: -1px; margin: 0 0 16px; font-weight: 600; line-height: 1.3; }
+.briefing-copy { font-size: 15px; line-height: 1.85; margin: 0 0 20px; color: #485b42; }
+.briefing-copy strong { color: var(--ink); }
+.briefing-help { display: grid; gap: 11px; margin: 0 0 25px; padding: 16px 0; border-top: 1px solid #cdd5c5; border-bottom: 1px solid #cdd5c5; }
+.briefing-help > div { display: flex; align-items: center; gap: 15px; font-size: 11px; color: #68785f; }
+.briefing-help kbd { min-width: 100px; display: inline-block; text-align: center; background: #ebefdf; }
+.primary { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: #2e4e37; color: #f6f5ec; border: 1px solid #2e4e37; border-radius: 2px; font-size: 14px; font-weight: 500; letter-spacing: 2px; }
+.primary:hover { background: #3a6344; }
+.primary span { font-size: 18px; font-weight: 400; }
+.briefing-footnote { font-size: 10px; line-height: 1.7; color: #7b876e; margin: 16px 0 0; }
+.debug-panel { position: absolute; right: 28px; top: 106px; width: 254px; padding: 12px; background: #f4f0dfea; border: 1px solid #cfc49f; border-radius: 3px; pointer-events: auto; }
+.debug-panel strong { font-size: 10px; letter-spacing: 1px; }
+.debug-panel p { font-size: 9px; margin: 6px 0 10px; color: #7d7958; }
+.debug-panel > div { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.debug-panel button { font-size: 10px; border: 1px solid #c9c3a7; background: #f9f7e9; padding: 7px 4px; border-radius: 2px; }
+.debug-panel output { display: block; white-space: pre-line; line-height: 1.6; font-size: 9px; padding-top: 7px; color: #766e53; }
+.fatal { position: fixed; inset: 0; z-index: 5; background: #f3f4ec; padding: 15vh 10vw; }
+.fatal h1 { font-size: 32px; }
+.fatal p { line-height: 1.8; max-width: 700px; }
+body[data-phase="won"] .status-dot { background: #3cba54; }
+body[data-phase="lost"] .status-dot { background: #a34e43; }
+body[data-phase="lost"] .briefing { border-top: 3px solid #9b4d43; }
+body[data-phase="won"] .briefing { border-top: 3px solid #5a8854; }
+/* JS 未就绪时：主按钮明确不可点并解释原因，避免「点了没反应」的假活按钮。 */
+body:not([data-ready="true"]) .primary { pointer-events: none; opacity: .5; }
+.boot-note { display: none; margin: 9px 0 0; font-size: 11px; color: #7a8574; text-align: center; }
+body:not([data-ready="true"]) .boot-note { display: block; }
+/* 上下文丢失是已支持设备上的运行时事件，通用 WebGL 2 提示不适用，隐藏避免误导。 */
+#fatal[data-kind="context"] .fatal-hint { display: none; }
+@media (max-width: 1360px) {
+  .map-panel { display: none; }
+}
+@media (max-width: 1180px) {
+  .identity { gap: 9px; }
+  .identity > .mono { display: none; }
+  .commands button { width: 172px; padding: 10px; gap: 8px; }
+  .commands kbd { padding: 5px 8px; font-size: 11px; }
+.commands .command-status { display: block; margin-left: auto; }
+  .effect-panel { bottom: 126px; min-width: 250px; }
+  .controls-note { min-width: 105px; }
+  .overlay { padding-left: 6vw; }
+}
+@media (max-width: 900px) {
+  .commands { display: none; }
+  .stage-label { display: none; }
+  .toolbar { gap: 4px; }
+  .topbar { padding: 12px 16px; }
+  .objective { left: 16px; top: 96px; max-width: 300px; }
+  .bottom-hud { left: 16px; right: 16px; bottom: 14px; }
+  .overlay { padding: 92px 20px 115px; justify-content: center; }
+  .briefing { max-width: 490px; width: 100%; }
+  .toast { top: 162px; min-width: 240px; }
+  .debug-panel { right: 14px; top: 92px; width: 230px; }
+}
+/* 触屏：指令卡改成底部横排，与控制区一起垂直堆叠，避免遮住摇杆与角色。 */
+body[data-touch="true"] .commands { display: flex; gap: 6px; }
+body[data-touch="true"] .commands button { width: auto; flex: 1 1 0; min-width: 0; padding: 8px 7px; gap: 6px; }
+body[data-touch="true"] .commands button small { display: none; }
+body[data-touch="true"] .commands button .command-status { font-size: 8px; }
+body[data-touch="true"] .bottom-hud { left: 12px; right: 12px; bottom: 168px; justify-content: center; }
+body[data-touch="true"] .effect-panel { bottom: 236px; left: 50%; }
+body[data-touch="true"] .objective { top: 84px; left: 12px; max-width: calc(100% - 24px); padding: 9px 12px; }
+body[data-touch="true"] .toast { top: 160px; max-width: calc(100% - 32px); font-size: 12px; padding: 9px 13px; }
+body[data-touch="true"] .topbar { padding: 10px 14px; }
+body[data-touch="true"] .identity strong { font-size: 21px; letter-spacing: 3px; }
+body[data-touch="true"] #timer { font-size: 30px; }
+body[data-touch="true"] .stage-label { display: none; }
+body[data-touch="true"] .briefing { padding: 22px 22px 20px; }
+body[data-touch="true"] .overlay { padding: 76px 16px 120px; align-items: flex-start; }
+body[data-touch="true"] .briefing h1 { font-size: 26px; margin-bottom: 12px; }
+body[data-touch="true"] .briefing-copy { font-size: 14px; line-height: 1.75; margin-bottom: 14px; }
+body[data-touch="true"] .briefing-help { gap: 8px; padding: 12px 0; margin-bottom: 16px; }
+body[data-touch="true"] .briefing-help > div { font-size: 12px; gap: 10px; }
+body[data-touch="true"] .briefing-help kbd { min-width: 88px; }
+body[data-touch="true"] .primary { padding: 15px 16px; font-size: 15px; }
+body[data-touch="true"] .keyboard-only { display: none; }
+@media (max-height: 640px) {
+  body[data-touch="true"] .bottom-hud { bottom: 150px; }
+  body[data-touch="true"] .effect-panel { bottom: 214px; }
+  .touch-stick { width: 116px; height: 116px; }
+}
+@media (max-height: 760px) {
+  .topbar { height: 72px; padding-top: 10px; padding-bottom: 10px; }
+  .timer-block { top: 9px; }
+  #timer { font-size: 33px; }
+  .objective, .debug-panel, .map-panel { top: 91px; }
+  .effect-panel { bottom: 118px; }
+  .toast { top: 94px; }
+  .briefing { padding: 23px 30px 20px; }
+  .eyebrow { margin-top: 19px; }
+  .briefing-help { gap: 8px; padding: 13px 0; margin-bottom: 20px; }
+  .briefing h1 { margin-bottom: 12px; }
+  .briefing-copy { font-size: 14px; margin-bottom: 16px; }
+  .bottom-hud { bottom: 16px; }
+}
+/* 横屏矮视口（手机横持）：开始面板改为面板内滚动保证按钮可达，指令卡压到底边，
+   不再悬在走廊中央挡住角色。仅作用于触屏 + landscape，桌面与竖屏不受影响。 */
+@media (orientation: landscape) and (max-height: 520px) {
+  body[data-touch="true"] .overlay { padding: 10px 16px; }
+  body[data-touch="true"] .briefing { max-height: calc(100% - 16px); overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 20px 12px; }
+  body[data-touch="true"] .briefing h1 { font-size: 21px; margin-bottom: 8px; }
+  body[data-touch="true"] .briefing-copy { font-size: 13px; line-height: 1.6; margin-bottom: 10px; }
+  body[data-touch="true"] .briefing-help { padding: 8px 0; margin-bottom: 10px; gap: 6px; }
+  body[data-touch="true"] .briefing-help kbd { min-width: 76px; }
+  body[data-touch="true"] .primary { padding: 12px 14px; font-size: 14px; }
+  body[data-touch="true"] .bottom-hud { bottom: 12px; }
+  body[data-touch="true"] .effect-panel { bottom: 72px; }
+}

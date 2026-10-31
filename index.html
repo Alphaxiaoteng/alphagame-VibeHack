@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#e7ebe5" />
+    <meta name="description" content="在医院改写灯光、通道与广播，躲避巡查并坚持 60 秒，抵达东侧安全门。" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23e7ebe5'/%3E%3Cpath d='M26 12h12v14h14v12H38v14H26V38H12V26h14z' fill='%233f7a55'/%3E%3C/svg%3E" />
+    <title>查房 Rounds · 医院逃生</title>
+  </head>
+  <body data-phase="start">
+    <main id="app">
+      <div id="scene" aria-label="第三人称医院游戏画面"></div>
+      <div id="hud" class="hud">
+        <header class="topbar">
+          <div class="identity"><strong>查房</strong><span class="mono">ROUNDS / 01</span><span class="stage-label">夜间巡查 / 住院部</span></div>
+          <div class="timer-block"><span id="timer-label">安全门通电</span><strong id="timer" class="mono">60<span>s</span></strong></div>
+          <div class="toolbar"><button id="mute" type="button" aria-pressed="false" title="静音或打开声音">声音：开</button><button id="pause" type="button" disabled>暂停 <kbd>Esc</kbd></button></div>
+        </header>
+        <div class="objective"><span class="status-dot" id="status-dot"></span><div><strong id="objective">躲开值班员，等安全门通电</strong><span id="status">巡查中 · 走路安静，奔跑会被听见</span></div></div>
+        <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+        <section id="effect-panel" class="effect-panel" hidden><strong id="effect-name"></strong><span id="effect-time" class="mono"></span><div class="effect-track"><div id="effect-fill"></div></div></section>
+        <aside class="map-panel" aria-label="医院路线图"><div><span>住院部 / N ↑</span><span id="corridor-name">北走廊</span></div><canvas id="minimap" width="200" height="146" aria-label="路线、玩家和东侧安全门"></canvas><small id="map-note">绿点：你 · 东侧：安全门</small></aside>
+        <div id="danger" class="danger" aria-hidden="true" hidden></div>
+        <div class="bottom-hud">
+          <section class="stamina-panel" aria-label="体力"><div><span>体力</span><span id="stamina-label" class="mono">100%</span></div><div id="stamina" class="stamina-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="stamina-fill" data-stable="true"></div></div><small id="stamina-hint">按住 Shift 奔跑 · 松开恢复</small></section>
+          <section class="commands" aria-label="点击或按 1 / 2 / 3 发动值班指令">
+            <button id="command-lights" type="button" title="点亮全部顶灯与出口引导，持续 6 秒；值班员视距扩大至 12 米。12 秒冷却。"><kbd>1</kbd><div><strong>全院开灯</strong><small>你也更容易暴露</small></div><span class="command-status">可用</span><i class="cooldown-fill"></i></button>
+            <button id="command-lockdown" type="button" title="关闭最短追捕路线上的空闲防火门 5 秒；你也需要绕路。12 秒冷却。"><kbd>2</kbd><div><strong>封锁走廊</strong><small>你也需要绕路</small></div><span class="command-status">可用</span><i class="cooldown-fill"></i></button>
+            <button id="command-broadcast" type="button" title="引向远处病房 6 秒，随后警觉搜索 6 秒。先躲开视线才能引开值班员。12 秒冷却。"><kbd>3</kbd><div><strong>广播查房</strong><small>先躲开视线才能引开</small></div><span class="command-status">可用</span><i class="cooldown-fill"></i></button>
+          </section>
+          <div class="controls-note"><span><kbd>WASD</kbd> 移动</span><span>右键拖动转镜头</span><span><kbd>R</kbd> 结算后重开</span></div>
+        </div>
+        <div id="touch-controls" class="touch-controls" hidden>
+          <div id="touch-stick" class="touch-stick" role="application" aria-label="虚拟摇杆：拖动移动，向上推前进">
+            <div id="touch-thumb" class="touch-thumb"></div>
+          </div>
+          <div class="touch-actions">
+            <button id="touch-sprint" type="button" aria-pressed="false">跑</button>
+            <button id="touch-pause" type="button">暂停</button>
+          </div>
+        </div>
+        <aside id="debug-panel" class="debug-panel" hidden>
+          <strong class="mono">验收模式 / DEBUG</strong><p>只在 ?debug=1 开放，不代表正式指令</p><div><button id="debug-a" type="button">F2 · 门 A</button><button id="debug-b" type="button">F3 · 门 B</button><button id="debug-time" type="button">F4 · 剩余 3 秒</button><button id="debug-exit" type="button">F5 · 立即通电</button></div><output id="debug-state" class="mono"></output>
+        </aside>
+      </div>
+      <section id="overlay" class="overlay" aria-labelledby="overlay-title">
+        <div class="briefing">
+          <div class="briefing-head"><span class="mono">夜间值班记录 / 001</span><span class="phase-badge">住院部 · 夜班</span></div>
+          <p id="overlay-kicker" class="eyebrow">备用电源正在充能</p>
+          <h1 id="overlay-title">今晚，走出医院。</h1>
+          <p id="overlay-copy" class="briefing-copy">躲开值班员，活过 <strong>60 秒</strong>。<br />安全门亮起后，跑到东侧门前逃生。</p>
+          <div id="start-help" class="briefing-help"><div><kbd>W A S D</kbd><span>相对镜头移动</span></div><div><kbd>Shift</kbd><span>短暂奔跑，体力用完需松开</span></div><div><kbd>鼠标右键</kbd><span>按住拖动转镜头，无需锁定鼠标</span></div><div id="touch-help" hidden><kbd>左下摇杆</kbd><span>拖动移动 · 右侧「跑」加速 · 点指令卡改规则</span></div></div>
+          <button id="primary" class="primary" type="button">开始值班 <span aria-hidden="true">→</span></button>
+          <p class="boot-note" aria-live="polite">正在载入值班室（three.js 场景约 0.6 MB）… 按钮就绪后自动亮起。</p>
+          <p id="overlay-footnote" class="briefing-footnote">1 开灯：你也会暴露 · 2 封门：你也要绕路 · 3 广播：先躲开视线。可按键，也可点击下方卡片。</p>
+        </div>
+      </section>
+      <section id="fatal" class="fatal" role="alert" hidden><h1>画面未能启动</h1><p id="fatal-message"></p><p class="fatal-hint">请用支持 WebGL 2 的桌面浏览器，并打开硬件加速后刷新。</p></section>
+      <noscript>《查房》需要启用 JavaScript 才能游玩。</noscript>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
