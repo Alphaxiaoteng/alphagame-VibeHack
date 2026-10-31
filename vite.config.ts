@@ -1,6 +1,8 @@
 import { defineConfig } from 'vitest/config';
+import { waffoApiPlugin } from './src/server/apiPlugin';
 
 export default defineConfig({
+  plugins: [waffoApiPlugin()],
   // 相对路径打包：同一份 dist 既能部署到 GitHub Pages 子路径，也能本地局域网直接访问
   base: './',
   server: {

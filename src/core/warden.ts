@@ -17,6 +17,13 @@ export class PatrolGuard {
   facing = 0;
   /** 巡逻速度等调参：Warden 子类与游戏共享同一引用，难度切换时整体替换。 */
   tuning: DifficultyPreset = DIFFICULTIES.standard;
+  customPatrolSpeed?: number;
+  get patrolSpeed(): number {
+    return this.customPatrolSpeed ?? this.tuning.patrolSpeed;
+  }
+  set patrolSpeed(val: number) {
+    this.customPatrolSpeed = val;
+  }
   private revision = -1;
 
   constructor(map: HospitalMap, private readonly rand: () => number = Math.random) {
@@ -125,7 +132,7 @@ export class PatrolGuard {
       this.facing = this.pauseFacing + Math.sin(this.pauseClock * 1.7) * 0.5;
       return;
     }
-    let budget = this.tuning.patrolSpeed * dt;
+    let budget = this.patrolSpeed * dt;
     let hops = 0;
     while (budget > 1e-6 && hops < 8) {
       hops += 1;
@@ -327,7 +334,7 @@ export class Warden extends PatrolGuard {
     }
 
     const before = { ...this.position };
-    let budget = (this.mode === 'chase' ? this.tuning.chaseSpeed : this.tuning.patrolSpeed) * dt;
+    let budget = (this.mode === 'chase' ? this.tuning.chaseSpeed : this.patrolSpeed) * dt;
     for (let hop = 0; budget > 1e-6 && this.path.length > 0 && hop < 12; hop++) {
       const point = this.path[0];
       const gap = distance(this.position, point);

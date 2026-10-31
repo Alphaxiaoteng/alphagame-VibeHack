@@ -396,6 +396,12 @@ body[data-touch="true"] .map-panel { display: none; }
   box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.5), 0 36px 80px -15px rgba(0, 0, 0, 0.8), 0 0 50px rgba(56, 189, 248, 0.12);
   border-radius: 28px;
   color: var(--text-primary);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+body[data-config-open="true"] .briefing {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.98);
 }
 .briefing-head {
   display: flex;
@@ -1000,4 +1006,432 @@ body[data-touch="true"] .keyboard-only { display: none; }
   height: 100%;
   border: none;
 }
+
+/* ── 深蓝液态玻璃整合：首页极简战备胶囊与独立整备舱 ────────── */
+.shop { margin: 0 0 16px; }
+
+/* 首页轻量战备状态条（胶囊型） */
+.shop-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(30, 41, 59, 0.45);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 4px 16px rgba(0, 0, 0, 0.25);
+  transition: all 0.2s ease;
+}
+.shop-summary-bar:hover {
+  border-color: var(--glass-border-bright);
+  background: rgba(30, 41, 59, 0.6);
+}
+.shop-summary-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.shop-summary-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  background: rgba(14, 116, 144, 0.25);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+.shop-summary-level {
+  font-weight: 700;
+  color: #ffffff;
+}
+.shop-summary-role {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.shop-summary-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: var(--accent-cyan);
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.shop-summary-btn:hover {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+  transform: translateY(-1px);
+}
+.shop-summary-btn .gear-icon { font-size: 12px; }
+
+/* 独立弹窗：战备整备舱 */
+.shop-config-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 14, 22, 0.82);
+  backdrop-filter: blur(12px);
+}
+.shop-config-card {
+  width: 620px;
+  max-width: 95vw;
+}
+.config-title-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.config-title-block strong { color: #fff; font-size: 14px; }
+.shop-modal-content {
+  padding: 16px 20px;
+  display: grid;
+  gap: 14px;
+  max-height: 72vh;
+  overflow-y: auto;
+}
+.shop-config-footer {
+  padding: 12px 20px 16px;
+  background: rgba(15, 23, 42, 0.85);
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  justify-content: flex-end;
+}
+.config-confirm-btn {
+  width: auto;
+  min-width: 140px;
+  padding: 8px 18px;
+  font-size: 13px;
+  margin: 0;
+}
+
+/* 1. 关卡大幅实景视窗 */
+.shop-cover {
+  position: relative;
+  margin: 0;
+  height: 140px;
+  max-height: 140px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 8px 24px rgba(0, 0, 0, 0.4);
+  background: #090e17;
+}
+.shop-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 140px;
+  object-fit: cover;
+  object-position: center 40%;
+  filter: brightness(0.9) contrast(1.05);
+  transition: transform 0.4s ease;
+}
+.shop-cover:hover img { transform: scale(1.02); }
+
+/* 3D 动作角色动态悬浮窗 */
+.shop-role-3d-box {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 124px;
+  height: 124px;
+  border-radius: 10px;
+  background: radial-gradient(circle at 50% 50%, rgba(14, 116, 144, 0.35) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid var(--glass-border-bright);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.25), 0 4px 12px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+}
+.role-3d-canvas {
+  width: 124px !important;
+  height: 124px !important;
+  display: block;
+}
+.shop-role-3d-label {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  letter-spacing: 0.5px;
+  background: rgba(11, 15, 25, 0.85);
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.shop-cover-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.82);
+  color: #ffffff;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.shop-cover-badge.locked {
+  background: rgba(180, 83, 9, 0.85);
+  border-color: rgba(251, 191, 36, 0.5);
+  color: #fffbeb;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.3);
+}
+.shop-cover-badge.free {
+  background: rgba(5, 150, 105, 0.85);
+  border-color: rgba(52, 211, 153, 0.5);
+  color: #ecfdf5;
+}
+
+.shop-cover-meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 14px 10px;
+  background: linear-gradient(180deg, transparent 0%, rgba(11, 15, 25, 0.85) 50%, rgba(11, 15, 25, 0.98) 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.shop-cover-meta strong { font-size: 15px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; }
+.shop-cover-meta span { font-size: 10px; color: var(--text-muted); font-weight: 500; }
+
+/* 2. 选择项分组与箭头 */
+.shop-group { display: grid; gap: 6px; }
+.shop-group-head { display: flex; justify-content: space-between; align-items: center; }
+.shop-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; }
+.shop-nav-arrows { display: flex; gap: 4px; }
+.shop-nav-arrows button {
+  padding: 2px 8px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  transition: all 0.15s;
+}
+.shop-nav-arrows button:hover { background: rgba(56, 189, 248, 0.2); border-color: var(--accent-cyan); }
+
+.shop-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+/* 关卡与角色卡片（深蓝液态玻璃风格） */
+.shop-chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  text-align: left;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+.shop-chip:hover { border-color: var(--glass-border-bright); background: rgba(30, 41, 59, 0.75); transform: translateY(-1px); }
+.shop-chip.active {
+  border-color: var(--accent-cyan);
+  background: radial-gradient(120% 120% at 50% 0%, rgba(14, 116, 144, 0.4) 0%, rgba(14, 116, 144, 0.15) 100%);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+.shop-chip.locked { opacity: 0.55; background: rgba(15, 23, 42, 0.5); }
+.shop-chip > span { display: grid; gap: 2px; min-width: 0; }
+.shop-chip strong { font-size: 11px; font-weight: 700; white-space: nowrap; color: #ffffff; }
+.shop-chip small { font-size: 9px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shop-chip.active strong { color: var(--accent-cyan); }
+
+/* 缩略图与立绘头像尺寸严格受控 */
+.shop-thumb {
+  width: 28px !important;
+  height: 28px !important;
+  max-width: 28px !important;
+  max-height: 28px !important;
+  flex: none;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.shop-avatar {
+  width: 28px !important;
+  height: 28px !important;
+  max-width: 28px !important;
+  max-height: 28px !important;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--accent-cyan);
+}
+.shop-swatch {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* 3. 买断按钮 */
+.shop-buy {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  color: #ffffff;
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.35);
+  transition: all 0.15s ease;
+  margin-bottom: 4px;
+}
+.shop-buy:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.45);
+}
+.shop-buy strong { font-size: 12px; font-weight: 800; letter-spacing: 0.5px; }
+.shop-buy span { font-size: 10px; opacity: 0.95; font-weight: 500; }
+.shop-buy:disabled { opacity: 0.55; }
+
+.shop-note { font-size: 10px; line-height: 1.5; color: var(--text-muted); margin: 0; }
+.shop-note.warn { color: #fbbf24; }
+
+/* 4. 买断 / 暂未开售弹窗 (深蓝毛玻璃弹窗) */
+.shop-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.shop-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(7, 11, 20, 0.85);
+  backdrop-filter: blur(10px);
+}
+.shop-modal-card {
+  position: relative;
+  z-index: 1;
+  width: 480px;
+  max-width: 100%;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid var(--glass-border-bright);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(56, 189, 248, 0.2);
+  overflow: hidden;
+  animation: modalEnter 0.2s ease-out;
+}
+.shop-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: rgba(30, 41, 59, 0.6);
+  border-bottom: 1px solid var(--glass-border);
+}
+.shop-modal-header .mono { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--accent-cyan); }
+.shop-modal-close {
+  background: transparent;
+  border: 0;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 4px;
+}
+.shop-modal-close:hover { color: #fff; }
+
+.shop-modal-body { padding: 18px 20px; display: grid; gap: 14px; }
+.shop-modal-preview {
+  position: relative;
+  height: 120px;
+  max-height: 120px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+}
+.shop-modal-preview img { width: 100%; height: 100%; object-fit: cover; }
+.shop-modal-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 10px;
+  padding: 3px 8px;
+  background: rgba(217, 119, 6, 0.95);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+}
+.shop-modal-info h3 { margin: 0 0 4px; font-size: 16px; font-weight: 800; color: #ffffff; }
+.shop-modal-desc { margin: 0; font-size: 12px; line-height: 1.6; color: var(--text-muted); }
+.shop-modal-specs {
+  display: grid;
+  gap: 5px;
+  padding: 10px 12px;
+  background: rgba(30, 41, 59, 0.4);
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  font-size: 10px;
+}
+.shop-modal-specs > div { display: flex; justify-content: space-between; color: var(--text-muted); }
+.shop-modal-specs strong { color: #ffffff; font-weight: 700; }
+.shop-modal-specs strong.warn { color: #fbbf24; }
+
+.shop-modal-footer {
+  display: flex;
+  gap: 10px;
+  padding: 12px 20px 16px;
+  background: rgba(15, 23, 42, 0.8);
+  border-top: 1px solid var(--glass-border);
+}
+.shop-modal-btn {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.15s;
+}
+.shop-modal-btn.default-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+}
+.shop-modal-btn.default-btn:hover { background: rgba(255, 255, 255, 0.15); }
+.shop-modal-btn.primary-btn {
+  background: var(--accent-cyan);
+  border: 1px solid #0284c7;
+  color: #0b0f19;
+}
+.shop-modal-btn.primary-btn:hover { background: #38bdf8; }
+
 

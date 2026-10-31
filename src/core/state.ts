@@ -1,7 +1,6 @@
 import {
   CATCH_RADIUS,
   COMMANDS,
-  COMMAND_COOLDOWN,
   COMMAND_IDS,
   DIFFICULTIES,
   EXIT_POINT,
@@ -9,10 +8,10 @@ import {
   GUARD_RADIUS,
   MAX_STEP,
   NO_INPUT,
-  TIME_LIMIT,
   WARD_TARGETS,
 } from './config';
 import type { CommandId, DifficultyId, DifficultyPreset, DoorId, PlayerInput, Point } from './config';
+import { LEVELS, type RoundRules } from './economy';
 import { HospitalMap, distance } from './map';
 import { Player } from './player';
 import { Warden } from './warden';
@@ -68,6 +67,7 @@ export class RoundsGame {
   elapsed = 0;
   activeEffect: CommandEffect | null = null;
   commandsUsed = 0;
+  rules: RoundRules = { ...LEVELS[0].rules };
   private cooldowns: Record<CommandId, number> = { lights: 0, lockdown: 0, broadcast: 0 };
 
   private events: GameEvent[] = [];
@@ -77,6 +77,11 @@ export class RoundsGame {
 
   constructor(options: { perception?: boolean } = {}) {
     this.guard = new Warden(this.map, options.perception ?? true);
+  }
+
+  applyLevelRules(rules: RoundRules): void {
+    this.rules = { ...rules };
+    this.guard.patrolSpeed = rules.patrolSpeed;
   }
 
   get lightsOn(): boolean {
@@ -96,11 +101,12 @@ export class RoundsGame {
   setDifficulty(id: DifficultyId): boolean {
     if (this.phase === 'playing' || this.phase === 'paused') return false;
     this.guard.tuning = DIFFICULTIES[id];
+    this.guard.customPatrolSpeed = undefined;
     return true;
   }
 
   get remaining(): number {
-    const raw = Math.max(0, TIME_LIMIT - this.elapsed);
+    const raw = Math.max(0, this.rules.timeLimit - this.elapsed);
     if (raw < 0.0005) return 0;
     return Math.round(raw * 1000) / 1000;
   }
@@ -217,7 +223,7 @@ export class RoundsGame {
       effect.target = { ...target };
       this.guard.beginBroadcast(target, this.map);
     }
-    this.cooldowns[id] = COMMAND_COOLDOWN;
+    this.cooldowns[id] = this.rules.commandCooldown;
     this.activeEffect = effect;
     this.commandsUsed += 1;
     this.events.push({ type: 'commandStarted', command: id, message: {
@@ -245,7 +251,7 @@ export class RoundsGame {
 
   /** 仅 ?debug=1 使用：把剩余时间改写成指定值，不替代到门口获胜 */
   debugSetRemaining(value: number): void {
-    this.elapsed = Math.max(0, Math.min(TIME_LIMIT, TIME_LIMIT - value));
+    this.elapsed = Math.max(0, Math.min(this.rules.timeLimit, this.rules.timeLimit - value));
     const left = this.remaining;
     if (left <= 30) this.warned30 = true;
     if (left <= 10) this.warned10 = true;

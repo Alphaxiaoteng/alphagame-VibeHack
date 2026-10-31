@@ -13,6 +13,8 @@ import { FirstPersonCamera } from './render/camera';
 import { HospitalRenderer } from './render/scene';
 import { SPRINT_EXHAUSTED_BELOW, isTap, sprintEngaged, stickAxes, touchControlsVisible } from './render/touch';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { mountShop, paidReturnNotice } from './ui/shop';
+import { levelById, skinById } from './core/economy';
 
 function element<T extends HTMLElement>(id: string): T {
   const found = document.getElementById(id);
@@ -859,6 +861,30 @@ function boot(): void {
   renderDifficultyCards();
   document.body.dataset.ready = 'true';
   document.body.dataset.touch = String(hasTouch);
+
+  // 战备大厅：科室与出勤人员选择
+  const phaseBadge = document.querySelector<HTMLElement>('.phase-badge');
+  const shopEl = document.getElementById('shop');
+  if (shopEl) {
+    const shop = mountShop(shopEl, {
+      onSelect(levelId, skinId) {
+        const level = levelById(levelId);
+        const skin = skinById(skinId);
+        if (!level || !skin) return;
+        if (level.id !== 'ward-01') {
+          game.applyLevelRules(level.rules);
+        } else {
+          game.setDifficulty(selectedDifficulty);
+        }
+        hospital.applySkin(skin, level.theme);
+        if (phaseBadge) phaseBadge.textContent = `${level.ward} · ${level.name}`;
+      },
+      onNotice(text) { notice(text, true); },
+    });
+    const paidNotice = paidReturnNotice();
+    if (paidNotice) notice(paidNotice);
+    void shop.refresh();
+  }
 
   if (debug) {
     const state = () => ({

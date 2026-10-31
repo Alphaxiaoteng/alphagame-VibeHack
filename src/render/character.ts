@@ -20,6 +20,7 @@ export class HumanRig {
   private readonly legs: THREE.Group[] = [];
   private readonly knees: THREE.Group[] = [];
   readonly flashlightSpot: THREE.SpotLight | null = null;
+  private readonly shirt: THREE.MeshStandardMaterial;
   private stride = 0;
   private weight = 0;
 
@@ -29,6 +30,7 @@ export class HumanRig {
     const hair = new THREE.MeshStandardMaterial({ color: warden ? 0x18181b : 0x272522, roughness: 0.95 });
     // 守卫/查房值班员采用深色战术医院制服（墨黑长裤 + 深碳灰勤务上衣）
     const shirt = clothMaterial(warden ? 0x1e293b : 0x2f7d70);
+    this.shirt = shirt;
     const pants = clothMaterial(warden ? 0x0f172a : 0x22363b);
     const shoes = new THREE.MeshStandardMaterial({ color: warden ? 0x111827 : 0x202623, roughness: 0.5, metalness: 0.2 });
     const badge = new THREE.MeshStandardMaterial({ color: warden ? 0x38bdf8 : 0xe9ece1, roughness: 0.4, metalness: 0.6 });
@@ -114,6 +116,11 @@ export class HumanRig {
     }
 
     this.group.name = warden ? 'human-warden' : 'human-player';
+  }
+
+  /** 换肤：只改衣料颜色，几何与骨架不动。 */
+  setCloth(color: number): void {
+    this.shirt.color.setHex(color);
   }
 
   animate(meters: number, dt: number, running: boolean): void {

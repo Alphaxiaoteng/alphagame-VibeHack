@@ -8,6 +8,7 @@ import { distance } from '../core/map';
 import type { RoundsGame } from '../core/state';
 import { HumanRig } from './character';
 import { ceilingMaterial, clothMaterial, plasterMaterial, tileMaterial } from './materials';
+import type { SkinDef, ThemeId } from '../core/economy';
 import { AssetRegistry } from '../core/assetRegistry';
 import type { AssetCategory, AssetEntry } from '../core/assetRegistry';
 import { ModelLoaderService } from './modelLoader';
@@ -93,6 +94,113 @@ export class HospitalRenderer {
   exitDoorRight: THREE.Group | null = null;
   outdoorLight: THREE.PointLight | null = null;
   outdoorSunlight: THREE.Mesh | null = null;
+  private wardenMixer: THREE.AnimationMixer | null = null;
+  private wardenWalkAction: THREE.AnimationAction | null = null;
+  private wardenIdleAction: THREE.AnimationAction | null = null;
+  wardenAnimatedModel: THREE.Group | null = null;
+  wardenFlashlightSpot: THREE.SpotLight | null = null;
+
+  /** 异步加载并接入 Tripo 生成的带骨骼与 walk/idle 动画的高精 3D 值班员 */
+  private async loadAnimatedWarden(): Promise<void> {
+    try {
+      const loader = new GLTFLoader();
+      const gltf = await loader.loadAsync('/models/warden_animated.glb');
+      const model = gltf.scene;
+
+      // 归一化缩放到真人身高 1.82m
+      const bbox = new THREE.Box3().setFromObject(model);
+      const size = bbox.getSize(new THREE.Vector3());
+      const targetHeight = 1.82;
+      const scale = targetHeight / Math.max(size.y, 0.001);
+      model.scale.setScalar(scale);
+
+      // 脚底吸附到 Y = 0，中心对齐
+      const center = bbox.getCenter(new THREE.Vector3());
+      model.position.set(-center.x * scale, -bbox.min.y * scale, -center.z * scale);
+      // 游戏内 guardRig 统一以本地 +X 为面朝前进方向，Tripo 角色旋转 -Math.PI / 2 对齐到 +X
+      model.rotation.y = -Math.PI / 2;
+
+      model.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+
+      // 骨骼动画初始化
+      if (gltf.animations && gltf.animations.length > 0) {
+        this.wardenMixer = new THREE.AnimationMixer(model);
+        const walkClip = gltf.animations.find((a) => a.name.toLowerCase().includes('walk')) || gltf.animations[1] || gltf.animations[0];
+        const idleClip = gltf.animations.find((a) => a.name.toLowerCase().includes('idle')) || gltf.animations[0];
+
+        if (walkClip) {
+          this.wardenWalkAction = this.wardenMixer.clipAction(walkClip);
+          this.wardenWalkAction.play();
+          this.wardenWalkAction.setEffectiveWeight(0);
+        }
+        if (idleClip) {
+          this.wardenIdleAction = this.wardenMixer.clipAction(idleClip);
+          this.wardenIdleAction.play();
+          this.wardenIdleAction.setEffectiveWeight(1.0);
+        }
+      }
+
+      // 战术巡逻手电筒动态前向光束
+      const spot = new THREE.SpotLight(0xfff5d6, 4.2, 18, Math.PI / 6.5, 0.35, 1.2);
+      spot.position.set(0.2, 1.15, 0.1);
+      const spotTarget = new THREE.Object3D();
+      spotTarget.position.set(8.0, 0.2, 0); // 前向投射到走廊地面
+      this.guardRig.add(spot);
+      this.guardRig.add(spotTarget);
+      spot.target = spotTarget;
+      this.wardenFlashlightSpot = spot;
+
+      // 挂载至 guardRig 并隐藏兜底的程序化身体
+      this.wardenAnimatedModel = model;
+      this.guardRig.add(model);
+      this.guardHuman.body.visible = false;
+      console.log('Tripo 3D 骨骼动画值班员成功装配至场景！');
+    } catch (err) {
+      console.warn('Tripo 动画值班员加载备用回退:', err);
+    }
+  }
+
+  /** 异步加载并接入 Tripo 生成的高精 3D 医用抢救推车（贴北墙死角放置，通道留白极大，零阻挡走廊行动） */
+  private loadCrashCart(): void {
+    const cartGroup = new THREE.Group();
+    // 贴北走廊北墙死角 (x=10.2, z=3.35, yaw=Math.PI)，深度仅 0.45m，走廊净宽度超过 2.3m
+    cartGroup.position.set(10.2, 0, 3.35);
+    cartGroup.rotation.y = Math.PI;
+
+    const loader = new GLTFLoader();
+    loader.load(
+      '/models/crash_cart.glb',
+      (gltf) => {
+        const model = gltf.scene;
+        const bbox = new THREE.Box3().setFromObject(model);
+        const size = bbox.getSize(new THREE.Vector3());
+        const targetHeight = 0.95; // 真实医疗抢救车标准台面高度 0.95m
+        const scale = targetHeight / Math.max(size.y, 0.001);
+        model.scale.setScalar(scale);
+
+        const center = bbox.getCenter(new THREE.Vector3());
+        model.position.set(-center.x * scale, -bbox.min.y * scale, -center.z * scale);
+
+        model.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+        cartGroup.add(model);
+        console.log('Tripo 3D 医用抢救推车成功装配至场景！');
+      },
+      undefined,
+      (err) => console.warn('Crash cart model loading fallback:', err)
+    );
+
+    this.scene.add(cartGroup);
+  }
 
   public applyTheme(): void {
     const theme = AssetRegistry.get().getActiveTheme();
@@ -198,6 +306,10 @@ export class HospitalRenderer {
     this.searchRing.position.y = 0.02;
     this.searchRing.visible = false;
     this.scene.add(this.searchRing);
+    // 异步加载 Tripo 导出的带真实骨骼与行走动画的 3D 值班员模型
+    this.loadAnimatedWarden();
+    // 异步加载 Tripo 导出的高精 3D 医用抢救推车（贴北墙放置，零阻挡通道）
+    this.loadCrashCart();
   }
 
   sync(game: RoundsGame, dt: number): void {
@@ -211,7 +323,22 @@ export class HospitalRenderer {
     const playerMeters = this.previousPlayer ? distance(this.previousPlayer, game.player.position) : 0;
     const guardMeters = this.previousGuard ? distance(this.previousGuard, game.guard.position) : 0;
     this.playerHuman.animate(playerMeters < 1 ? playerMeters : 0, dt, game.player.sprinting);
-    this.guardHuman.animate(guardMeters < 1 ? guardMeters : 0, dt, game.guard.mode === 'chase');
+    
+    // 驱动 Tripo 3D 骨骼动画值班员
+    if (this.wardenMixer) {
+      this.wardenMixer.update(dt);
+      const isMoving = guardMeters > 0.0003;
+      const isChase = game.guard.mode === 'chase';
+      if (this.wardenWalkAction && this.wardenIdleAction) {
+        const targetWalk = isMoving ? 1.0 : 0.0;
+        const targetIdle = isMoving ? 0.0 : 1.0;
+        this.wardenWalkAction.weight += (targetWalk - this.wardenWalkAction.weight) * Math.min(1, dt * 10);
+        this.wardenIdleAction.weight += (targetIdle - this.wardenIdleAction.weight) * Math.min(1, dt * 10);
+        this.wardenWalkAction.timeScale = isChase ? 1.4 : 1.0;
+      }
+    } else {
+      this.guardHuman.animate(guardMeters < 1 ? guardMeters : 0, dt, game.guard.mode === 'chase');
+    }
     this.playerRig.position.set(game.player.position.x, 0, game.player.position.z);
     this.guardRig.position.set(game.guard.position.x, 0, game.guard.position.z);
     if (restarted) {
@@ -285,6 +412,12 @@ export class HospitalRenderer {
   }
 
   playerPoint(): Point { return { x: this.playerRig.position.x, z: this.playerRig.position.z }; }
+
+  applySkin(skin: SkinDef, _theme?: ThemeId): void {
+    for (const lamp of this.lamps) lamp.color.setHex(skin.lamp);
+    for (const ward of this.wardLamps) ward.light.color.setHex(skin.lamp);
+    this.playerHuman.setCloth(skin.cloth);
+  }
 
   snapshot() {
     return { humanCharacters: [this.playerRig.name, this.guardRig.name], lampIntensity: this.lamps[0]?.intensity, doors: Object.fromEntries([...this.doors].map(([id, entry]) => [id, entry.progress])), routeArrows: this.route.visible ? this.route.children.length : 0, wardLights: this.wardLamps.map(ward => ward.light.intensity), searchMarker: this.searchRing.visible ? { x: this.searchRing.position.x, z: this.searchRing.position.z } : null };
@@ -364,6 +497,21 @@ export class HospitalRenderer {
 
     // 超写实 3D 夜班巡查病历板 (挂于南走廊独立开阔墙面，真实笔迹与勾选表单)
     this.buildRealisticChart(14.5, 1.45, 18.985, Math.PI);
+
+    // 壁挂式 AED 自动体外除颤急救箱（挂于东走廊疏散通道侧墙，高识别度急救绿+脉冲微光）
+    this.buildRealisticAED(26.985, 1.42, 14.5, -Math.PI / 2);
+
+    // 走廊高处双头应急照明灯（消防备用微光探照，不占用任何地面行走空间）
+    this.buildEmergencyLight(3.015, 2.52, 7.5, Math.PI / 2);
+    this.buildEmergencyLight(18.5, 2.52, 3.015, 0);
+    this.buildEmergencyLight(11.5, 2.52, 18.985, Math.PI);
+
+    // 病房 01 / 02 床头医疗设备带（贴于病床后墙，含氧气/吸引/压缩空气端子与呼叫面板）
+    this.buildBedHeadPanel(7.3, 1.35, 9.6, 0);
+    this.buildBedHeadPanel(22.7, 1.35, 9.6, 0);
+
+    // 护士站对面：夜间值班排班责任与院感防控告示大屏
+    this.buildHospitalBulletinBoard(12.0, 1.55, 3.015, 0);
   }
 
   /** 壁挂式独立防烟钢制消防箱，内置真实 3D 灭火器模型与规范巡检指引标牌 */
@@ -518,6 +666,247 @@ export class HospitalRenderer {
     clampPin.position.set(0, 0.44, 0.022);
     clampPin.rotation.z = Math.PI / 2;
     group.add(clampPin);
+
+    this.scene.add(group);
+  }
+
+  /** 壁挂式 AED 自动体外除颤急救箱：高辨识度医疗急救箱体、观察窗与绿光待机指示灯 */
+  private buildRealisticAED(x: number, y: number, z: number, yaw: number): void {
+    const group = new THREE.Group();
+    group.position.set(x, y, z);
+    group.rotation.y = yaw;
+
+    const caseMat = new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.35, metalness: 0.3 }); // 国际急救绿
+    const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.25 });
+    const glassMat = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      roughness: 0.05,
+      metalness: 0.1,
+      transparent: true,
+      opacity: 0.2,
+      depthWrite: false,
+    });
+
+    // 箱体主壳
+    group.add(box(0.44, 0.54, 0.16, caseMat, 0, 0, 0, 0.015));
+    // 白色对比前框
+    group.add(box(0.40, 0.50, 0.01, whiteMat, 0, 0, 0.082, 0.008));
+    // 钢化玻璃观察视窗
+    group.add(box(0.32, 0.36, 0.004, glassMat, 0, 0.04, 0.088));
+
+    // 箱内 3D AED 主机模块（鲜红/亮黄外壳 + 提手 + 电极贴片舱）
+    const aedBody = box(0.24, 0.26, 0.09, new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.4 }), 0, 0.03, 0.02, 0.015);
+    const aedHandle = box(0.08, 0.024, 0.02, new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.8 }), 0, 0.145, 0.05);
+    group.add(aedBody, aedHandle);
+
+    // 状态自检脉冲闪烁指示灯（真实 AED 标配，暗走廊中微微发亮）
+    const ledMat = new THREE.MeshStandardMaterial({
+      color: 0x34d399,
+      emissive: 0x10b981,
+      emissiveIntensity: 0.8,
+      roughness: 0.2,
+    });
+    const statusLed = new THREE.Mesh(new THREE.SphereGeometry(0.014, 12, 12), ledMat);
+    statusLed.position.set(0.08, 0.12, 0.089);
+    const ledLight = new THREE.PointLight(0x10b981, 0.6, 2.4);
+    ledLight.position.set(0.08, 0.12, 0.12);
+    group.add(statusLed, ledLight);
+
+    // 双语标识铭牌
+    const plaqueMesh = plaque('AED 自动体外除颤器', 'EMERGENCY DEFIBRILLATOR', 0.4, 0.11, true);
+    plaqueMesh.position.set(0, -0.18, 0.09);
+    group.add(plaqueMesh);
+
+    this.scene.add(group);
+  }
+
+  /** 壁挂式双头应急照明灯：公立医院消防标配，停电或夜间备用微光照明 */
+  private buildEmergencyLight(x: number, y: number, z: number, yaw: number): void {
+    const group = new THREE.Group();
+    group.position.set(x, y, z);
+    group.rotation.y = yaw;
+
+    const baseShell = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.5 });
+    const chromeTrim = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.25, metalness: 0.85 });
+    const lensMat = new THREE.MeshStandardMaterial({
+      color: 0xfef08a,
+      emissive: 0xfef08a,
+      emissiveIntensity: 0.35,
+      roughness: 0.2,
+    });
+
+    // 蓄电池底座机身
+    group.add(box(0.34, 0.14, 0.08, baseShell, 0, 0, 0, 0.01));
+    // 状态指示灯（绿灯正常充电，红灯故障）
+    const greenLed = new THREE.Mesh(
+      new THREE.SphereGeometry(0.005, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0x22c55e })
+    );
+    greenLed.position.set(-0.11, 0.02, 0.042);
+    const redLed = new THREE.Mesh(
+      new THREE.SphereGeometry(0.005, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0xef4444 })
+    );
+    redLed.position.set(-0.08, 0.02, 0.042);
+    group.add(greenLed, redLed);
+
+    // 两个可调节双头射灯筒（左右各一，向走廊地面倾斜）
+    for (const side of [-1, 1]) {
+      const lampHead = new THREE.Group();
+      lampHead.position.set(side * 0.11, 0.07, 0.035);
+      lampHead.rotation.x = Math.PI / 4.5; // 向下俯照 40 度
+      lampHead.rotation.y = side * 0.15;
+
+      const cylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.046, 0.04, 16), chromeTrim);
+      cylinder.rotation.x = Math.PI / 2;
+      lampHead.add(cylinder);
+
+      const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.006, 16), lensMat);
+      lens.rotation.x = Math.PI / 2;
+      lens.position.z = 0.022;
+      lampHead.add(lens);
+
+      group.add(lampHead);
+    }
+
+    // 暖光指示待机微晕
+    const standbyGlow = new THREE.PointLight(0xfef08a, 0.3, 3.2);
+    standbyGlow.position.set(0, -0.05, 0.15);
+    group.add(standbyGlow);
+
+    this.scene.add(group);
+  }
+
+  /** 现代医院床头医疗设备带：集中氧气、负压吸引、压缩空气端子与呼叫插座 */
+  private buildBedHeadPanel(x: number, y: number, z: number, yaw: number): void {
+    const group = new THREE.Group();
+    group.position.set(x, y, z);
+    group.rotation.y = yaw;
+
+    const brushedAlu = new THREE.MeshStandardMaterial({ color: 0xcfd8dc, roughness: 0.3, metalness: 0.7 });
+    const darkSkirting = new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.6 });
+
+    // 铝合金连续设备带横梁 (长度 2.2m，厚度仅 0.035m，完全贴墙不挡路)
+    group.add(box(2.2, 0.22, 0.035, brushedAlu, 0, 0, 0, 0.008));
+    // 上下静音防撞条
+    group.add(box(2.2, 0.015, 0.04, darkSkirting, 0, 0.115, 0.004));
+    group.add(box(2.2, 0.015, 0.04, darkSkirting, 0, -0.115, 0.004));
+
+    // 医疗气体端子（氧气绿、吸引黄、空气蓝）
+    const gasPorts = [
+      { color: 0x15803d },
+      { color: 0xd97706 },
+      { color: 0x2563eb },
+    ];
+    gasPorts.forEach((p, idx) => {
+      const port = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.022, 0.022, 0.02, 14),
+        new THREE.MeshStandardMaterial({ color: p.color, roughness: 0.3, metalness: 0.5 })
+      );
+      port.rotation.x = Math.PI / 2;
+      port.position.set(-0.6 + idx * 0.12, 0.01, 0.022);
+      group.add(port);
+    });
+
+    // 呼叫对讲器与红按钮
+    const callUnit = box(0.09, 0.12, 0.018, new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 }), 0.55, 0.01, 0.022);
+    const redButton = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.016, 0.016, 0.012, 12),
+      new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3 })
+    );
+    redButton.rotation.x = Math.PI / 2;
+    redButton.position.set(0.55, 0.03, 0.034);
+    group.add(callUnit, redButton);
+
+    // 暖色床头夜灯阅读灯条
+    const readingStrip = box(0.5, 0.025, 0.025, new THREE.MeshStandardMaterial({ color: 0xffedd5, emissive: 0xffedd5, emissiveIntensity: 0.4 }), 0, 0.075, 0.02);
+    const readingLight = new THREE.PointLight(0xffedd5, 0.55, 2.2);
+    readingLight.position.set(0, 0.05, 0.15);
+    group.add(readingStrip, readingLight);
+
+    this.scene.add(group);
+  }
+
+  /** 走廊亚克力医护人员公示与院感管理告示牌 */
+  private buildHospitalBulletinBoard(x: number, y: number, z: number, yaw: number): void {
+    const group = new THREE.Group();
+    group.position.set(x, y, z);
+    group.rotation.y = yaw;
+
+    const acrylicMat = new THREE.MeshStandardMaterial({
+      color: 0xf1f5f9,
+      roughness: 0.1,
+      metalness: 0.05,
+      transparent: true,
+      opacity: 0.85,
+    });
+    const standoffMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.15, metalness: 0.9 });
+
+    // 悬浮亚克力看板主体
+    group.add(box(1.4, 0.85, 0.012, acrylicMat, 0, 0, 0, 0.01));
+
+    // 四角不锈钢金属固定广告钉
+    for (const sx of [-0.64, 0.64]) {
+      for (const sy of [-0.38, 0.38]) {
+        const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.03, 12), standoffMat);
+        pin.rotation.x = Math.PI / 2;
+        pin.position.set(sx, sy, 0.008);
+        group.add(pin);
+      }
+    }
+
+    // 真实告示版面喷绘贴图
+    const boardTex = new THREE.CanvasTexture((() => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 620;
+      const ctx = canvas.getContext('2d')!;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, 1024, 620);
+
+      // 顶部深绿医疗标头
+      ctx.fillStyle = '#065f46';
+      ctx.fillRect(0, 0, 1024, 110);
+      ctx.fillStyle = '#ecfdf5';
+      ctx.font = 'bold 36px "PingFang SC", sans-serif';
+      ctx.fillText('住院部二病区 · 夜间值班责任与感染防控告示', 40, 70);
+
+      // 左侧值班责任栏
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(30, 130, 460, 450);
+      ctx.fillStyle = '#34d399';
+      ctx.font = 'bold 24px sans-serif';
+      ctx.fillText('夜间值班守则 (02:00 - 06:00)', 50, 175);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '20px sans-serif';
+      ctx.fillText('· 责任护士每 30 分钟巡查病室一次', 50, 225);
+      ctx.fillText('· 重点观察病房：01 病房、02 病房', 50, 265);
+      ctx.fillText('· 听见异响保持肃静，避免正面接触', 50, 305);
+      ctx.fillText('· 紧急情况拉响广播或避入配药凹间', 50, 345);
+
+      // 右侧安全疏散指引
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(520, 130, 470, 450);
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 24px sans-serif';
+      ctx.fillText('应急疏散与门禁联动', 540, 175);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '20px sans-serif';
+      ctx.fillText('· 防火卷帘门 A/B：联动指令即时封锁', 540, 225);
+      ctx.fillText('· 东侧安全疏散门：备用电源充电后开启', 540, 265);
+      ctx.fillText('· 严禁私自阻挡常闭式防火疏散通道', 540, 305);
+      ctx.fillText('· 院内紧急呼叫热线：内线 1201', 540, 345);
+
+      return canvas;
+    })());
+    boardTex.colorSpace = THREE.SRGBColorSpace;
+
+    const poster = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.34, 0.80),
+      new THREE.MeshStandardMaterial({ map: boardTex, roughness: 0.85 })
+    );
+    poster.position.set(0, 0, 0.008);
+    group.add(poster);
 
     this.scene.add(group);
   }
