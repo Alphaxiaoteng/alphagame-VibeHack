@@ -19,9 +19,9 @@ export class Player {
   facing = 0;
   /** 体力耗尽后必须先松开 Shift 才能重新奔跑 */
   private sprintLocked = false;
-  /** 平滑加减速：起步缓入、停步利落，消除满速瞬移与急停的生硬感。 */
-  private static readonly ACCEL_RATE = 12;
-  private static readonly DECEL_RATE = 22;
+  /** 平滑加减速：起步利落灵敏、停步干脆，消除迟滞感与生硬瞬移。 */
+  private static readonly ACCEL_RATE = 18;
+  private static readonly DECEL_RATE = 24;
   private velocityX = 0;
   private velocityZ = 0;
   /** 浮点余量：低于该值视为已耗尽，避免耗尽瞬间多跑一整帧 */

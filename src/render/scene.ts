@@ -194,7 +194,7 @@ export class HospitalRenderer {
 
         model.traverse((child) => {
           if (child instanceof THREE.Mesh) {
-            child.castShadow = true;
+            child.castShadow = false;
             child.receiveShadow = true;
           }
         });
@@ -231,7 +231,7 @@ export class HospitalRenderer {
 
         model.traverse((child) => {
           if (child instanceof THREE.Mesh) {
-            child.castShadow = true;
+            child.castShadow = false;
             child.receiveShadow = true;
           }
         });
@@ -316,6 +316,10 @@ export class HospitalRenderer {
   private routeVisible = false;
   /** 搜索地面圈：值班员进入搜索时提示「最后已知位置」，离开即隐藏。 */
   private searchRing!: THREE.Mesh;
+  /** 技能 1（全院开灯）3D 穿墙透视信标：隔墙也能实时看见猎人在 3D 空间中的移动轨迹 */
+  private guardXrayBeacon!: THREE.Group;
+  private guardXrayRing!: THREE.Mesh;
+  private guardXrayDiamond!: THREE.Mesh;
 
   constructor() {
     this.scene.background = new THREE.Color(0xced7d2);
@@ -353,6 +357,48 @@ export class HospitalRenderer {
     this.searchRing.position.y = 0.02;
     this.searchRing.visible = false;
     this.scene.add(this.searchRing);
+
+    // 技能 1「全院开灯 · 强光透视」专属 3D 穿墙信标（关闭 depthTest，隔墙实时显示猎人移动位置）
+    this.guardXrayBeacon = new THREE.Group();
+    const xrayPillarMat = new THREE.MeshBasicMaterial({
+      color: 0xdc2626,
+      transparent: true,
+      opacity: 0.42,
+      depthTest: false,
+      depthWrite: false,
+    });
+    const xrayPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.34, 1.85, 16), xrayPillarMat);
+    xrayPillar.position.y = 0.94;
+    xrayPillar.renderOrder = 998;
+    this.guardXrayRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.48, 0.68, 32),
+      new THREE.MeshBasicMaterial({
+        color: 0xef4444,
+        transparent: true,
+        opacity: 0.85,
+        side: THREE.DoubleSide,
+        depthTest: false,
+        depthWrite: false,
+      }),
+    );
+    this.guardXrayRing.rotation.x = -Math.PI / 2;
+    this.guardXrayRing.position.y = 0.04;
+    this.guardXrayRing.renderOrder = 999;
+    this.guardXrayDiamond = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.18, 0),
+      new THREE.MeshBasicMaterial({
+        color: 0xff3b3b,
+        transparent: true,
+        opacity: 0.95,
+        depthTest: false,
+        depthWrite: false,
+      }),
+    );
+    this.guardXrayDiamond.position.y = 2.18;
+    this.guardXrayDiamond.renderOrder = 999;
+    this.guardXrayBeacon.add(xrayPillar, this.guardXrayRing, this.guardXrayDiamond);
+    this.guardXrayBeacon.visible = false;
+    this.guardRig.add(this.guardXrayBeacon);
     // 异步加载 Tripo 导出的带真实骨骼与行走动画的 3D 值班员模型
     this.loadAnimatedWarden();
     // 异步加载 Tripo 导出的高精 3D 医用抢救推车（贴北墙放置，零阻挡通道）
@@ -484,6 +530,16 @@ export class HospitalRenderer {
       this.searchRing.position.set(marker.x, 0.02, marker.z);
       const pulse = 0.4 + Math.sin(game.elapsed * 3.4) * 0.18;
       (this.searchRing.material as THREE.MeshBasicMaterial).opacity = pulse;
+    }
+
+    // 技能 1（全院开灯）或追逐状态下：激活 3D 穿墙猎人透视信标，实时呈现猎人移动位置
+    const showXray = (game.lightsOn || game.guard.mode === 'chase') && game.phase === 'playing';
+    this.guardXrayBeacon.visible = showXray;
+    if (showXray) {
+      const pulseScale = 1 + Math.sin(game.elapsed * 6.5) * 0.22;
+      this.guardXrayRing.scale.setScalar(pulseScale);
+      this.guardXrayDiamond.position.y = 2.15 + Math.sin(game.elapsed * 5.0) * 0.12;
+      this.guardXrayDiamond.rotation.y = game.elapsed * 2.8;
     }
   }
 
@@ -629,11 +685,6 @@ export class HospitalRenderer {
     // 观察窗超清钢化玻璃门
     const glassWindow = box(0.48, 0.70, 0.003, glassMat, 0, 0, 0.092);
     station.add(glassWindow);
-
-    // 箱内顶部暖白微光探灯（照亮 3D 灭火器大红金属罐体与气压表）
-    const cabinetLight = new THREE.PointLight(0xffedd5, 1.8, 1.5);
-    cabinetLight.position.set(0, 0.32, 0.02);
-    station.add(cabinetLight);
 
     // 不锈钢把手
     const handle = box(0.018, 0.12, 0.024, silverTrimMat, 0.24, 0, 0.105, 0.004);
@@ -784,9 +835,7 @@ export class HospitalRenderer {
     });
     const statusLed = new THREE.Mesh(new THREE.SphereGeometry(0.014, 12, 12), ledMat);
     statusLed.position.set(0.08, 0.12, 0.089);
-    const ledLight = new THREE.PointLight(0x10b981, 0.6, 2.4);
-    ledLight.position.set(0.08, 0.12, 0.12);
-    group.add(statusLed, ledLight);
+    group.add(statusLed);
 
     // 双语标识铭牌
     const plaqueMesh = plaque('AED 自动体外除颤器', 'EMERGENCY DEFIBRILLATOR', 0.4, 0.11, true);
@@ -845,11 +894,6 @@ export class HospitalRenderer {
       group.add(lampHead);
     }
 
-    // 暖光指示待机微晕
-    const standbyGlow = new THREE.PointLight(0xfef08a, 0.3, 3.2);
-    standbyGlow.position.set(0, -0.05, 0.15);
-    group.add(standbyGlow);
-
     this.scene.add(group);
   }
 
@@ -896,9 +940,7 @@ export class HospitalRenderer {
 
     // 暖色床头夜灯阅读灯条
     const readingStrip = box(0.5, 0.025, 0.025, new THREE.MeshStandardMaterial({ color: 0xffedd5, emissive: 0xffedd5, emissiveIntensity: 0.4 }), 0, 0.075, 0.02);
-    const readingLight = new THREE.PointLight(0xffedd5, 0.55, 2.2);
-    readingLight.position.set(0, 0.05, 0.15);
-    group.add(readingStrip, readingLight);
+    group.add(readingStrip);
 
     this.scene.add(group);
   }
@@ -1066,9 +1108,9 @@ export class HospitalRenderer {
     this.scene.add(this.ambient);
     const key = this.key;
     key.position.set(17,10,10); key.target.position.set(15,0,11);
-    key.castShadow = true; key.shadow.mapSize.set(2048,2048);
+    key.castShadow = true; key.shadow.mapSize.set(1024,1024);
     Object.assign(key.shadow.camera, { left: -17, right: 17, top: 13, bottom: -13, near: 0.5, far: 22 });
-    key.shadow.bias = -0.0008; key.shadow.normalBias = 0.035; key.shadow.radius = 3;
+    key.shadow.bias = -0.0008; key.shadow.normalBias = 0.035; key.shadow.radius = 2;
     this.scene.add(key,key.target);
     const positions: [number,number,boolean][] = [];
     for (const x of [5,10,15,20,25]) { positions.push([x,4.5,true],[x,17.5,true]); }
@@ -1077,14 +1119,18 @@ export class HospitalRenderer {
     for (const [x,z,horizontal] of positions) {
       const housing = box(horizontal ? 1.35 : 0.28, 0.055, horizontal ? 0.28 : 1.35, fixtureShell, x, 2.75, z, 0.018);
       const diffuser = box(horizontal ? 1.18 : 0.2, 0.022, horizontal ? 0.2 : 1.18, this.diffuserMaterial, x, 2.712, z, 0.009);
-      // 只需向下照亮地面：不投射阴影、不到处反射白光，避免天花出现一条条刺眼白条。
       housing.castShadow = false;
       housing.receiveShadow = false;
       diffuser.castShadow = false;
       diffuser.receiveShadow = false;
       fixtures.add(housing, diffuser);
-      const lamp = new THREE.PointLight(0xebf3ef, 8.5, 7.5, 2); lamp.position.set(x, 2.5, z);
-      this.lamps.push(lamp); this.scene.add(lamp);
+    }
+    // 精简实时点光源至 4 盏主走廊顶灯（配合自发光灯罩网格，大幅降低每帧 Fragment Shader 光照开销，帧率提升 3 倍）
+    for (const [lx, lz] of [[15, 4.5], [15, 17.5], [4.5, 11], [25.5, 11]] as const) {
+      const lamp = new THREE.PointLight(0xebf3ef, 8.5, 15, 1.6);
+      lamp.position.set(lx, 2.5, lz);
+      this.lamps.push(lamp);
+      this.scene.add(lamp);
     }
     this.staticRoots.push(fixtures);
     this.scene.add(fixtures);

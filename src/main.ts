@@ -472,20 +472,59 @@ function boot(): void {
       ctx.strokeRect(x0 + t.x * s - 7, z0 + t.z * s - 7, 14, 14);
     }
     // 值班员实时位置：开灯定位、近距离目视或正在追逐时可见
-    if (game.lightsOn || game.guard.mode === 'chase' || (distance(p, game.guard.position) < 10 && game.map.hasLineOfSight(p, game.guard.position))) {
-      ctx.fillStyle = '#8c1d1d';
+    const guardRevealed = game.lightsOn || game.guard.mode === 'chase' || (distance(p, game.guard.position) < 10 && game.map.hasLineOfSight(p, game.guard.position));
+    if (guardRevealed) {
+      const gx = x0 + game.guard.position.x * s;
+      const gz = z0 + game.guard.position.z * s;
+      // 技能 1 开灯或追逐时，绘制猎人实时移动路线（红色虚线）
+      if ((game.lightsOn || game.guard.mode === 'chase') && game.guard.path.length > 0) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(220, 48, 48, 0.52)';
+        ctx.lineWidth = 1.4;
+        ctx.setLineDash([2.5, 2.5]);
+        ctx.beginPath();
+        ctx.moveTo(gx, gz);
+        for (const pt of game.guard.path) {
+          ctx.lineTo(x0 + pt.x * s, z0 + pt.z * s);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+      // 实时脉动雷达光圈：清晰传达猎人正在实时移动
+      const pulseRadius = 5.8 + Math.sin(performance.now() * 0.009) * 2.2;
+      ctx.strokeStyle = 'rgba(220, 48, 48, 0.72)';
+      ctx.lineWidth = 1.4;
       ctx.beginPath();
-      ctx.arc(x0 + game.guard.position.x * s, z0 + game.guard.position.z * s, 4.1, 0, Math.PI * 2);
+      ctx.arc(gx, gz, pulseRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      // 猎人行进朝向指针
+      ctx.strokeStyle = '#d92626';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(gx, gz);
+      ctx.lineTo(gx + Math.cos(game.guard.facing) * 7.5, gz + Math.sin(game.guard.facing) * 7.5);
+      ctx.stroke();
+      // 猎人核心定位红点
+      ctx.fillStyle = '#c41e1e';
+      ctx.beginPath();
+      ctx.arc(gx, gz, 4.2, 0, Math.PI * 2);
       ctx.fill();
     }
-    corridorName.textContent = corridor(p);
-    mapNote.textContent = game.exitUnlocked ? '东侧安全门已通电 · 绿标为逃生出口' : game.lightsOn ? `开灯定位：值班员在${corridor(game.guard.position)}` : '黑点：你 · 东侧：安全门';
+    const guardDist = distance(p, game.guard.position).toFixed(1);
+    const nextCorridor = corridor(p);
+    if (corridorName.textContent !== nextCorridor) corridorName.textContent = nextCorridor;
+    const nextMapNote = game.exitUnlocked
+      ? '东侧安全门已通电 · 绿标为逃生出口'
+      : game.lightsOn
+      ? `开灯透视：猎人在${corridor(game.guard.position)} · 距你 ${guardDist}m`
+      : '黑点：你 · 东侧：安全门';
+    if (mapNote.textContent !== nextMapNote) mapNote.textContent = nextMapNote;
   }
 
-  /** 追逐时画面外看不到威胁来源：一枚低强度红色箭头绕屏幕中心指向值班员方位，其余状态隐藏。 */
+  /** 追逐或全院开灯透视时：一枚红色方位箭头绕屏幕中心指向值班员实时方位，其余状态隐藏。 */
   function updateThreatPointer(): void {
-    const chasing = game.phase === 'playing' && game.guard.mode === 'chase';
-    if (!chasing) {
+    const showPointer = game.phase === 'playing' && (game.guard.mode === 'chase' || game.lightsOn);
+    if (!showPointer) {
       if (!threatPointer.hidden) threatPointer.hidden = true;
       return;
     }
@@ -500,13 +539,15 @@ function boot(): void {
   }
 
   function updateUI(): void {
+    if (game.phase === 'playing') drawMap();
     if (previousPhase === game.phase && game.elapsed >= uiTime && game.elapsed - uiTime < 0.07) return;
     uiTime = game.elapsed;
     timerLabel.textContent = game.exitUnlocked ? '东侧安全门 · 已通电' : '安全门通电';
     const time = game.exitUnlocked ? '逃生' : `${Math.ceil(game.remaining)}<span>s</span>`;
     if (timer.innerHTML !== time) timer.innerHTML = time;
     objective.textContent = game.exitUnlocked ? '东侧安全门已通电 · 立刻前往门口逃生' : '躲开值班员，等安全门通电';
-    status.textContent = game.lightsOn ? `开灯定位：值班员在${corridor(game.guard.position)} · 视距 12m` : {
+    const liveGuardDist = distance(game.player.position, game.guard.position).toFixed(1);
+    status.textContent = game.lightsOn ? `开灯透视：猎人在${corridor(game.guard.position)} · 距你 ${liveGuardDist}m` : {
       patrol: '巡查中 · 走路安静，奔跑会被听见',
       chase: '被发现！转进病房、药房或屏风后，或用 2 封锁追捕路线',
       search: '正在搜索 · 先躲开视线，再用 3 广播引开',
@@ -549,7 +590,7 @@ function boot(): void {
         effectFill.style.transform = `scaleX(${fraction})`;
       }
     }
-    drawMap();
+    if (game.phase !== 'playing') drawMap();
     const percent = Math.round(game.player.stamina * 100);
     // 只在格数变化时写 DOM：每帧写 transform 会让自动化「元素稳定」判定超时。
     const staminaTenths = Math.round(game.player.stamina * 20);
@@ -648,7 +689,7 @@ function boot(): void {
   let introPaused = false;
   let introElapsedMs = 0;
   let introLastTimestamp = 0;
-  const introDurationMs = 5000;
+  const introDurationMs = 2500;
 
   function finishIntroSequence(): void {
     if (!introActive) return;
@@ -721,13 +762,14 @@ function boot(): void {
       loaderPause.innerHTML = '暂停 <kbd>P</kbd>';
     }
     if (loaderFill) loaderFill.style.transform = 'scaleX(0)';
-    if (loaderCountdown) loaderCountdown.textContent = '5.0s';
+    if (loaderCountdown) loaderCountdown.textContent = '2.5s';
     introLastTimestamp = performance.now();
     introRafId = requestAnimationFrame(stepIntro);
   }
 
   if (loaderPause) {
     loaderPause.addEventListener('click', () => {
+      audio.unlock();
       loaderPause.blur();
       toggleIntroPause();
     });
@@ -735,6 +777,7 @@ function boot(): void {
 
   if (loaderSkip) {
     loaderSkip.addEventListener('click', () => {
+      audio.unlock();
       loaderSkip.blur();
       finishIntroSequence();
     });
@@ -752,6 +795,7 @@ function boot(): void {
   });
 
   const unlockMenuBgm = (): void => {
+    audio.unlock();
     if (game.phase === 'start') audio.startMenuBgm();
   };
   window.addEventListener('pointerdown', unlockMenuBgm, { once: true });
@@ -759,6 +803,7 @@ function boot(): void {
 
   const press = (button: HTMLButtonElement, handler: () => void): void => {
     button.addEventListener('click', () => {
+      audio.unlock();
       handler();
       button.blur(); // 释放焦点：避免之后按 Space / Enter 触发浏览器原生 click 误操作
     });
@@ -1160,7 +1205,6 @@ function boot(): void {
       follow.pitch = -0.04;
     }
     hospital.sync(game, game.phase === 'playing' ? dt : 0, follow.yaw, follow.pitch);
-    hospital.scene.updateMatrixWorld(true);
     if (game.phase === 'start') {
       // 标题待机时为背景走廊增加电影感微幅手持呼吸镜头（平滑正弦微晃，消除死板静止）
       const t = performance.now() * 0.0006;

@@ -35,6 +35,18 @@ describe('三条指令是真实规则，不是禁用按钮', () => {
     expect(game.useCommand('lights')).toBe(true);
   });
 
+  it('开启技能1（全院开灯）时立即打破猎人路点驻留停顿，确保猎人位置持续移动', () => {
+    const game = new RoundsGame({ difficulty: 'intern' });
+    game.start();
+    game.player.position = { x: 12, z: 6.5 };
+    game.guard.pauseRemaining = 2.6;
+    const beforePos = { ...game.guard.position };
+    expect(game.useCommand('lights')).toBe(true);
+    expect(game.guard.pauseRemaining).toBe(0);
+    advance(game, 0.5);
+    expect(distance(beforePos, game.guard.position)).toBeGreaterThan(0.5);
+  });
+
   it('封锁选择最短路线上的门，双方被挡、AI 立刻绕行，五秒后打开', () => {
     const game = commandGame();
     game.player.position = { x: 12, z: 4.5 };

@@ -145,6 +145,7 @@ export class RoundsGame {
     this.updateCommands(dt);
     this.player.update(dt, input, this.map);
     const previousMode = this.guard.mode;
+    if (this.lightsOn) this.guard.pauseRemaining = 0;
     this.guard.update(dt, this.map, this.player, this.sightRange, { openingProtected: this.elapsed < 10 });
     if (this.guard.mode !== previousMode) {
       this.events.push({ type: 'guardChanged', message: {
@@ -205,7 +206,13 @@ export class RoundsGame {
       return false;
     }
     const effect: CommandEffect = { id, remaining: COMMANDS[id].duration };
-    if (id === 'lockdown') {
+    if (id === 'lights') {
+      // 全院开灯瞬间唤醒值班员：立刻结束路点驻足或原地搜索停滞，保持移动巡查
+      this.guard.pauseRemaining = 0;
+      if (this.guard.mode === 'search' && this.guard.path.length === 0) {
+        this.guard.searchRemaining = 0;
+      }
+    } else if (id === 'lockdown') {
       const destination = this.map.closestWalkable(this.player.position, GUARD_RADIUS);
       const path = destination ? this.map.findPath(this.guard.position, destination, GUARD_RADIUS) : [];
       const doors = this.map.doorsOnPath(this.guard.position, path);
