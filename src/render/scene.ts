@@ -55,26 +55,6 @@ function plaque(text: string, subtitle: string, w: number, h: number, dark = fal
   return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: signTexture(text, subtitle, dark) }));
 }
 
-/** 结界符：和纸 + 朱印，笔画是抽象符纹而不是任何具体文字。 */
-function talismanTexture(): THREE.CanvasTexture {
-  const canvas = document.createElement('canvas');
-  canvas.width = 128; canvas.height = 320;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('无法绘制结界符');
-  ctx.fillStyle = '#efe4c8'; ctx.fillRect(0, 0, 128, 320);
-  ctx.strokeStyle = '#8c3a2e'; ctx.lineWidth = 5; ctx.strokeRect(9, 9, 110, 302);
-  ctx.strokeStyle = '#2c2622'; ctx.lineWidth = 7; ctx.lineCap = 'round';
-  for (const [x1, y1, x2, y2] of [[64, 44, 64, 190], [40, 66, 88, 66], [40, 100, 88, 100], [40, 134, 88, 134], [46, 168, 82, 168]] as const) {
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-  }
-  ctx.fillStyle = '#8c3a2e';
-  ctx.beginPath(); ctx.arc(64, 246, 33, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#efe4c8';
-  ctx.font = '600 34px "PingFang SC", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('封', 64, 259);
-  const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}
-
 /** 清洁、明亮的公立医院。模型比例、地图碰撞与门坐标沿用已有规则，不改路线。 */
 export class HospitalRenderer {
   readonly scene = new THREE.Scene();
@@ -108,12 +88,7 @@ export class HospitalRenderer {
   private readonly arrowGeometry: THREE.ShapeGeometry;
   /** 需要静态合批的容器：构造完成后按材质把小网格合并，减少 draw call。 */
   private readonly staticRoots: THREE.Object3D[] = [];
-  /**
-   * 忍者据点构件（木构梁柱、和纸提灯、结界符、暖帘）。
-   * 整组按题材切显隐，因此不能进 staticRoots：合批会把子网格摘走、并进全局大网格后无法单独隐藏。
-   */
-  private readonly shinobiGroup = new THREE.Group();
-  /** 当前建筑题材，供验收读取；渲染本身只看 shinobiGroup.visible。 */
+  /** 当前建筑题材，供状态读取 */
   private theme: ThemeId = 'hospital';
   private diffuserMaterial = new THREE.MeshStandardMaterial({ color: 0xdfe8dd, emissive: 0xf4fcf0, emissiveIntensity: 0.55, roughness: 0.55 });
   private exitLamp!: THREE.Mesh;
@@ -141,12 +116,8 @@ export class HospitalRenderer {
     this.buildDepartments();
     this.buildFurniture();
     this.buildProps();
-    this.buildShinobiProps();
-    this.scene.add(this.shinobiGroup);
     this.buildDoors();
     this.mergeStaticGeometry();
-    // 默认医院题材：忍者构件先整组藏起来，等 applySkin 按关卡题材打开。
-    this.shinobiGroup.visible = false;
     this.scene.add(this.playerRig, this.guardRig, this.route);
     this.searchRing = new THREE.Mesh(
       new THREE.RingGeometry(0.62, 0.74, 40),
@@ -169,7 +140,6 @@ export class HospitalRenderer {
     for (const ward of this.wardLamps) ward.light.color.setHex(skin.lamp);
     this.playerHuman.setCloth(skin.cloth);
     this.theme = theme;
-    this.shinobiGroup.visible = theme === 'shinobi';
   }
 
   sync(game: RoundsGame, dt: number): void {
@@ -342,8 +312,6 @@ export class HospitalRenderer {
    */
   private mergeStaticGeometry(): void {
     for (const root of this.staticRoots) this.mergeRoot(root, this.scene);
-    // 忍者构件按题材整组切显隐，所以合并结果留在组内，不能并进场景大网格。
-    this.mergeRoot(this.shinobiGroup, this.shinobiGroup);
   }
 
   /** 把 root 下的网格按材质合并，结果挂到 parent（parent 自身不在合并范围内）。 */
@@ -628,63 +596,6 @@ export class HospitalRenderer {
    * 够不到的死区里，吊顶件底部在 1.98 m 以上，不挡第一人称视线。
    * 提灯只用自发光材质而不加点光源：场景已有 13 盏实时点光，再加会拖慢低端机。
    */
-  private buildShinobiProps(): void {
-    const timber = new THREE.MeshStandardMaterial({ color: 0x4a3527, roughness: 0.82 });
-    const timberDark = new THREE.MeshStandardMaterial({ color: 0x33241a, roughness: 0.88 });
-    const washi = new THREE.MeshStandardMaterial({ color: 0xf6e6c4, emissive: 0xf3d79a, emissiveIntensity: 0.9, roughness: 0.72 });
-    const rope = new THREE.MeshStandardMaterial({ color: 0x2f2a24, roughness: 0.9 });
-    const norenCloth = new THREE.MeshStandardMaterial({ color: 0x2b3a52, roughness: 0.92, side: THREE.DoubleSide });
-    const seal = new THREE.MeshBasicMaterial({ map: talismanTexture() });
-
-    // 立柱 ×16：贴墙立在走廊两侧，柱脚加一块深色基石。
-    const post = (x: number, z: number): void => {
-      this.shinobiGroup.add(box(0.12, 2.66, 0.12, timber, x, 1.33, z));
-      this.shinobiGroup.add(box(0.17, 0.08, 0.17, timberDark, x, 0.06, z));
-    };
-    for (const x of [6, 10, 14, 18, 22]) { post(x, 3.09); post(x, 18.91); }
-    for (const z of [8, 11, 14]) { post(3.09, z); post(26.91, z); }
-
-    // 横梁：架在走廊上方 2.58 m。位置避开顶灯灯盘（灯盘在 2.72 m 以上）与悬挂指示牌（1.87–2.17 m）。
-    // acrossX 表示横梁沿 x 铺开（西/东走廊），否则沿 z 铺开（南/北走廊）。
-    const beam = (x: number, z: number, acrossX: boolean): void => {
-      this.shinobiGroup.add(box(acrossX ? 3.0 : 0.14, 0.16, acrossX ? 0.14 : 3.0, timber, x, 2.58, z));
-    };
-    for (const x of [6.5, 10.5, 14.5, 19, 23.5]) { beam(x, 4.5, false); beam(x, 17.5, false); }
-    for (const z of [6.5, 10, 13.5, 17]) { beam(4.5, z, true); beam(25.5, z, true); }
-
-    // 和纸提灯：挂在每根横梁正中，绳 + 灯身 + 上下箍。底部 1.98 m，不挡第一人称视线。
-    const lantern = (x: number, z: number): void => {
-      const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.16, 6), rope);
-      cord.position.set(x, 2.42, z); this.shinobiGroup.add(cord);
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.34, 14), washi);
-      body.position.set(x, 2.16, z); body.castShadow = true; this.shinobiGroup.add(body);
-      // 上箍是深色木圈；下箍用同一张透光纸面，玩家从灯下走过时看到的是暖光圆底而不是一块黑盘。
-      const top = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 0.03, 14), timberDark);
-      top.position.set(x, 2.34, z); this.shinobiGroup.add(top);
-      const bottom = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 0.03, 14), washi);
-      bottom.position.set(x, 1.98, z); this.shinobiGroup.add(bottom);
-    };
-    for (const x of [6.5, 10.5, 14.5, 19, 23.5]) { lantern(x, 4.5); lantern(x, 17.5); }
-    for (const z of [6.5, 10, 13.5, 17]) { lantern(4.5, z); lantern(25.5, z); }
-
-    // 结界符 ×4：贴在走廊外墙上，正对玩家来路。
-    const talisman = (x: number, z: number, yaw: number): void => {
-      const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.55), seal);
-      paper.position.set(x, 1.62, z); paper.rotation.y = yaw;
-      this.shinobiGroup.add(paper);
-    };
-    talisman(8.5, 3.015, 0);
-    talisman(21.5, 3.015, 0);
-    talisman(3.015, 9.0, Math.PI / 2);
-    talisman(26.985, 15.5, -Math.PI / 2);
-
-    // 暖帘：挂在护士站浅凹间开口上沿（x 11–13 的墙洞），玩家仍可从帘下穿过。
-    const noren = new THREE.Group(); noren.position.set(12, 0, 6.03);
-    noren.add(box(1.96, 0.05, 0.05, timberDark, 0, 2.28, 0));
-    for (const offset of [-0.62, 0, 0.62]) noren.add(box(0.58, 0.62, 0.02, norenCloth, offset, 1.95, 0));
-    this.shinobiGroup.add(noren);
-  }
-
   private buildDoors(): void {
     const shutterTexture = new THREE.CanvasTexture((() => {
       const canvas = document.createElement('canvas'); canvas.width=128; canvas.height=512;
