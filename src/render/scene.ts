@@ -353,8 +353,8 @@ export class HospitalRenderer {
     // 超写实 3D 灭火器与壁挂式消防栓总成 (替代原先的假扁平红盒子)
     this.buildRealisticFireStation(9.4, 1.35, 5.98, Math.PI);
 
-    // 超写实 3D 夜班巡查病历板 (挂于中央护士站走廊外墙，真实笔迹与勾选表单)
-    this.buildRealisticChart(17.4, 1.6, 18.985, Math.PI);
+    // 超写实 3D 夜班巡查病历板 (挂于南走廊独立开阔墙面，真实笔迹与勾选表单)
+    this.buildRealisticChart(14.5, 1.45, 18.985, Math.PI);
   }
 
   /** 壁挂式独立防烟钢制消防箱，内置真实 3D 灭火器模型与规范巡检指引标牌 */
@@ -365,29 +365,33 @@ export class HospitalRenderer {
 
     const cabinetMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.45, metalness: 0.7 });
     const silverTrimMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.25, metalness: 0.85 });
-    const glassMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.35, depthWrite: false });
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.28, depthWrite: false });
 
-    // 柜体背板与侧壁
-    const cabinetHousing = box(0.58, 0.82, 0.22, cabinetMat, 0, 0, 0, 0.02);
+    // 柜体外框壳体
+    const cabinetHousing = box(0.58, 0.82, 0.18, cabinetMat, 0, 0, -0.01, 0.02);
     station.add(cabinetHousing);
 
-    // 内部腔体深色衬底
-    const innerCavity = box(0.52, 0.76, 0.2, new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.9 }), 0, 0, 0.012);
-    station.add(innerCavity);
+    // 柜体背板深黑衬底（仅厚 0.01m 紧贴后壁，绝不遮挡灭火器罐体）
+    const backWall = box(0.54, 0.78, 0.01, new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.95 }), 0, 0, -0.09);
+    station.add(backWall);
 
-    // 观察窗不锈钢边框与透明钢化玻璃
-    const doorFrame = box(0.54, 0.78, 0.015, silverTrimMat, 0, 0, 0.11, 0.01);
+    // 底座托板
+    const shelf = box(0.54, 0.02, 0.16, cabinetMat, 0, -0.38, 0);
+    station.add(shelf);
+
+    // 观察窗边框与透明钢化玻璃门
+    const doorFrame = box(0.54, 0.78, 0.015, silverTrimMat, 0, 0, 0.09, 0.01);
     station.add(doorFrame);
-    const glassWindow = box(0.44, 0.68, 0.005, glassMat, 0, 0, 0.115);
+    const glassWindow = box(0.44, 0.68, 0.004, glassMat, 0, 0, 0.095);
     station.add(glassWindow);
 
-    // 紧急拉手
-    const handle = box(0.018, 0.12, 0.024, silverTrimMat, 0.22, 0, 0.125, 0.004);
+    // 不锈钢把手
+    const handle = box(0.018, 0.12, 0.024, silverTrimMat, 0.22, 0, 0.105, 0.004);
     station.add(handle);
 
-    // 真实 3D 灭火器总成（首帧使用高精程序化 3D 网格，同时异步叠加加载 Tripo P2 游戏级 GLB）
+    // 真实 3D 灭火器总成（首帧使用高保真 3D 网格，同时异步载入 Tripo P2 游戏级 GLB）
     const extGroup = new THREE.Group();
-    extGroup.position.set(0, -0.26, 0.04);
+    extGroup.position.set(0, -0.37, 0.0);
 
     const loader = new GLTFLoader();
     loader.load(
@@ -396,11 +400,13 @@ export class HospitalRenderer {
         const model = gltf.scene;
         const bbox = new THREE.Box3().setFromObject(model);
         const size = bbox.getSize(new THREE.Vector3());
-        const targetHeight = 0.52;
+        const targetHeight = 0.54;
         const scale = targetHeight / Math.max(size.y, 0.001);
         model.scale.setScalar(scale);
         const center = bbox.getCenter(new THREE.Vector3());
+        // 模型居中并调整朝向让气压表与手柄正对观察窗
         model.position.set(-center.x * scale, -bbox.min.y * scale, -center.z * scale);
+        model.rotation.y = Math.PI / 2;
         model.traverse((child) => {
           if (child instanceof THREE.Mesh) {
             child.castShadow = true;
@@ -416,33 +422,33 @@ export class HospitalRenderer {
       }
     );
 
-    // 程序化 3D 灭火器网格（保证首帧 0ms 立显）
-    const redPaint = new THREE.MeshStandardMaterial({ color: 0xd32f2f, roughness: 0.22, metalness: 0.2 });
+    // 程序化 3D 灭火器网格（保证首帧 0ms 立显，鲜艳大红罐体 + 黑色软管 + 铜阀门 + 压力表）
+    const redPaint = new THREE.MeshStandardMaterial({ color: 0xd32f2f, roughness: 0.2, metalness: 0.25 });
     const rubberHose = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.85 });
     const brassValve = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.35, metalness: 0.8 });
     const chrome = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.2, metalness: 0.95 });
 
-    const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.34, 18), redPaint);
-    tank.position.set(0, 0.17, 0); tank.castShadow = true; extGroup.add(tank);
-    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.08, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), redPaint);
-    dome.position.set(0, 0.34, 0); dome.castShadow = true; extGroup.add(dome);
-    const baseBoot = new THREE.Mesh(new THREE.CylinderGeometry(0.083, 0.083, 0.035, 18), rubberHose);
+    const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.082, 0.35, 18), redPaint);
+    tank.position.set(0, 0.175, 0); tank.castShadow = true; extGroup.add(tank);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.082, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), redPaint);
+    dome.position.set(0, 0.35, 0); dome.castShadow = true; extGroup.add(dome);
+    const baseBoot = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.035, 18), rubberHose);
     baseBoot.position.set(0, 0.0175, 0); baseBoot.castShadow = true; extGroup.add(baseBoot);
 
     const valveNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.026, 0.045, 12), brassValve);
-    valveNeck.position.set(0, 0.43, 0); extGroup.add(valveNeck);
-    const valveBody = box(0.045, 0.04, 0.05, brassValve, 0, 0.465, 0);
+    valveNeck.position.set(0, 0.44, 0); extGroup.add(valveNeck);
+    const valveBody = box(0.045, 0.04, 0.05, brassValve, 0, 0.475, 0);
     extGroup.add(valveBody);
-    const leverTop = box(0.016, 0.012, 0.15, chrome, 0, 0.495, 0.04);
+    const leverTop = box(0.016, 0.012, 0.15, chrome, 0, 0.505, 0.04);
     leverTop.rotation.x = -0.15; extGroup.add(leverTop);
-    const leverBottom = box(0.016, 0.012, 0.14, chrome, 0, 0.465, 0.05);
+    const leverBottom = box(0.016, 0.012, 0.14, chrome, 0, 0.475, 0.05);
     extGroup.add(leverBottom);
     const pin = new THREE.Mesh(new THREE.TorusGeometry(0.016, 0.003, 8, 16), chrome);
-    pin.position.set(0.028, 0.47, 0); pin.rotation.y = Math.PI / 2; extGroup.add(pin);
-    const gauge = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.012, 12), brassValve);
-    gauge.position.set(0, 0.45, 0.038); gauge.rotation.x = Math.PI / 2; extGroup.add(gauge);
+    pin.position.set(0.028, 0.48, 0); pin.rotation.y = Math.PI / 2; extGroup.add(pin);
+    const gauge = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.012, 12), chrome);
+    gauge.position.set(0, 0.46, 0.038); gauge.rotation.x = Math.PI / 2; extGroup.add(gauge);
     const hose = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.38, 10), rubberHose);
-    hose.position.set(-0.088, 0.24, 0.03); hose.rotation.z = -0.05; extGroup.add(hose);
+    hose.position.set(-0.09, 0.24, 0.03); hose.rotation.z = -0.05; extGroup.add(hose);
 
     station.add(extGroup);
 

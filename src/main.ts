@@ -570,9 +570,44 @@ function boot(): void {
   }
   press(mute, () => {
     const muted = audio.toggleMute();
-    mute.textContent = muted ? '声音：关' : '声音：开';
+    mute.innerHTML = muted ? '<kbd>M</kbd> 静音' : '<kbd>M</kbd> 声音';
     mute.setAttribute('aria-pressed', String(muted));
   });
+
+  // 手机扫码弹窗与路演 PPT 交互
+  const qrModal = document.getElementById('qr-modal');
+  const pitchModal = document.getElementById('pitch-modal');
+  const pitchIframe = document.getElementById('pitch-iframe') as HTMLIFrameElement | null;
+  const btnQr = document.getElementById('btn-qr') as HTMLButtonElement | null;
+  const btnPitch = document.getElementById('btn-pitch') as HTMLButtonElement | null;
+  const briefingQr = document.getElementById('briefing-qr') as HTMLButtonElement | null;
+  const briefingPitch = document.getElementById('briefing-pitch') as HTMLButtonElement | null;
+
+  function openQrModal(): void {
+    if (qrModal) qrModal.hidden = false;
+  }
+  function openPitchModal(): void {
+    if (pitchModal) {
+      pitchModal.hidden = false;
+      if (pitchIframe && (!pitchIframe.src || pitchIframe.src === 'about:blank' || pitchIframe.src.endsWith('about:blank'))) {
+        pitchIframe.src = '/pitch.html';
+      }
+    }
+  }
+  function closeAllModals(): void {
+    if (qrModal) qrModal.hidden = true;
+    if (pitchModal) pitchModal.hidden = true;
+  }
+
+  if (btnQr) press(btnQr, openQrModal);
+  if (briefingQr) press(briefingQr, openQrModal);
+  if (btnPitch) press(btnPitch, openPitchModal);
+  if (briefingPitch) press(briefingPitch, openPitchModal);
+
+  document.querySelectorAll('[data-close-modal]').forEach(el => {
+    el.addEventListener('click', closeAllModals);
+  });
+
   if (debug) {
     press(debugButtons[0], () => toggleDoor('A'));
     press(debugButtons[1], () => toggleDoor('B'));
@@ -587,7 +622,15 @@ function boot(): void {
       return;
     }
     if (event.repeat) return;
-    if (event.code === 'Escape') { event.preventDefault(); togglePause(); }
+    if (event.code === 'Escape') {
+      if ((qrModal && !qrModal.hidden) || (pitchModal && !pitchModal.hidden)) {
+        event.preventDefault();
+        closeAllModals();
+        return;
+      }
+      event.preventDefault();
+      togglePause();
+    }
     else if (event.code === 'KeyR' && (game.phase === 'won' || game.phase === 'lost')) beginRound();
     else if (['Digit1', 'Digit2', 'Digit3'].includes(event.code) && game.phase === 'playing') activateCommand(COMMAND_IDS[Number(event.code.slice(-1)) - 1]);
     else if (debug && ['F2', 'F3', 'F4', 'F5'].includes(event.code)) {

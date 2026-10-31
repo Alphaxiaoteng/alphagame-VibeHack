@@ -10,5 +10,7 @@ build/
 tripo-out/
 # Tripo 3D 生成中间产物：模型体积达数十 MB 且未被游戏引用，不入库
 .tripo/
+.codely/
+output/
 assets/art/models/*.glb
 assets/art/models/*/
