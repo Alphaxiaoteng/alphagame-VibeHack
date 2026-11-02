@@ -14,8 +14,8 @@
 
 | 访问入口 | 链接地址 | 访问与操作说明 |
 | :--- | :--- | :--- |
-| **线上游戏实机直连** | [http://124.220.198.243/rounds/](http://124.220.198.243/rounds/) | 电脑端打开即玩；手机端请用自带相机或 Safari / Chrome 打开 |
-| **公网路演大屏 PPT** | [http://124.220.198.243/pitch](http://124.220.198.243/pitch) | 支持键盘 `←` / `→` / `Space` 翻页、`F` 键全屏、图片点击高清放大 |
+| **GitHub Pages 独立体验** | [https://alphaxiaoteng.github.io/alphagame-VibeHack/](https://alphaxiaoteng.github.io/alphagame-VibeHack/) | 官方 GitHub.io 全球 CDN 加速，电脑端与手机端免安装点开即玩 |
+| **公网路演大屏 PPT** | [https://alphaxiaoteng.github.io/alphagame-VibeHack/pitch.html](https://alphaxiaoteng.github.io/alphagame-VibeHack/pitch.html) | 支持键盘 `←` / `→` / `Space` 翻页、`F` 键全屏、图片点击高清放大 |
 | **GitHub 开源仓库** | [https://github.com/Alphaxiaoteng/alphagame-VibeHack](https://github.com/Alphaxiaoteng/alphagame-VibeHack) | 完整源码、3D 角色与病房资产、纯逻辑状态机与自动化测试 |
 
 ### 手机端扫码即玩与交流
