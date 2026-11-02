@@ -20,17 +20,17 @@ export const VOICE_URLS = {
 export type VoiceId = keyof typeof VOICE_URLS;
 
 export const VOICE_TEXT: Record<VoiceId, string> = {
-  start: '夜间巡查已开始，请保持安静，等待东侧安全门解锁。',
-  door: '注意，走廊防火门已降下封锁。',
-  warning30: '距离东侧安全门解锁还有三十秒。',
-  warning10: '最后十秒，准备前往东侧安全门。',
-  unlocked: '东侧安全门已解锁，门已打开，请立即撤离。',
-  ward: '各科室注意，广播查房已启动，值班员已转向大厅。',
+  start: '主电源中断，备用照明已启动。请值班人员按路线巡查。',
+  door: '注意，走廊防火门正在落下，请绕行其他通道。',
+  warning30: '备用电源充能中，距离安全门解锁还有三十秒。',
+  warning10: '安全门即将通电，请做好撤离准备。',
+  unlocked: '东侧安全门已解锁，门已打开，请立即沿绿灯撤离！',
+  ward: '呼叫值班员，请前往三号病房核查呼叫信号。',
   lights: '全院备用照明已开启，强光透视已接通。',
-  lockdown: '紧急通报，防火卷帘门已强制降下，通道封锁。',
-  chase: '站住！夜间巡查，不许跑！',
-  patrol: '谁在那边？夜间严禁在走廊逗留。',
-  caught: '抓到你了，立刻返回病房。',
+  lockdown: '紧急通报，防火卷帘门已强制降下，通道封锁！',
+  chase: '站住！夜间巡查，不许跑！！',
+  patrol: '走廊还没查完……谁在那边？！',
+  caught: '抓到你了！今晚谁也别想擅自离开病区！',
 };
 
 export const BGM_URLS = {
@@ -530,10 +530,10 @@ export class AudioEngine {
     if (moved && game.elapsed >= this.nextPlayerStep) {
       const rate = 0.94 + Math.random() * 0.12;
       const played = game.player.sprinting
-        ? this.playSfx('sprint', 0.65, rate)
-        : this.playSfx('walk', 0.48, rate);
+        ? this.playSfx('sprint', 0.92, rate)
+        : this.playSfx('walk', 0.85, rate);
       if (!played) this.tone(game.player.sprinting ? 118 : 100, 0.075, 0.075);
-      this.nextPlayerStep = game.elapsed + (game.player.sprinting ? 0.26 : 0.42);
+      this.nextPlayerStep = game.elapsed + (game.player.sprinting ? 0.24 : 0.40);
     }
     if (game.player.sprinting && game.player.stamina < 18 && game.elapsed >= this.nextBreathStep) {
       this.playSfx('breathGasp', 0.55);
@@ -629,7 +629,7 @@ export class AudioEngine {
     enqueue(Object.entries(SFX_URLS) as [SfxId, string][], this.sfxBuffers);
     enqueue(Object.entries(BGM_URLS) as [BgmId, string][], this.bgmBuffers);
 
-    const concurrency = 2;
+    const concurrency = 4;
     let cursor = 0;
     const worker = async () => {
       while (cursor < tasks.length) {

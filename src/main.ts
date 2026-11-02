@@ -143,6 +143,12 @@ function boot(): void {
   let focusWarned = false;
   let lastKnownHidden = document.hidden;
 
+  function releasePointerLock(): void {
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      try { document.exitPointerLock(); } catch {}
+    }
+  }
+
   function clearInput(): void {
     keys.clear();
     dragging = false;
@@ -190,6 +196,7 @@ function boot(): void {
   }
 
   function pauseGame(): void {
+    releasePointerLock();
     clearInput();
     game.pause();
     audio.setPaused(true);
@@ -372,6 +379,7 @@ function boot(): void {
         previousGuardMode = game.guard.mode;
         break;
       case 'caught':
+        releasePointerLock();
         clearInput();
         audio.stopRound();
         audio.alert();
@@ -379,6 +387,7 @@ function boot(): void {
         recordRound('lost');
         break;
       case 'won': {
+        releasePointerLock();
         clearInput();
         audio.stopRound();
         recordRound('won');
@@ -1002,23 +1011,62 @@ function boot(): void {
   });
   window.addEventListener('keyup', event => keys.delete(event.code));
   canvas.addEventListener('contextmenu', event => event.preventDefault());
-  canvas.addEventListener('pointerdown', event => {
-    if (event.button !== 2 || game.phase !== 'playing') return;
-    dragging = true;
-    lastPointerX = event.clientX;
-    lastPointerY = event.clientY;
-    // 指针捕获只是“拖出画布仍持续转向”的增强；合成/注入事件的指针 id 可能无法捕获，失败不应中断拖动。
-    try { canvas.setPointerCapture(event.pointerId); } catch { /* 无法捕获时退化为画布内拖动 */ }
+
+  // ── 物理鼠标视角控制（原生指针锁定 Pointer Lock + 鼠标左/右键拖拽双模） ──
+  const requestPointerLock = () => {
+    if (game.phase === 'playing' && document.pointerLockElement !== canvas) {
+      try { void canvas.requestPointerLock?.(); } catch { /* 浏览器安全策略或已请求中 */ }
+    }
+  };
+
+  canvas.addEventListener('click', () => {
+    requestPointerLock();
   });
+
+  // 指针锁定模式：移动物理鼠标直接无死角控制摄像机
+  document.addEventListener('mousemove', event => {
+    if (document.pointerLockElement === canvas && game.phase === 'playing') {
+      const sens = 0.0028;
+      follow.rotate(event.movementX * sens);
+      follow.tilt(-event.movementY * (sens * 0.85));
+    }
+  });
+
+  // 鼠标拖拽双模（左键、中键或右键拖动均可转动视角，兼顾未锁定或随时拖拽）
+  canvas.addEventListener('pointerdown', event => {
+    if (game.phase !== 'playing') return;
+    if (event.pointerType === 'mouse') {
+      dragging = true;
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+      requestPointerLock();
+      try { canvas.setPointerCapture(event.pointerId); } catch {}
+    }
+  });
+
   canvas.addEventListener('pointermove', event => {
-    if (!dragging || game.phase !== 'playing') return;
+    if (event.pointerType !== 'mouse' || !dragging || game.phase !== 'playing') return;
+    if (document.pointerLockElement === canvas) return; // 已由 Pointer Lock 处理，避免双倍位移
     follow.rotate((event.clientX - lastPointerX) * 0.0032);
     follow.tilt(-(event.clientY - lastPointerY) * 0.0028);
     lastPointerX = event.clientX;
     lastPointerY = event.clientY;
   });
-  canvas.addEventListener('pointerup', () => { dragging = false; });
-  canvas.addEventListener('pointercancel', clearInput);
+
+  const endMouseDrag = (event: PointerEvent) => {
+    if (event.pointerType === 'mouse') {
+      dragging = false;
+      try { canvas.releasePointerCapture(event.pointerId); } catch {}
+    }
+  };
+  canvas.addEventListener('pointerup', endMouseDrag);
+  canvas.addEventListener('pointercancel', endMouseDrag);
+
+  document.addEventListener('pointerlockchange', () => {
+    if (document.pointerLockElement !== canvas) {
+      dragging = false;
+    }
+  });
   // 触摸板：双指横滑转视角、竖滑俯仰。wheel 监听必须非被动才能 preventDefault，避免页面滚动劫持手势。
   canvas.addEventListener('wheel', event => {
     if (game.phase !== 'playing') return;
