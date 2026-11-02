@@ -95,7 +95,8 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
       <span class="shop-summary-role" hidden></span>
     </div>
     <button type="button" class="shop-summary-btn">
-      <span>切换 ›</span>
+      <span>切换</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
     </button>
   `;
   const summaryLevel = summaryBar.querySelector('.shop-summary-level') as HTMLElement;
@@ -121,7 +122,9 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
       <strong>值班档案 · 区域与人员登记表</strong>
       <span class="badge-mini">内部档案</span>
     </div>
-    <button type="button" class="modal-close" title="关闭">&times;</button>
+    <button type="button" class="modal-close" title="关闭">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
   `;
   const closeConfigBtn = modalHead.querySelector('.modal-close') as HTMLButtonElement;
 
@@ -172,11 +175,11 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   levelNav.className = 'shop-nav-arrows';
   const prevBtn = document.createElement('button');
   prevBtn.type = 'button';
-  prevBtn.innerHTML = '&larr;';
+  prevBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>';
   prevBtn.title = '上一科室';
   const nextBtn = document.createElement('button');
   nextBtn.type = 'button';
-  nextBtn.innerHTML = '&rarr;';
+  nextBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
   nextBtn.title = '下一科室';
   levelNav.append(prevBtn, nextBtn);
   groupHead.append(levelLabel, levelNav);
@@ -206,7 +209,7 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
   const confirmBtn = document.createElement('button');
   confirmBtn.type = 'button';
   confirmBtn.className = 'primary config-confirm-btn';
-  confirmBtn.innerHTML = '<span>确认排班</span><span class="arrow-icon">&rarr;</span>';
+  confirmBtn.innerHTML = '<span>确认排班</span><span class="arrow-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>';
   modalFooter.append(confirmBtn);
 
   modalContent.append(cover, group, skinGroup, buy, note);
@@ -375,7 +378,9 @@ export function mountShop(root: HTMLElement, hooks: ShopHooks): Shop {
     buyModalCard.innerHTML = `
       <div class="shop-modal-header">
         <span class="mono">ENTITLEMENT BUYOUT / 0.99</span>
-        <button type="button" class="shop-modal-close" aria-label="关闭">&times;</button>
+        <button type="button" class="shop-modal-close" aria-label="关闭">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
       </div>
       <div class="shop-modal-body">
         <div class="shop-modal-preview">

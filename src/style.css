@@ -1,75 +1,78 @@
 :root {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Segoe UI", sans-serif;
-  color: #ffffff;
-  background: #000000;
+  color: #f5f2eb;
+  background: #141312;
   font-synthesis: none;
 
-  /* Apple VisionOS 极简黑白灰阶无形界面规范 */
-  --color-bg-base: #000000;
-  --color-surface-glass: rgba(18, 18, 22, 0.76);
-  --color-surface-elevated: rgba(28, 28, 32, 0.85);
-  --color-surface-subtle: rgba(255, 255, 255, 0.05);
+  /* Anthropic Claude 经典设计规范 · 曜石暗调与陶土暖色 (Claude Design System) */
+  --color-bg-base: #141312;
+  --color-surface-glass: rgba(28, 27, 25, 0.82);
+  --color-surface-elevated: rgba(38, 36, 34, 0.9);
+  --color-surface-subtle: rgba(245, 242, 235, 0.05);
 
-  --glass-bg: rgba(22, 22, 26, 0.72);
-  --glass-bg-hover: rgba(36, 36, 42, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --glass-border-bright: rgba(255, 255, 255, 0.28);
-  --glass-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.18);
-  --glass-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.85);
-  --glass-blur: blur(40px) saturate(180%);
+  --glass-bg: rgba(28, 27, 25, 0.78);
+  --glass-bg-hover: rgba(44, 42, 39, 0.88);
+  --glass-border: rgba(245, 242, 235, 0.1);
+  --glass-border-bright: rgba(217, 119, 87, 0.35);
+  --glass-specular: inset 0 1px 0 0 rgba(245, 242, 235, 0.12);
+  --glass-shadow: 0 20px 50px -10px rgba(10, 9, 8, 0.85);
+  --glass-blur: blur(28px) saturate(160%);
 
-  --text-primary: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.65);
-  --text-dim: rgba(255, 255, 255, 0.42);
-  --accent-cyan: #ffffff;
-  --accent-emerald: #ffffff;
-  --accent-alert: #ffffff;
+  --text-primary: #f5f2eb;
+  --text-muted: #a8a297;
+  --text-dim: #736e66;
+  --accent-terracotta: #d97757;
+  --accent-terracotta-hover: #e28567;
+  --accent-terracotta-soft: rgba(217, 119, 87, 0.12);
+  --accent-cyan: #d97757;
+  --accent-emerald: #4a7c59;
+  --accent-alert: #d97757;
 
-  --radius-card: 2px;
-  --radius-control: 2px;
-  --radius-pill: 2px;
+  --radius-card: 12px;
+  --radius-control: 8px;
+  --radius-pill: 9999px;
 
-  /* 心理微恐 · 医院陈旧病历档案纸质感变量 (Horror Clinical Paper Dossier) */
-  --font-serif: "Noto Serif SC", "Songti SC", "STSong", "PMingLiU", serif;
+  /* Claude 人文米纸与档案病历纸质感变量 (Claude Editorial Paper Dossier) */
+  --font-serif: "Noto Serif SC", "Newsreader", "Songti SC", "STSong", "Georgia", serif;
   --font-display: "Cinzel", "Noto Serif SC", "Songti SC", serif;
   --paper-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.12 0 0 0 0 0.10 0 0 0 0 0.08 0 0 0 0.075 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  --paper-sheet-bg: radial-gradient(ellipse at 50% 42%, #e6decb 0%, #d8ceba 68%, #c2b49a 100%);
-  --paper-card-bg: rgba(247, 242, 230, 0.58);
-  --paper-card-active: #f4eee0;
-  --paper-ink: #171310;
-  --paper-ink-muted: #4e4439;
-  --paper-ink-dim: #736657;
-  --paper-border: #2b241d;
-  --paper-rule: rgba(43, 36, 29, 0.28);
-  --paper-stamp-red: #8c1d1d;
-  --paper-stamp-green: #1b4d3e;
+  --paper-sheet-bg: radial-gradient(ellipse at 50% 42%, #faf7f2 0%, #f4efe6 68%, #e8dfd2 100%);
+  --paper-card-bg: rgba(255, 253, 249, 0.82);
+  --paper-card-active: #ffffff;
+  --paper-ink: #1c1a18;
+  --paper-ink-muted: #5e5950;
+  --paper-ink-dim: #8a847a;
+  --paper-border: rgba(45, 38, 30, 0.12);
+  --paper-rule: rgba(45, 38, 30, 0.08);
+  --paper-stamp-red: #cc6644;
+  --paper-stamp-green: #3f7a55;
 }
 * { box-sizing: border-box; }
-body { margin: 0; overflow: hidden; background: #000000; }
+body { margin: 0; overflow: hidden; background: #141312; }
 button { font: inherit; cursor: pointer; color: inherit; }
 button:disabled { cursor: default; }
-button:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.8); outline-offset: 2px; }
+button:focus-visible { outline: 2px solid var(--accent-terracotta); outline-offset: 2px; }
 [hidden] { display: none !important; }
 .mono, kbd { font-family: ui-monospace, SFMono-Regular, "Roboto Mono", Menlo, monospace; font-variant-numeric: tabular-nums; }
 kbd {
-  padding: 2px 7px;
-  border: 1px solid #120f0c;
-  border-bottom: 2px solid #080605;
-  border-radius: 1px;
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.35;
   white-space: nowrap;
-  background: #231e19;
-  color: #f4eee0;
-  box-shadow: none;
+  background: #252321;
+  color: #f5f2eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 #app, #scene { position: fixed; inset: 0; width: 100%; height: 100%; }
 #scene canvas { display: block; width: 100%; height: 100%; outline: none; touch-action: none; }
 .hud { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
 .hud button { pointer-events: auto; }
 
-/* 顶部悬浮极简 HUD：全量采用微恐医院陈旧纸质病历标签与打字机油墨风格 */
+/* 顶部悬浮极简 HUD：Claude 曜石暗调与陶土暖色质感 */
 .topbar {
   position: absolute;
   top: 0;
@@ -91,43 +94,44 @@ kbd {
   display: none !important;
 }
 
-/* 顶部中央倒计时纸质卡片 */
+/* 顶部中央倒计时卡片 */
 .timer-block {
   position: absolute;
   top: 14px;
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
-  min-width: 128px;
-  padding: 6px 20px 5px;
-  border-radius: 1px;
-  background-color: #dcd2be;
-  background-image: var(--paper-noise), var(--paper-sheet-bg);
-  border: 1.5px solid var(--paper-border);
-  border-top: 3px solid var(--paper-stamp-red);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.78), 0 0 0 2px #161310;
+  min-width: 136px;
+  padding: 8px 22px 6px;
+  border-radius: 12px;
+  background: rgba(28, 27, 25, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(245, 242, 235, 0.12);
+  border-top: 2px solid var(--accent-terracotta);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65);
   pointer-events: auto;
 }
 .timer-block > span {
   display: block;
   font-family: var(--font-serif);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  color: var(--paper-ink-muted);
-  font-weight: 800;
+  font-size: 10.5px;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 #timer {
   display: block;
   font-size: 28px;
   line-height: 1.1;
-  font-weight: 900;
-  color: var(--paper-ink);
+  font-weight: 800;
+  color: var(--text-primary);
 }
 #timer span {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   margin-left: 2px;
-  color: var(--paper-ink-muted);
+  color: var(--accent-terracotta);
 }
 
 /* 左上角全屏按钮与右上角纸质档案签按钮 */
@@ -136,25 +140,26 @@ kbd {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background-color: #dcd2be;
-  background-image: var(--paper-noise), var(--paper-sheet-bg);
-  border: 1.5px solid var(--paper-border);
-  border-bottom: 2.5px solid #161310;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
-  border-radius: 1px;
-  padding: 6px 13px;
+  background: rgba(28, 27, 25, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(245, 242, 235, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  border-radius: 8px;
+  padding: 7px 14px;
   font-family: var(--font-serif);
   font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  color: var(--paper-ink);
-  transition: all 0.15s ease;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: auto;
 }
 .top-left-btn:hover:not(:disabled),
 .toolbar button:hover:not(:disabled) {
-  background-color: #efe7d6;
-  border-color: var(--paper-stamp-red);
+  background: rgba(44, 42, 39, 0.95);
+  border-color: var(--accent-terracotta);
+  color: #ffffff;
   transform: translateY(-1px);
 }
 #mute {
@@ -176,46 +181,46 @@ kbd {
 /* 左上角纸质查房指令便签（位于左上角全屏按钮正下方） */
 .objective {
   position: absolute;
-  top: 56px;
+  top: 60px;
   left: 24px;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  background-color: #dcd2be;
-  background-image: var(--paper-noise), var(--paper-sheet-bg);
-  padding: 10px 16px;
-  border: 1.5px solid var(--paper-border);
-  border-left: 4px solid var(--paper-stamp-red);
-  border-radius: 1px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.78), 0 0 0 2px #161310;
+  gap: 12px;
+  background: rgba(28, 27, 25, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 12px 18px;
+  border: 1px solid rgba(245, 242, 235, 0.1);
+  border-left: 3px solid var(--accent-terracotta);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65);
   max-width: 360px;
 }
 .objective strong {
   font-family: var(--font-serif);
-  font-size: 13px;
-  font-weight: 900;
+  font-size: 13.5px;
+  font-weight: 700;
   display: block;
-  color: var(--paper-ink);
-  letter-spacing: 0.08em;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
 }
 .objective span:not(.status-dot) {
   display: block;
   margin-top: 3px;
   font-family: var(--font-serif);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--paper-ink-muted);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-muted);
   line-height: 1.45;
 }
 .status-dot {
   width: 7px;
   height: 7px;
-  background: var(--paper-stamp-red);
-  border-radius: 0;
-  transform: rotate(45deg);
+  background: var(--accent-terracotta);
+  border-radius: 50%;
   margin-top: 5px;
   flex: none;
-  box-shadow: none;
+  box-shadow: 0 0 8px rgba(217, 119, 87, 0.6);
 }
 
 /* 中央纸质通报条 */
@@ -224,20 +229,21 @@ kbd {
   top: 96px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 9px 22px;
-  background-color: #e6decb;
-  background-image: var(--paper-noise), var(--paper-sheet-bg);
-  border: 1.5px solid var(--paper-border);
-  border-left: 4px solid var(--paper-stamp-red);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.85), 0 0 0 2px #161310;
+  padding: 10px 24px;
+  background: rgba(28, 27, 25, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(245, 242, 235, 0.12);
+  border-left: 3px solid var(--accent-terracotta);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75);
   font-family: var(--font-serif);
   font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   max-width: 520px;
   text-align: center;
-  border-radius: 1px;
-  color: var(--paper-ink);
+  border-radius: 8px;
+  color: var(--text-primary);
 }
 .toast.alert {
   background-color: #381414;
@@ -262,99 +268,101 @@ body[data-phase="start"] .hud { display: none; }
 
 /* 左下角纸质体能记录卡 */
 .stamina-panel {
-  width: 186px;
+  width: 196px;
   flex: none;
-  padding: 10px 14px;
-  border: 1.5px solid var(--paper-border);
-  border-left: 4px solid var(--paper-ink);
-  background-color: #dcd2be;
-  background-image: var(--paper-noise), var(--paper-sheet-bg);
-  border-radius: 1px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.78), 0 0 0 2px #161310;
+  padding: 12px 16px;
+  border: 1px solid rgba(245, 242, 235, 0.1);
+  border-left: 3px solid var(--accent-terracotta);
+  background: rgba(28, 27, 25, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65);
 }
 .stamina-panel > div:first-child {
   display: flex;
   justify-content: space-between;
   font-family: var(--font-serif);
   font-size: 12px;
-  color: var(--paper-ink);
-  font-weight: 900;
-  letter-spacing: 0.1em;
+  color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 .stamina-track {
   height: 6px;
-  background: rgba(43, 36, 29, 0.22);
-  border: 1px solid rgba(43, 36, 29, 0.45);
-  margin: 7px 0;
-  border-radius: 0;
+  background: rgba(245, 242, 235, 0.12);
+  border: none;
+  margin: 8px 0;
+  border-radius: 3px;
   overflow: hidden;
 }
 #stamina-fill {
   width: 100%;
   height: 100%;
-  background: var(--paper-ink);
-  border-radius: 0;
+  background: var(--accent-terracotta);
+  border-radius: 3px;
   transform-origin: left;
   transition: transform 0.08s linear;
 }
 .stamina-panel small {
   display: block;
   font-family: var(--font-serif);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--paper-ink-muted);
-  line-height: 1.3;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.35;
 }
 
 /* 底部中央：三枚微恐医院纸质战术指令符卡（1 全院开灯 / 2 封锁走廊 / 3 广播查房） */
-.commands { display: flex; gap: 12px; margin: 0 auto; }
+.commands { display: flex; gap: 14px; margin: 0 auto; }
 .commands button {
   position: relative;
   overflow: hidden;
   display: flex;
-  gap: 11px;
+  gap: 12px;
   align-items: center;
   text-align: left;
-  padding: 10px 14px;
-  width: 220px;
-  background-color: #dcd2be;
-  background-image: var(--paper-noise), var(--paper-sheet-bg);
-  border: 1.5px solid var(--paper-border);
-  border-left: 4px solid var(--paper-stamp-red);
-  border-radius: 1px;
-  transition: all 0.15s ease;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.78), 0 0 0 2px #161310;
+  padding: 10px 16px;
+  width: 224px;
+  background: rgba(28, 27, 25, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(245, 242, 235, 0.1);
+  border-left: 3px solid var(--accent-terracotta);
+  border-radius: 10px;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65);
 }
 .commands button:hover:not(:disabled) {
-  background-color: #efe7d6;
-  border-color: var(--paper-stamp-red);
+  background: rgba(44, 42, 39, 0.95);
+  border-color: var(--accent-terracotta);
   transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(217, 119, 87, 0.18);
 }
 .commands button:active:not(:disabled) {
   transform: translateY(1px);
 }
 .commands button:disabled {
-  opacity: 0.52;
-  filter: sepia(0.35) brightness(0.82);
+  opacity: 0.45;
+  filter: grayscale(0.5);
 }
 /* 纸质指令卡上的暗红印章数字键帽 (1 / 2 / 3) */
 .commands kbd.key-badge, .commands kbd {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  min-width: 30px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
   padding: 0;
-  font-size: 14px;
-  font-weight: 900;
-  font-family: ui-monospace, SFMono-Regular, "Courier New", Menlo, monospace;
-  border-radius: 1px;
-  background: var(--paper-stamp-red);
-  border: 1px solid #521010;
-  border-bottom: 2px solid #360909;
-  color: #f7f3eb;
-  box-shadow: none;
+  font-size: 13px;
+  font-weight: 800;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  border-radius: 6px;
+  background: var(--accent-terracotta);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 .commands .cmd-info {
   display: flex;
@@ -365,34 +373,34 @@ body[data-phase="start"] .hud { display: none; }
   display: block;
   font-family: var(--font-serif);
   font-size: 13px;
-  font-weight: 900;
-  color: var(--paper-ink);
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
 }
 .commands small {
   display: block;
   font-family: var(--font-serif);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--paper-ink-muted);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-muted);
   margin-top: 2px;
   white-space: nowrap;
 }
 .commands .command-status {
   margin-left: auto;
   font-family: var(--font-serif);
-  font-size: 10px;
-  color: var(--paper-stamp-green);
+  font-size: 10.5px;
+  color: var(--accent-emerald);
   white-space: nowrap;
-  font-weight: 900;
-  padding: 1px 6px;
-  border-radius: 0;
-  background: rgba(27, 77, 62, 0.08);
-  border: 1px solid var(--paper-stamp-green);
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(74, 124, 89, 0.15);
+  border: 1px solid rgba(74, 124, 89, 0.3);
 }
 .commands button:disabled .command-status {
-  color: var(--paper-ink-dim);
-  border-color: var(--paper-rule);
+  color: var(--text-dim);
+  border-color: rgba(245, 242, 235, 0.08);
   background: transparent;
 }
 .commands button > *:not(.cooldown-fill) {
@@ -400,14 +408,14 @@ body[data-phase="start"] .hud { display: none; }
   z-index: 1;
 }
 .commands button[data-state="cooldown"] .command-status {
-  color: #f7f3eb;
-  background: var(--paper-stamp-red);
-  border-color: #521010;
+  color: #ffffff;
+  background: var(--accent-terracotta);
+  border-color: var(--accent-terracotta);
 }
 .commands button[data-state="active"] .command-status {
-  color: #f7f3eb;
-  background: var(--paper-stamp-green);
-  border-color: #13382d;
+  color: #ffffff;
+  background: var(--accent-emerald);
+  border-color: var(--accent-emerald);
 }
 .commands .cooldown-fill {
   position: absolute;
@@ -416,25 +424,25 @@ body[data-phase="start"] .hud { display: none; }
   bottom: 0;
   height: 100%;
   width: var(--progress, 0%);
-  background: linear-gradient(90deg, rgba(140, 29, 29, 0.24) 0%, rgba(185, 43, 43, 0.38) 100%);
-  border-right: 2px solid var(--paper-stamp-red);
-  box-shadow: inset 0 -3px 0 var(--paper-stamp-red);
+  background: linear-gradient(90deg, rgba(217, 119, 87, 0.2) 0%, rgba(217, 119, 87, 0.4) 100%);
+  border-right: 2px solid var(--accent-terracotta);
+  box-shadow: inset 0 -3px 0 var(--accent-terracotta);
   opacity: 1;
   pointer-events: none;
   z-index: 0;
   transition: width 0.08s linear;
 }
 .commands button[data-state="active"] .cooldown-fill {
-  background: linear-gradient(90deg, rgba(27, 77, 62, 0.25) 0%, rgba(47, 167, 101, 0.38) 100%);
-  border-right-color: #2fa765;
-  box-shadow: inset 0 -3px 0 #2fa765;
+  background: linear-gradient(90deg, rgba(74, 124, 89, 0.25) 0%, rgba(74, 124, 89, 0.45) 100%);
+  border-right-color: var(--accent-emerald);
+  box-shadow: inset 0 -3px 0 var(--accent-emerald);
 }
 .commands button:not([data-state="cooldown"]):not([data-state="active"]) .cooldown-fill {
   border-right-width: 0;
   box-shadow: none;
 }
 .commands button.denied { animation: denied .32s ease; }
-@keyframes denied { 25% { border-color: #b92b2b; } 60% { transform: translateX(3px); } }
+@keyframes denied { 25% { border-color: var(--accent-terracotta); } 60% { transform: translateX(3px); } }
 
 /* 生效中战术状态纸条 */
 .effect-panel {
@@ -446,66 +454,68 @@ body[data-phase="start"] .hud { display: none; }
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 7px 16px;
-  background-color: #e6decb;
-  background-image: var(--paper-noise), var(--paper-sheet-bg);
-  border: 1.5px solid var(--paper-border);
-  border-left: 4px solid var(--paper-stamp-red);
-  border-radius: 1px;
+  padding: 8px 18px;
+  background: rgba(28, 27, 25, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(245, 242, 235, 0.1);
+  border-left: 3px solid var(--accent-terracotta);
+  border-radius: 8px;
   font-family: var(--font-serif);
   font-size: 12px;
-  color: var(--paper-ink);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.78), 0 0 0 2px #161310;
+  color: var(--text-primary);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65);
 }
-.effect-panel strong { font-weight: 900; letter-spacing: 0.08em; }
-.effect-panel .mono { margin-left: auto; color: var(--paper-stamp-red); font-size: 11px; font-weight: 800; }
-.effect-track { width: 64px; height: 4px; background: rgba(43, 36, 29, 0.22); border-radius: 0; overflow: hidden; }
-#effect-fill { height: 100%; background: var(--paper-stamp-red); border-radius: 0; transform-origin: left; }
+.effect-panel strong { font-weight: 700; letter-spacing: 0.05em; }
+.effect-panel .mono { margin-left: auto; color: var(--accent-terracotta); font-size: 11px; font-weight: 700; }
+.effect-track { width: 64px; height: 4px; background: rgba(245, 242, 235, 0.12); border-radius: 2px; overflow: hidden; }
+#effect-fill { height: 100%; background: var(--accent-terracotta); border-radius: 2px; transform-origin: left; }
 
 /* 右上角纸质建筑平面图面板 */
 .map-panel {
   position: absolute;
   right: 24px;
   top: 72px;
-  width: 210px;
-  padding: 8px 8px 6px;
-  background-color: #dcd2be;
-  background-image: var(--paper-noise), var(--paper-sheet-bg);
-  border: 1.5px solid var(--paper-border);
-  border-radius: 1px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.78), 0 0 0 2px #161310;
+  width: 214px;
+  padding: 10px 10px 8px;
+  background: rgba(28, 27, 25, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(245, 242, 235, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65);
 }
 .map-panel > div {
   display: flex;
   justify-content: space-between;
   font-family: var(--font-serif);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  color: var(--paper-ink);
-  padding: 0 2px 5px;
-  font-weight: 900;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+  padding: 0 2px 6px;
+  font-weight: 700;
 }
 .map-panel canvas {
   display: block;
   width: 192px;
   height: 140px;
-  background: #c8bba3;
-  border: 1px solid var(--paper-border);
-  border-radius: 0;
+  background: #1c1a18;
+  border: 1px solid rgba(245, 242, 235, 0.08);
+  border-radius: 6px;
 }
 .map-panel small {
   display: block;
-  margin-top: 5px;
+  margin-top: 6px;
   font-family: var(--font-serif);
   font-size: 9.5px;
-  font-weight: 700;
-  color: var(--paper-ink-muted);
+  font-weight: 500;
+  color: var(--text-muted);
   padding: 0 2px;
 }
 
-.danger { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 100px 18px rgba(140, 29, 29, 0.55); opacity: 0; transition: opacity .2s; }
+.danger { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 100px 18px rgba(217, 119, 87, 0.55); opacity: 0; transition: opacity .2s; }
 .danger[data-on="true"] { opacity: 1; }
-.threat-pointer { position: fixed; left: 50%; top: 50%; z-index: 2; color: #b92b2b; font-size: 22px; line-height: 1; pointer-events: none; opacity: .9; filter: drop-shadow(0 2px 8px rgba(140, 29, 29, 0.6)); }
+.threat-pointer { position: fixed; left: 50%; top: 50%; z-index: 2; color: var(--accent-terracotta); font-size: 22px; line-height: 1; pointer-events: none; opacity: .9; filter: drop-shadow(0 2px 8px rgba(217, 119, 87, 0.6)); }
 
 .touch-controls { position: absolute; left: 20px; right: 20px; bottom: 18px; display: flex; align-items: flex-end; justify-content: space-between; pointer-events: none; }
 .touch-stick { position: relative; width: 132px; height: 132px; border-radius: 50%; background: rgba(24, 20, 16, 0.78); border: 1.5px solid rgba(220, 210, 190, 0.45); pointer-events: auto; touch-action: none; }
@@ -2061,29 +2071,28 @@ body[data-touch="true"] .keyboard-only { display: none; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  border-radius: 1px;
-  background-color: #dcd2be;
-  background-image: var(--paper-noise), var(--paper-sheet-bg);
-  border: 1px solid var(--paper-border);
+  padding: 5px 14px;
+  border-radius: 8px;
+  background-color: #FAF8F5;
+  border: 1px solid rgba(44, 40, 36, 0.15);
   border-left: 3px solid var(--paper-stamp-red);
   color: var(--paper-ink);
   font-family: var(--font-serif);
   font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.55);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
   transition: all 0.16s ease;
   cursor: pointer;
 }
 .shop-summary-btn:hover {
-  background-color: #efe7d6;
+  background-color: #ffffff;
   color: var(--paper-stamp-red);
   border-color: var(--paper-stamp-red);
-  transform: translateX(3px);
+  transform: translateX(2px);
 }
 
-/* 独立弹窗：医院值班纸质档案袋 (Horror Clinical Dossier，零液态玻璃，纸张肌理) */
+/* 独立弹窗：医院值班纸质档案袋 (Claude Anthropic Editorial Dossier) */
 .shop-config-layer {
   position: fixed;
   inset: 0;
@@ -2092,7 +2101,8 @@ body[data-touch="true"] .keyboard-only { display: none; }
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(4, 5, 7, 0.86);
+  background: rgba(14, 13, 12, 0.88);
+  backdrop-filter: blur(8px);
 }
 .shop-config-layer[hidden] {
   display: none !important;
@@ -2102,14 +2112,12 @@ body[data-touch="true"] .keyboard-only { display: none; }
   z-index: 1;
   width: 680px;
   max-width: 95vw;
-  background-color: #dcd2be;
-  background-image: var(--paper-noise), var(--paper-sheet-bg);
-  border: 2px solid var(--paper-border);
+  background-color: #FAF8F5;
+  border: 1px solid rgba(44, 40, 36, 0.12);
   box-shadow:
-    0 28px 70px rgba(0, 0, 0, 0.95),
-    0 0 0 6px #161310,
-    0 0 0 7px rgba(218, 208, 188, 0.25);
-  border-radius: 2px;
+    0 24px 60px -12px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
   color: var(--paper-ink);
   overflow: hidden;
 }
@@ -2122,8 +2130,8 @@ body[data-touch="true"] .keyboard-only { display: none; }
   color: var(--paper-ink);
   font-family: var(--font-serif);
   font-size: 16px;
-  font-weight: 900;
-  letter-spacing: 0.16em;
+  font-weight: 800;
+  letter-spacing: 0.08em;
 }
 .shop-modal-content {
   padding: 18px 24px;
@@ -2133,9 +2141,9 @@ body[data-touch="true"] .keyboard-only { display: none; }
   overflow-y: auto;
 }
 .shop-config-footer {
-  padding: 12px 24px 16px;
-  background: rgba(23, 19, 16, 0.06);
-  border-top: 2px solid var(--paper-border);
+  padding: 14px 24px 18px;
+  background: #F4EFE6;
+  border-top: 1px solid rgba(44, 40, 36, 0.1);
   display: flex;
   justify-content: flex-end;
 }
@@ -2145,13 +2153,12 @@ body[data-touch="true"] .keyboard-only { display: none; }
   padding: 10px 22px;
   font-family: var(--font-serif);
   font-size: 14px;
-  font-weight: 900;
-  letter-spacing: 0.2em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   background: var(--paper-ink);
-  color: #f4eee0;
+  color: #FAF8F5;
   border: 1px solid var(--paper-ink);
-  border-left: 4px solid var(--paper-stamp-red);
-  border-radius: 0;
+  border-radius: 8px;
   margin: 0;
   cursor: pointer;
   transition: all 0.15s;
@@ -2161,20 +2168,20 @@ body[data-touch="true"] .keyboard-only { display: none; }
   border-color: var(--paper-stamp-red);
   color: #ffffff;
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(204, 102, 68, 0.3);
 }
 
-/* 1. 科室档案现场实景银盐照片框 */
+/* 1. 科室档案现场实景照片框 */
 .shop-cover {
   position: relative;
   margin: 0;
   height: 168px;
   max-height: 168px;
-  border-radius: 0;
+  border-radius: 10px;
   overflow: hidden;
-  border: 4px solid #f2ece0;
-  outline: 1px solid var(--paper-border);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.32);
-  background: #0d0c0a;
+  border: 1px solid rgba(44, 40, 36, 0.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  background: #141312;
 }
 .shop-cover img {
   display: block;
@@ -2183,23 +2190,22 @@ body[data-touch="true"] .keyboard-only { display: none; }
   max-height: 168px;
   object-fit: cover;
   object-position: center 50%;
-  filter: sepia(0.16) brightness(0.88) contrast(1.08);
+  filter: sepia(0.12) brightness(0.92) contrast(1.05);
   transition: transform 0.4s ease;
 }
 .shop-cover:hover img { transform: scale(1.02); }
 
-/* 3D 动作角色暗房检视窗 */
+/* 3D 动作角色检视窗 */
 .shop-role-3d-box {
   position: absolute;
   top: 8px;
   right: 8px;
   width: 124px;
   height: 124px;
-  border-radius: 0;
-  background: #0b0a09;
-  border: 2px solid #e8dfd0;
-  outline: 1px solid #171310;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.75);
+  border-radius: 8px;
+  background: #141312;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -2218,11 +2224,12 @@ body[data-touch="true"] .keyboard-only { display: none; }
   left: 0;
   text-align: center;
   font-family: var(--font-serif);
-  font-size: 9px;
-  font-weight: 800;
-  color: #171310;
-  letter-spacing: 0.16em;
-  background: #e8dfd0;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #FAF8F5;
+  letter-spacing: 0.12em;
+  background: rgba(20, 19, 18, 0.85);
+  backdrop-filter: blur(4px);
   padding: 2px 4px;
   border-radius: 0;
 }
@@ -2232,25 +2239,25 @@ body[data-touch="true"] .keyboard-only { display: none; }
   top: 10px;
   left: 10px;
   padding: 3px 10px;
-  border-radius: 0;
+  border-radius: 9999px;
   font-family: var(--font-serif);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  background: #f2ece0;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  background: #FAF8F5;
   color: var(--paper-ink);
-  border: 1.5px solid var(--paper-border);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(44, 40, 36, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 .shop-cover-badge.locked {
   background: #2b1414;
-  border-color: #8c1d1d;
+  border-color: #CC6644;
   color: #f5d0d0;
 }
 .shop-cover-badge.free {
-  background: #f2ece0;
-  border-color: var(--paper-stamp-green);
-  color: var(--paper-stamp-green);
+  background: #F4EFE6;
+  border-color: rgba(44, 40, 36, 0.18);
+  color: var(--paper-ink-muted);
 }
 
 .shop-cover-meta {
@@ -2312,48 +2319,48 @@ body[data-touch="true"] .keyboard-only { display: none; }
 
 .shop-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
-/* 科室与值班人员纸质档案卡（告别圆头像与暗灰胶囊，采用一寸证件照 + 纸质登记卡） */
+/* 科室与值班人员纸质档案卡 (Claude Anthropic Editorial) */
 .shop-chip {
   position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 10px;
+  padding: 9px 12px;
   text-align: left;
-  background: var(--paper-card-bg);
-  border: 1px solid rgba(43, 36, 29, 0.42);
-  border-left: 3px solid rgba(43, 36, 29, 0.42);
-  border-radius: 0;
+  background: #FAF8F5;
+  border: 1px solid rgba(44, 40, 36, 0.12);
+  border-left: 3px solid rgba(44, 40, 36, 0.22);
+  border-radius: 8px;
   transition: all 0.15s ease;
   cursor: pointer;
 }
 .shop-chip:hover {
-  background: #ede5d4;
-  border-color: var(--paper-border);
+  background: #ffffff;
+  border-color: rgba(44, 40, 36, 0.25);
   transform: translateY(-1px);
 }
 .shop-chip.active {
-  background: var(--paper-card-active);
-  border-color: var(--paper-border);
-  border-left: 4px solid var(--paper-stamp-red);
-  box-shadow: 0 3px 10px rgba(23, 19, 16, 0.15);
+  background: #ffffff;
+  border-color: rgba(44, 40, 36, 0.18);
+  border-left: 3px solid var(--paper-stamp-red);
+  box-shadow: 0 4px 12px rgba(204, 102, 68, 0.15);
 }
 .shop-chip.locked {
   opacity: 0.52;
-  background: rgba(210, 200, 182, 0.35);
+  background: rgba(244, 239, 230, 0.6);
 }
 .shop-chip > span { display: grid; gap: 3px; min-width: 0; }
 .shop-chip strong {
   font-family: var(--font-serif);
   font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   white-space: nowrap;
   color: var(--paper-ink);
 }
 .shop-chip small {
   font-family: var(--font-serif);
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 600;
   color: var(--paper-ink-muted);
   white-space: nowrap;
@@ -2361,7 +2368,7 @@ body[data-touch="true"] .keyboard-only { display: none; }
   text-overflow: ellipsis;
 }
 
-/* 科室缩略照与人员一寸白边证件照（彻底取消 50% 圆角头像） */
+/* 科室缩略照与人员一寸白边证件照 */
 .shop-thumb,
 .shop-avatar {
   width: 36px !important;
@@ -2369,28 +2376,27 @@ body[data-touch="true"] .keyboard-only { display: none; }
   max-width: 36px !important;
   max-height: 44px !important;
   flex: none;
-  border-radius: 0 !important;
+  border-radius: 4px !important;
   object-fit: cover;
-  border: 2px solid #f7f3eb !important;
-  outline: 1px solid rgba(43, 36, 29, 0.45);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
-  filter: sepia(0.18) contrast(1.06);
+  border: 1px solid rgba(44, 40, 36, 0.15) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  filter: sepia(0.12) contrast(1.05);
 }
 .shop-swatch {
   position: absolute;
   right: 6px;
   top: 6px;
   display: none;
-  padding: 1px 5px;
+  padding: 1px 6px;
   font-family: var(--font-serif);
   font-style: normal;
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   color: var(--paper-stamp-red);
-  border: 1px solid var(--paper-stamp-red);
-  background: rgba(140, 29, 29, 0.06);
-  border-radius: 0;
+  border: 1px solid rgba(204, 102, 68, 0.35);
+  background: rgba(204, 102, 68, 0.08);
+  border-radius: 9999px;
 }
 .shop-chip.active .shop-swatch {
   display: inline-block;
@@ -2404,10 +2410,11 @@ body[data-touch="true"] .keyboard-only { display: none; }
   justify-content: space-between;
   padding: 10px 16px;
   background: var(--paper-stamp-red);
-  color: #f7f3eb;
-  border: 1px solid #591111;
-  border-radius: 0;
+  color: #FAF8F5;
+  border: 1px solid var(--paper-stamp-red);
+  border-radius: 8px;
   transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(204, 102, 68, 0.25);
   margin-bottom: 2px;
 }
 .shop-buy:hover:not(:disabled) {

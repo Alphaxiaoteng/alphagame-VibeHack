@@ -194,12 +194,16 @@
           <div class="tactical-menu-panel">
             <button id="primary" class="primary" type="button">
               <span class="primary-label-main">开始逃生</span>
-              <span class="arrow-icon" aria-hidden="true">→</span>
+              <span class="arrow-icon" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </span>
             </button>
 
             <button id="restart-round" class="restart-round-btn" type="button" hidden>
               <span id="restart-round-label">重新进入本局</span>
-              <span class="arrow-icon" aria-hidden="true">↻</span>
+              <span class="arrow-icon" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+              </span>
             </button>
 
             <div class="difficulty-picker-container">
@@ -294,7 +298,10 @@
               <span id="loader-countdown" class="mono loader-time">5.0s</span>
               <div class="loader-actions-group">
                 <button id="loader-pause" type="button" class="loader-pause-btn" aria-pressed="false">暂停 <kbd>P</kbd></button>
-                <button id="loader-skip" type="button" class="loader-skip-btn">跳过 <kbd>Space</kbd> →</button>
+                <button id="loader-skip" type="button" class="loader-skip-btn">
+                  <span>跳过 <kbd>Space</kbd></span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
               </div>
             </div>
           </footer>
@@ -319,7 +326,9 @@
           <p>《查房》为 3D 沉浸逃生视界，横向持握可开启完整遥控摇杆与战术指令按键。</p>
           <button type="button" id="btn-force-landscape" class="primary landscape-btn">
             <span>进入全屏横屏</span>
-            <span class="arrow-icon">⛶</span>
+            <svg class="arrow-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+            </svg>
           </button>
         </div>
       </div>
@@ -330,7 +339,9 @@
         <div class="modal-card qr-card">
           <div class="modal-head">
             <strong>手机扫码即玩</strong>
-            <button class="modal-close" data-close-modal title="关闭">×</button>
+            <button class="modal-close" data-close-modal title="关闭">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
           </div>
           <div class="qr-preview-box">
             <img src="./qr-game.png" alt="游戏访问二维码" width="240" height="240" />
@@ -353,8 +364,13 @@
               </div>
             </div>
             <div class="modal-actions">
-              <a href="/pitch" target="_blank" class="btn-subtle" title="新标签页全屏演示">独立全屏 ↗</a>
-              <button class="modal-close" data-close-modal title="关闭">×</button>
+              <a href="/pitch" target="_blank" class="btn-subtle" title="新标签页全屏演示">
+                <span>独立全屏</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              </a>
+              <button class="modal-close" data-close-modal title="关闭">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
             </div>
           </div>
 
