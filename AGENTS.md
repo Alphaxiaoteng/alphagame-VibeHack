@@ -38,7 +38,7 @@
 
 ## 4. 部署与现场试玩 (Deploy & Demo)
 
-- **公网地址**：<https://alphaxiaoteng.github.io/midnight-duty/>（GitHub Pages；`Alphaxiaoteng/midnight-duty` 只存构建产物，源码仓库保持私有）。
+- **公网地址**：<https://alphaxiaoteng.github.io/alphagame-VibeHack/>（GitHub Pages 官方发布地址，已全站自动化部署）。
 - **重新部署**：`npm run deploy` — 构建 `dist/`、推送并打印二维码，首次生效约 1 分钟。
 - **现场兜底（不依赖外网）**：终端 A 跑 `npm run serve:lan`，终端 B 跑 `npm run qr:lan` 打印局域网二维码，手机连同一 Wi-Fi 或热点扫码进入。
 - **打包约束**：`vite.config.ts` 使用 `base: './'`，同一份 `dist/` 同时适配 Pages 子路径与局域网直连。

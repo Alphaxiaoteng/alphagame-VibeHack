@@ -7,8 +7,8 @@ import { join } from 'node:path';
 import qrcode from 'qrcode-terminal';
 
 const OWNER = process.env.PAGES_OWNER ?? 'Alphaxiaoteng';
-const REPO = process.env.PAGES_REPO ?? 'midnight-duty';
-const BRANCH = 'main';
+const REPO = process.env.PAGES_REPO ?? 'alphagame-VibeHack';
+const BRANCH = 'gh-pages';
 const URL = `https://${OWNER.toLowerCase()}.github.io/${REPO}/`;
 
 const run = (cmd, args, cwd) =>

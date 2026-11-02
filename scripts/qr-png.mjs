@@ -4,15 +4,21 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import QRCode from 'qrcode';
 
-const URL = process.env.PAGES_URL ?? 'https://alphaxiaoteng.github.io/midnight-duty/';
-const OUT = 'assets/art/ui/qr-deploy.png';
+const URL = process.env.PAGES_URL ?? 'https://alphaxiaoteng.github.io/alphagame-VibeHack/';
+const targets = [
+  'assets/art/ui/qr-deploy.png',
+  'public/qr-game.png',
+  'public/textures/qr-game.png',
+];
 
-mkdirSync(dirname(OUT), { recursive: true });
-await QRCode.toFile(OUT, URL, {
-  width: 720,
-  margin: 2,
-  errorCorrectionLevel: 'M',
-  color: { dark: '#233c32', light: '#f2f4ec' },
-});
+for (const out of targets) {
+  mkdirSync(dirname(out), { recursive: true });
+  await QRCode.toFile(out, URL, {
+    width: 720,
+    margin: 2,
+    errorCorrectionLevel: 'M',
+    color: { dark: '#233c32', light: '#f2f4ec' },
+  });
+  console.log(`✓ ${out} → ${URL}`);
+}
 
-console.log(`✓ ${OUT} → ${URL}`);
