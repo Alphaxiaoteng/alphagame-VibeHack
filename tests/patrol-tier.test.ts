@@ -71,7 +71,9 @@ describe('三档巡逻走位', () => {
 });
 describe('巡逻覆盖回归（开局保护窗 10 秒后恢复全图）', () => {
   it('45 秒巡逻北/西走廊有覆盖，且值班员会目视发现出生点挂机玩家', () => {
-    const game = new RoundsGame();
+    let s = 1;
+    const rand = () => { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296; };
+    const game = new RoundsGame({ rand });
     game.start();
     const zones: Record<string, number> = { 北: 0, 南: 0, 西: 0, 东: 0 };
     let seen = false;
