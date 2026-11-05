@@ -21,6 +21,7 @@ console.log('▶ 准备 Pages 仓库内容 …');
 const staging = mkdtempSync(join(tmpdir(), 'pages-'));
 try {
   cpSync('dist', staging, { recursive: true });
+  rmSync(join(staging, '.git'), { recursive: true, force: true });
   // 绕过 Jekyll，避免下划线开头的产物被吞
   writeFileSync(join(staging, '.nojekyll'), '');
 
