@@ -66,6 +66,51 @@ pinned: false
 
 ---
 
+## 「AI 造游戏」全流程生产力实践 (How AI Built This Game)
+
+作为 **魔搭社区 × Qoder × 盛趣游戏 第三期「AI 造游戏」大赛** 的深度践行作品，本项目完整验证了**「人人都是游戏制作人」**在复杂 3D 原创游戏研发中的落地可能。
+
+```mermaid
+flowchart TD
+  subgraph AI_Assets ["1. AI 三维与音频资产生成"]
+    A1["Tripo 3D 快速生成<br/>高精角色与动画模型"] --> A2["归一化网格与 PBR 材质装配<br/>消光蜡面 + 物理 Bump"]
+    A3["Edge-TTS 神经语音合成<br/>住院部广播与巡查语音"] --> A4["Web Audio API 空间声场<br/>动态 Lub-Dub 心跳与脚步衰减"]
+  end
+
+  subgraph AI_Logic ["2. AI 智能体与核心逻辑架构"]
+    B1["Qoder 驱动端到端编码<br/>纯逻辑与渲染完全解耦"] --> B2["120 项 Vitest 自动化单元测试<br/>覆盖移动/碰撞/技能互斥"]
+    B3["多分支动态猎手 AI<br/>回马枪突袭 + 速度矢量截击"] --> B4["A* 实时规避与盲区深度排查"]
+  end
+
+  subgraph Web_Deployment ["3. 创空间与多端秒开交付"]
+    C1["ModelScope Studio 静态容器<br/>sdk: static 零冷启动秒开"] --> C2["电脑桌面键鼠 3D 视界"]
+    C1 --> C3["手机端横屏全屏虚拟摇杆"]
+  end
+
+  AI_Assets --> Web_Deployment
+  AI_Logic --> Web_Deployment
+```
+
+### 1. AI 驱动的三维美术资产流水线 (AI 3D Art Pipeline)
+- **零手工高门槛建模**：基于 **Tripo 3D** 提示词与图生 3D 模型流水线，快速生成值班员骨骼动画模型（包含 Walk/Idle 动画片段）、医用病床、推车、药品柜等 3D 资产；
+- **工业级 PBR 微表面处理**：利用程序化 Canvas 算法自动生成高频法线贴图（`bumpMap`）与非均匀粗糙度贴图（`roughnessMap`），彻底消除了生硬的塑料油光，实现医院水磨石地砖与抗菌墙面的真实光影漫反射。
+
+### 2. AI 赋能的工业级系统架构 (AI-Native Engineering with Qoder)
+- **纯逻辑与表现层解耦（Headless Architecture）**：
+  - 核心物理判定、A* 网格寻路、视线遮挡光线投射与技能冷却逻辑全量封装于纯 TypeScript 逻辑模块（`src/core/`），完全不依赖 WebGL 上下文；
+  - **120 项自动化测试全量保障**：在 AI 智能体辅助下，为每个核心模块编写了 120 项 Vitest 单元测试，确保高压逃生中零穿墙、零数值漂移、零技能并发冲突。
+- **动态多分支猎手 AI**：
+  - 拒绝固定脚本巡逻：构建 8 处网格化巡逻枢纽，支持走廊支路随机切入；
+  - 融入**回马枪突击（Ambush Turnaround）**与**速度矢量前置拦截（Predictive Interception）**，值班员不仅会根据玩家奔跑速度提前截断拐角，还会偶尔反身扫射走廊，对抗性与博弈乐趣倍增。
+
+### 3. 主机级视听体感与微恐心理心流
+- **生理真实感镜头（Headbob & Breathing Sway）**：
+  - 第一人称视界融入真实人类行走/疾跑重心起伏与胸腔呼吸微动；奔跑冲刺时动态视野（FOV 72°→78°）自然推伸，营造强烈的肾上腺素飙升感；
+- **生理声学共振**：
+  - 玩家体力竭尽时触发急促粗重的喘息反射（Gasping Reflex）；值班员逼近时触发双重重击心跳（62Hz/82Hz Lub-Dub），直击心理微恐内核。
+
+---
+
 ## 商业化闭环与 Waffo 全球支付集成
 
 本项目完整集成了 **Waffo Pancake** 跨境数字商品收单方案，实现了从试玩导流到微额买断的商业化闭环：
