@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Serif+SC:wght@500;700;900&display=swap" rel="stylesheet">
+  <title>Waffo 收银台 · 《查房》买断核销单</title>
+  <style>
+    :root {
+      --font-serif: "Noto Serif SC", "Songti SC", "STSong", "PMingLiU", serif;
+      --font-display: "Cinzel", "Noto Serif SC", "Songti SC", serif;
+      
+      --paper-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.12 0 0 0 0 0.10 0 0 0 0 0.08 0 0 0 0.075 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      --paper-sheet-bg: #FAF8F5;
+      --paper-card-bg: #FFFFFF;
+      
+      --paper-ink: #1C1917;
+      --paper-ink-muted: #57534E;
+      --paper-ink-dim: #78716C;
+      --paper-border: rgba(44, 40, 36, 0.12);
+      --paper-stamp-terracotta: #CC6644;
+      --paper-stamp-terracotta-hover: #B85535;
+      
+      --bg-dark: #141312;
+    }
+    
+    * { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 30%, #1e1d1b 0%, #141312 100%);
+      font-family: var(--font-serif);
+      color: var(--paper-ink);
+      padding: 24px;
+      position: relative;
+      overflow-x: hidden;
+      font-feature-settings: "palt";
+    }
+    
+    /* Claude 曜石环境陶土微光 */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 50% 25%, rgba(204, 102, 68, 0.06) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    
+    /* Claude 人文米纸收银核销卡 */
+    .checkout-card {
+      width: 440px;
+      max-width: 100%;
+      background-color: #FAF8F5;
+      border: 1px solid rgba(44, 40, 36, 0.12);
+      border-radius: 14px;
+      padding: 32px 28px 26px;
+      box-shadow: 
+        0 24px 50px -12px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* 顶部装订线与档案批号 */
+    .archive-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-display);
+      font-size: 10.5px;
+      letter-spacing: 0.16em;
+      color: var(--paper-ink-dim);
+      border-bottom: 1px dashed rgba(44, 40, 36, 0.18);
+      padding-bottom: 10px;
+      margin-bottom: 18px;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .brand-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    
+    .brand {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      color: var(--paper-ink);
+      text-transform: uppercase;
+    }
+    
+    .brand-sub {
+      font-size: 10.5px;
+      letter-spacing: 0.06em;
+      color: var(--paper-ink-muted);
+    }
+    
+    /* 陶土暖橙印章戳 */
+    .badge-stamp {
+      border: 1px solid rgba(204, 102, 68, 0.35);
+      color: var(--paper-stamp-terracotta);
+      font-family: var(--font-serif);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      letter-spacing: 0.06em;
+      background: rgba(204, 102, 68, 0.08);
+      user-select: none;
+    }
+    
+    .item-title {
+      font-size: 21px;
+      font-weight: 900;
+      margin: 0 0 6px;
+      color: var(--paper-ink);
+      letter-spacing: -0.01em;
+    }
+    
+    .item-desc {
+      font-size: 12.5px;
+      color: var(--paper-ink-muted);
+      margin: 0 0 20px;
+      line-height: 1.6;
+    }
+    
+    /* 账单金额栏（米纸陶土出纳格） */
+    .price-box {
+      background: #F4EFE6;
+      border: 1px solid rgba(44, 40, 36, 0.08);
+      border-left: 3px solid var(--paper-stamp-terracotta);
+      border-radius: 8px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 18px;
+    }
+    
+    .price-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--paper-ink-muted);
+      letter-spacing: 0.04em;
+    }
+    
+    .price-values {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+    }
+    
+    .price-amount {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--paper-ink);
+    }
+    
+    .price-currency {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--paper-stamp-terracotta);
+      letter-spacing: 0.08em;
+    }
+    
+    /* 测试环境付款凭据格 */
+    .card-info {
+      background: #F4EFE6;
+      border: 1px dashed rgba(44, 40, 36, 0.22);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 22px;
+      font-size: 12px;
+      color: var(--paper-ink-muted);
+      line-height: 1.5;
+    }
+    
+    .card-info strong {
+      color: var(--paper-ink);
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-weight: 700;
+    }
+    
+    /* 确认出单大按钮（Claude 曜石黑 + 悬停陶土暖橙） */
+    .pay-btn {
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: 10px;
+      background: var(--paper-ink);
+      color: #FAF8F5;
+      font-family: var(--font-serif);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      border: 1px solid var(--paper-ink);
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(28, 25, 23, 0.25);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .pay-btn:hover {
+      background: var(--paper-stamp-terracotta);
+      border-color: var(--paper-stamp-terracotta);
+      color: #FFFFFF;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(204, 102, 68, 0.3);
+    }
+    
+    .pay-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+    
+    .pay-btn:disabled {
+      background: #A8A29E;
+      border-color: #A8A29E;
+      color: #E7E5E4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .pay-btn-icon {
+      display: inline-flex;
+      align-items: center;
+      transition: transform 0.18s ease;
+    }
+    .pay-btn:hover .pay-btn-icon {
+      transform: translateX(3px);
+    }
+    
+    .cancel-link {
+      display: block;
+      text-align: center;
+      margin-top: 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--paper-ink-muted);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      letter-spacing: 0.04em;
+      transition: color 0.18s ease;
+    }
+    
+    .cancel-link:hover {
+      color: var(--paper-stamp-terracotta);
+    }
+    
+    /* 底部收执防伪标识 */
+    .stamp-watermark {
+      margin-top: 22px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(44, 40, 36, 0.12);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      color: var(--paper-ink-dim);
+      font-family: var(--font-display);
+      letter-spacing: 0.12em;
+    }
+  </style>
+</head>
+<body>
+  <div class="checkout-card">
+    <div class="archive-meta">
+      <span>REF // WAFFO-CHCK-2026</span>
+      <span>HOSPITAL EVAC AUTH</span>
+    </div>
+    
+    <div class="header">
+      <div class="brand-group">
+        <span class="brand">WAFFO PAYMENTS</span>
+        <span class="brand-sub">全球出海合规结算通道</span>
+      </div>
+      <span class="badge-stamp">演示沙箱 · 离线结算</span>
+    </div>
+    
+    <h1 class="item-title" id="p-name">03 封印殿 (买断解锁)</h1>
+    <p class="item-desc">《查房》买断制扩展内容，付款后永久绑定这台设备的本地账本，无任何后续订阅扣费。</p>
+    
+    <div class="price-box">
+      <span class="price-label">待付买断总额 / TOTAL</span>
+      <div class="price-values">
+        <span class="price-amount" id="p-price">0.99</span>
+        <span class="price-currency">USD</span>
+      </div>
+    </div>
+    
+    <div class="card-info">
+      <div>测试卡号：<strong>4576 7500 0000 0110</strong></div>
+      <div style="margin-top:4px;">有效期：<strong>12/28</strong> &nbsp;&nbsp; 安全码 CVC：<strong>888</strong></div>
+    </div>
+    
+    <button type="button" class="pay-btn" id="pay-btn">
+      <span id="pay-btn-text">确认支付 $0.99 (模拟出单)</span>
+      <span class="pay-btn-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </span>
+    </button>
+    <a href="./" class="cancel-link">取消并返回病房</a>
+    
+    <div class="stamp-watermark">
+      <span>PANCAKE CHECKOUT ENGINE</span>
+      <span>STATION_AUTH: 04:00 AM</span>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const sku = params.get("sku") || "LEVEL_VAULT";
+    const ref = params.get("ref") || "";
+    const name = params.get("name") || "03 封印殿";
+    const price = params.get("price") || "0.99";
+
+    document.getElementById("p-name").textContent = name + " (买断解锁)";
+    document.getElementById("p-price").textContent = price;
+    const btn = document.getElementById("pay-btn");
+    const btnText = document.getElementById("pay-btn-text");
+    btnText.textContent = `确认支付 $${price} (模拟出单)`;
+
+    function saveLocalUnlock(unlockedSku) {
+      try {
+        const raw = localStorage.getItem("rounds.demo-skus");
+        const list = raw ? JSON.parse(raw) : [];
+        if (Array.isArray(list) && !list.includes(unlockedSku)) {
+          list.push(unlockedSku);
+          localStorage.setItem("rounds.demo-skus", JSON.stringify(list));
+        } else if (!Array.isArray(list)) {
+          localStorage.setItem("rounds.demo-skus", JSON.stringify([unlockedSku]));
+        }
+      } catch {}
+    }
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btnText.textContent = "正在出单与记账…";
+      saveLocalUnlock(sku);
+      try {
+        await fetch("./api/demo-pay", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ sku, ref })
+        });
+      } catch {}
+      btnText.textContent = "支付成功！正在返回游戏…";
+      setTimeout(() => {
+        location.href = "./?paid=1";
+      }, 600);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="full-screen" content="yes" />
+    <meta name="x5-fullscreen" content="true" />
+    <meta name="theme-color" content="#14110e" />
+    <meta name="description" content="在医院改写灯光、通道与广播，躲避巡查并坚持 45 秒，抵达东侧安全门。" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23e7ebe5'/%3E%3Cpath d='M26 12h12v14h14v12H38v14H26V38H12V26h14z' fill='%233f7a55'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+SC:wght@600;700;900&display=swap" rel="stylesheet" />
+    <title>极限逃生 ESCAPE: 45 SECONDS · 3D 微恐解谜潜行逃生游戏</title>
+    <script type="module" crossorigin src="./assets/index-fsEsOxem.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/three-vbqSFu3a.js">
+    <link rel="stylesheet" crossorigin href="./assets/index-DVyvkp64.css">
+  </head>
+  <body data-phase="start">
+    <main id="app">
+      <div id="scene" aria-label="第三人称医院游戏画面"></div>
+      <div id="hud" class="hud">
+        <header class="topbar">
+          <button id="btn-fullscreen" type="button" class="top-left-btn" title="全屏显示">全屏</button>
+          <div class="timer-block"><span id="timer-label">安全门通电</span><strong id="timer" class="mono">60<span>s</span></strong></div>
+          <div class="toolbar">
+            <button id="btn-qr" type="button" title="手机扫码直接体验" hidden>手机扫码</button>
+            <button id="mute" type="button" aria-pressed="false" title="静音或打开声音" hidden><kbd>M</kbd> 声音</button>
+            <button id="pause" type="button" disabled title="暂停"><kbd>Esc</kbd> 暂停</button>
+          </div>
+        </header>
+        <div class="objective"><span class="status-dot" id="status-dot"></span><div><strong id="objective">躲开值班员，等安全门通电</strong><span id="status">巡查中 · 走路安静，奔跑会被听见</span></div></div>
+        <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+        <section id="effect-panel" class="effect-panel" hidden><strong id="effect-name"></strong><span id="effect-time" class="mono"></span><div class="effect-track"><div id="effect-fill"></div></div></section>
+        <aside class="map-panel" aria-label="医院路线图"><div><span>住院部 / N ↑</span><span id="corridor-name">北走廊</span></div><canvas id="minimap" width="200" height="146" aria-label="路线、玩家和东侧安全门"></canvas><small id="map-note">黑点：你 · 东侧：安全门</small></aside>
+        <div id="danger" class="danger" aria-hidden="true" hidden></div>
+        <div id="threat-pointer" class="threat-pointer" aria-hidden="true" hidden>▲</div>
+        <div class="bottom-hud">
+          <section class="stamina-panel" aria-label="体力"><div><span>体力</span><span id="stamina-label" class="mono">100%</span></div><div id="stamina" class="stamina-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="stamina-fill" data-stable="true"></div></div><small id="stamina-hint">按住 Shift 奔跑 · 松开恢复</small></section>
+          <section class="commands" aria-label="值班战术指令槽（可按键盘 1 / 2 / 3 或直接点击）">
+            <button id="command-lights" type="button" class="command-btn" title="全院开灯：点亮全部顶灯与出口引导，持续 6 秒；值班员视距扩大至 12 米。12 秒冷却。">
+              <kbd class="key-badge">1</kbd>
+              <div class="cmd-info">
+                <strong>全院开灯</strong>
+                <small>强光透视 · 易暴露</small>
+              </div>
+              <span class="command-status">可用</span>
+              <i class="cooldown-fill"></i>
+            </button>
+            <button id="command-lockdown" type="button" class="command-btn" title="封锁走廊：关闭追捕路线防火门 5 秒；你也需要绕路。12 秒冷却。">
+              <kbd class="key-badge">2</kbd>
+              <div class="cmd-info">
+                <strong>封锁走廊</strong>
+                <small>阻断追捕 · 需绕路</small>
+              </div>
+              <span class="command-status">可用</span>
+              <i class="cooldown-fill"></i>
+            </button>
+            <button id="command-broadcast" type="button" class="command-btn" title="广播诱敌：引向远处病房 6 秒，随后警觉搜索 6 秒。先躲开视线才能引开。12 秒冷却。">
+              <kbd class="key-badge">3</kbd>
+              <div class="cmd-info">
+                <strong>广播诱敌</strong>
+                <small>声东击西 · 警戒搜索</small>
+              </div>
+              <span class="command-status">可用</span>
+              <i class="cooldown-fill"></i>
+            </button>
+          </section>
+          <div class="controls-note">
+            <span><kbd>WASD</kbd> 走位 · <kbd>Shift</kbd> 疾跑</span>
+            <span><kbd>1</kbd> 开灯 <small>透视位置</small></span>
+            <span><kbd>2</kbd> 封门 <small>阻断追捕</small></span>
+            <span><kbd>3</kbd> 广播 <small>声东击西</small></span>
+            <span>右键拖动视线</span>
+          </div>
+        </div>
+        <div id="touch-controls" class="touch-controls" hidden>
+          <div id="touch-stick" class="touch-stick" role="application" aria-label="虚拟摇杆：拖动移动，向上推前进">
+            <div id="touch-thumb" class="touch-thumb"></div>
+          </div>
+          <div class="touch-actions">
+            <button id="touch-orientation" type="button" title="切换横屏/竖屏">横屏</button>
+            <button id="touch-fullscreen" type="button" title="全屏显示">全屏</button>
+            <button id="touch-sprint" type="button" aria-pressed="false">跑</button>
+            <button id="touch-pause" type="button">暂停</button>
+          </div>
+        </div>
+        <aside id="debug-panel" class="debug-panel" hidden>
+          <div class="debug-pills">
+            <button id="debug-a" type="button"><kbd>F2</kbd> 门A</button>
+            <button id="debug-b" type="button"><kbd>F3</kbd> 门B</button>
+            <button id="debug-time" type="button"><kbd>F4</kbd> -3s</button>
+            <button id="debug-exit" type="button"><kbd>F5</kbd> 通电</button>
+          </div>
+          <output id="debug-state" class="mono" hidden></output>
+        </aside>
+      </div>
+      <section id="overlay" class="overlay" aria-labelledby="overlay-title">
+        <!-- 全屏电影级主视觉封面舞台 (仅在 start 阶段呈现) -->
+        <div class="cover-stage" aria-hidden="true">
+          <div class="cover-backdrop"></div>
+          <div class="cover-vignette"></div>
+          <div class="cover-scanlines"></div>
+        </div>
+
+        <div class="briefing">
+          <div class="briefing-head">
+            <div class="brand-pill"><span class="rec-dot"></span><span class="brand-name">WARD II</span><span class="sep">//</span><span class="mono">04:00 AM</span></div>
+            <span class="phase-badge">NIGHT SHIFT · 01</span>
+          </div>
+
+          <!-- 游戏主视觉巨幅片名 (Start 封面专属展示) -->
+          <div class="hero-title-lockup" aria-hidden="true">
+            <div class="hero-logo-cn">极限逃生</div>
+            <div class="hero-logo-en-row">
+              <span class="hero-logo-line"></span>
+              <span class="hero-logo-en">4 5   S E C O N D S</span>
+              <span class="hero-logo-line"></span>
+            </div>
+          </div>
+
+          <p id="overlay-kicker" class="eyebrow">备用电源正在充能</p>
+          <h1 id="overlay-title">今晚，走出医院。</h1>
+          <p id="overlay-copy" class="briefing-copy">
+            一款<strong class="highlight-timer">心理微恐潜行</strong> 逃生3D 游戏
+            <span class="briefing-subcopy">改写灯光、封门与广播，躲开夜间巡查追捕，存活 45 秒走出医院。</span>
+          </p>
+          
+          <!-- 主机级底部通栏操作按键图例 -->
+          <div id="start-help" class="gamepad-guide" aria-label="操作按键教程指南">
+            <!-- 基础身法与视线 -->
+            <div class="guide-row guide-row-basic">
+              <div class="key-cluster wasd-group">
+                <div class="wasd-layout">
+                  <div class="key-row key-row-top">
+                    <span class="key-cap square-key">W</span>
+                  </div>
+                  <div class="key-row key-row-bottom">
+                    <span class="key-cap square-key">A</span>
+                    <span class="key-cap square-key">S</span>
+                    <span class="key-cap square-key">D</span>
+                  </div>
+                </div>
+                <span class="key-action-label">走位移动</span>
+              </div>
+
+              <div class="guide-divider-v" aria-hidden="true"></div>
+
+              <div class="key-cluster sprint-group">
+                <span class="key-cap pill-key">Shift</span>
+                <span class="key-action-label">奔跑冲刺</span>
+              </div>
+
+              <div class="guide-divider-v" aria-hidden="true"></div>
+
+              <div class="key-cluster look-group">
+                <span class="key-cap mouse-key">
+                  <svg class="mouse-svg" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="5" y="2" width="14" height="20" rx="7"></rect>
+                    <line x1="12" y1="6" x2="12" y2="10"></line>
+                    <path d="M12 2v8h7" fill="rgba(255, 255, 255, 0.25)"></path>
+                  </svg>
+                  右键拖动
+                </span>
+                <span class="key-action-label">环视镜头</span>
+              </div>
+            </div>
+
+            <div class="guide-divider-h" aria-hidden="true"></div>
+
+            <!-- 1 2 3 战术按键指令槽 -->
+            <div class="guide-row guide-row-tactical">
+              <span class="tactical-lead-tag">战术指令</span>
+              <div class="tactical-item">
+                <span class="key-cap square-key num-key">1</span>
+                <span class="tactical-desc">全院开灯<small>透视位置</small></span>
+              </div>
+              <div class="tactical-item">
+                <span class="key-cap square-key num-key">2</span>
+                <span class="tactical-desc">封锁走廊<small>阻断追捕</small></span>
+              </div>
+              <div class="tactical-item">
+                <span class="key-cap square-key num-key">3</span>
+                <span class="tactical-desc">广播诱敌<small>声东击西</small></span>
+              </div>
+              <small class="tactical-hint">可按键或点击发动</small>
+            </div>
+
+            <div id="touch-help" class="touch-hint-pill" hidden>
+              <span>触控模式：左下虚拟摇杆移动 · 右侧奔跑与指令槽</span>
+            </div>
+          </div>
+
+          <div class="tactical-menu-panel">
+            <button id="primary" class="primary" type="button">
+              <span class="primary-label-main">开始逃生</span>
+              <span class="arrow-icon" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </span>
+            </button>
+
+            <button id="restart-round" class="restart-round-btn" type="button" hidden>
+              <span id="restart-round-label">重新进入本局</span>
+              <span class="arrow-icon" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+              </span>
+            </button>
+
+            <div class="difficulty-picker-container">
+              <div class="diff-header-row">
+                <span class="diff-label-title">难度</span>
+                <strong id="diff-current-badge" hidden>中</strong>
+              </div>
+              <div id="difficulty-picker" class="difficulty-picker" aria-label="选择值班难度">
+                <button type="button" class="difficulty-card" data-difficulty="intern" title="简单">
+                  <span class="diff-level-text">简单</span>
+                </button>
+                <button type="button" class="difficulty-card" data-difficulty="standard" title="中">
+                  <span class="diff-level-text">中</span>
+                </button>
+                <button type="button" class="difficulty-card" data-difficulty="graveyard" data-locked="true" title="极难">
+                  <div class="diff-card-inner">
+                    <span class="diff-level-text">极难</span>
+                    <svg class="diff-lock-icon" viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- 战备选择：轻量状态摘要，点击弹出独立 3D 动作整备舱 -->
+            <section id="shop" class="shop" aria-label="科室与出勤人员"></section>
+
+            <div class="briefing-actions-secondary">
+              <button id="briefing-pitch" type="button" class="subtle-link">游戏介绍</button>
+              <span class="menu-dot-sep" aria-hidden="true">·</span>
+              <button id="briefing-qr" type="button" class="subtle-link">手机扫码</button>
+            </div>
+          </div>
+
+          <p id="overlay-footnote" class="briefing-footnote" hidden></p>
+          <div id="shift-log" class="shift-log" hidden></div>
+        </div>
+      </section>
+
+      <!-- 5秒开局加载动画与极简操作指南 (点击「开始逃生」后触发) -->
+      <section id="intro-loader" class="intro-loader" hidden aria-label="潜行与战术操作指南">
+        <div class="intro-loader-backdrop"></div>
+        <div class="intro-loader-stage">
+          <header class="intro-loader-head">
+            <h2 class="intro-title">操作指南</h2>
+            <p class="intro-sub">坚持 <strong>45 秒</strong>，待东侧安全门通电后离开医院。</p>
+          </header>
+
+          <div class="intro-tutorial-grid">
+            <div class="tutorial-panel">
+              <div class="tutorial-rows">
+                <div class="tutorial-row">
+                  <div class="tut-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div>
+                  <div class="tut-desc"><strong>静步移动</strong><span>走路无声</span></div>
+                </div>
+                <div class="tutorial-row">
+                  <div class="tut-keys"><kbd class="wide">Shift</kbd></div>
+                  <div class="tut-desc"><strong>奔跑冲刺</strong><span>会被听见</span></div>
+                </div>
+                <div class="tutorial-row">
+                  <div class="tut-keys"><kbd class="wide">右键拖动</kbd></div>
+                  <div class="tut-desc"><strong>环视视角</strong><span>观察走廊</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tutorial-panel">
+              <div class="tutorial-rows">
+                <div class="tutorial-row">
+                  <div class="tut-keys"><kbd class="num">1</kbd></div>
+                  <div class="tut-desc"><strong>全院开灯</strong><span>点亮透视 6 秒</span></div>
+                </div>
+                <div class="tutorial-row">
+                  <div class="tut-keys"><kbd class="num">2</kbd></div>
+                  <div class="tut-desc"><strong>封锁走廊</strong><span>落下防火门 5 秒</span></div>
+                </div>
+                <div class="tutorial-row">
+                  <div class="tut-keys"><kbd class="num">3</kbd></div>
+                  <div class="tut-desc"><strong>广播诱敌</strong><span>引开值班员 6 秒</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <footer class="intro-loader-foot">
+            <div class="loader-bar-track">
+              <div id="loader-fill" class="loader-bar-fill"></div>
+            </div>
+            <div class="loader-foot-actions">
+              <span id="loader-countdown" class="mono loader-time">5.0s</span>
+              <div class="loader-actions-group">
+                <button id="loader-pause" type="button" class="loader-pause-btn" aria-pressed="false">暂停 <kbd>P</kbd></button>
+                <button id="loader-skip" type="button" class="loader-skip-btn">
+                  <span>跳过 <kbd>Space</kbd></span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
+              </div>
+            </div>
+          </footer>
+        </div>
+      </section>
+      <section id="fatal" class="fatal" role="alert" hidden><h1>画面未能启动</h1><p id="fatal-message"></p><p class="fatal-hint">请用支持 WebGL 2 的桌面浏览器，并打开硬件加速后刷新。</p></section>
+      <div id="result-flash" aria-hidden="true"></div>
+      <div id="escape-flare" class="escape-flare" aria-hidden="true"></div>
+
+      <!-- 手机端竖屏旋转提示层（仅在触控设备竖屏时激活） -->
+      <div id="landscape-prompt" class="landscape-prompt" hidden>
+        <div class="landscape-content">
+          <div class="rotate-phone-icon">
+            <svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="14" y="6" width="20" height="36" rx="4"></rect>
+              <line x1="22" y1="36" x2="26" y2="36"></line>
+              <path d="M38 18l6 6-6 6"></path>
+              <path d="M44 24H32"></path>
+            </svg>
+          </div>
+          <h2>请旋转至横屏游玩</h2>
+          <p>《极限逃生：45秒》为 3D 沉浸逃生视界，横向持握可开启完整遥控摇杆与战术指令按键。</p>
+          <button type="button" id="btn-force-landscape" class="primary landscape-btn">
+            <span>进入全屏横屏</span>
+            <svg class="arrow-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 手机扫码弹窗 -->
+      <div id="qr-modal" class="modal-layer" hidden aria-modal="true" role="dialog" aria-label="手机扫码游玩">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-card qr-card">
+          <div class="modal-head">
+            <strong>手机扫码即玩</strong>
+            <button class="modal-close" data-close-modal title="关闭">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="qr-preview-box">
+            <img src="./qr-game.png" alt="游戏访问二维码" width="240" height="240" />
+          </div>
+          <p class="qr-url mono">alphaxiaoteng.github.io/escape-45s/</p>
+          <p class="qr-desc">支持 iPhone / Android 全屏触控，左下角虚拟摇杆、右侧奔跑与指令交互，无需安装客户端。</p>
+        </div>
+      </div>
+
+      <!-- 游戏介绍与极简教程弹窗 (支持极简图文与路演幻灯片切换) -->
+      <div id="pitch-modal" class="modal-layer" hidden aria-modal="true" role="dialog" aria-label="游戏介绍与极简教程">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-card pitch-card">
+          <div class="modal-head">
+            <div class="pitch-title-block">
+              <strong>《极限逃生：45秒》游戏介绍 · 极简教程</strong>
+            </div>
+            <div class="modal-actions">
+              <button class="modal-close" data-close-modal title="关闭">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- 极简表述 教程面 (默认展示，极速直出，零延迟，完全适配手机与电脑) -->
+          <div id="pitch-guide-pane" class="pitch-guide-wrapper">
+            <div class="guide-grid">
+              <!-- 卡片 1: 核心逃生目标 -->
+              <div class="guide-card">
+                <div class="guide-card-head">
+                  <span class="guide-index mono">01</span>
+                  <h3>核心逃生目标</h3>
+                </div>
+                <p class="guide-text">
+                  你被困在夜间断电的封闭住院部。值班员手提马灯在走廊内循环巡查。<br />
+                  <strong>坚持存活至备用电源充满</strong>（实习 30s · 标准 45s · 资深 60s），东侧安全大门将自动通电弹开；<strong>走向东侧安全门迎向晨光</strong>即可通关撤离。
+                </p>
+              </div>
+
+              <!-- 卡片 2: 潜行与避险法则 -->
+              <div class="guide-card">
+                <div class="guide-card-head">
+                  <span class="guide-index mono">02</span>
+                  <h3>潜行与避险法则</h3>
+                </div>
+                <ul class="guide-list">
+                  <li><strong>正常走路绝对静音</strong>：正常走位（WASD / 虚拟摇杆）无声，不会引来巡查；只有<strong>按住奔跑</strong>会产生急促脚步声吸引猎人赶来。</li>
+                  <li><strong>规避正面对视</strong>：猎人前方有扇形手电视锥。直线逃跑必被抓住，必须<strong>立刻转弯进病房、药房或借屏风切断视线</strong>。</li>
+                  <li><strong>体力节奏控制</strong>：奔跑消耗体力条，耗尽将进入 2 秒喘息减速惩罚，切忌盲目长途奔跑。</li>
+                </ul>
+              </div>
+
+              <!-- 卡片 3: 三大改写指令 -->
+              <div class="guide-card">
+                <div class="guide-card-head">
+                  <span class="guide-index mono">03</span>
+                  <h3>三大改写指令（12s 独立冷却）</h3>
+                </div>
+                <div class="guide-cmd-grid">
+                  <div class="guide-cmd-item">
+                    <span class="cmd-tag stamp-red">1 全院开灯</span>
+                    <strong>强光透视</strong>
+                    <p>全院顶灯通电 6 秒，地图雷达与小箭头透视猎人实时位置与行进路线；猎人视距随之扩大，需躲入暗处。</p>
+                  </div>
+                  <div class="guide-cmd-item">
+                    <span class="cmd-tag">2 封锁走廊</span>
+                    <strong>物理阻断</strong>
+                    <p>紧急降下中庭防火卷帘门 5 秒，阻断当前追捕通道，强制猎人绕远路，瞬间拉开 10 米以上安全身位。</p>
+                  </div>
+                  <div class="guide-cmd-item">
+                    <span class="cmd-tag">3 广播诱敌</span>
+                    <strong>声东击西</strong>
+                    <p>假借医院内线广播诱导猎人转向远处病房核查 6 秒。必须在脱离直视后使用才能成功引开。</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 卡片 4: 双端操作极简对照 -->
+              <div class="guide-card">
+                <div class="guide-card-head">
+                  <span class="guide-index mono">04</span>
+                  <h3>双端操作极简对照</h3>
+                </div>
+                <div class="guide-ctrl-row">
+                  <div class="guide-ctrl-col">
+                    <strong class="col-title">电脑桌面端</strong>
+                    <p><kbd>WASD</kbd> 走位 · <kbd>Shift</kbd> 疾跑 · <kbd>1 / 2 / 3</kbd> 指令 · <kbd>右键拖动</kbd> 视角 · <kbd>Esc</kbd> 暂停</p>
+                  </div>
+                  <div class="guide-ctrl-col">
+                    <strong class="col-title">手机触控端</strong>
+                    <p><strong>左下摇杆</strong> 移动 · <strong>右下跑键</strong> 疾跑 · <strong>底部按键</strong> 技能 · <strong>右屏拖动</strong> 视角 · <strong>左上按钮</strong> 全屏</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 底部说明条 -->
+            <div class="guide-footer-bar">
+              <span class="guide-hint">魔搭社区（ModelScope）第三期「AI 造游戏」开发者创作大赛参赛作品</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <noscript>《极限逃生：45秒》需要启用 JavaScript 才能游玩。</noscript>
+    </main>
+  </body>
+</html>
