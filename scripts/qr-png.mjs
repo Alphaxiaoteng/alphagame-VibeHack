@@ -4,7 +4,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import QRCode from 'qrcode';
 
-const URL = process.env.PAGES_URL ?? 'https://alphaxiaoteng.github.io/alphagame-VibeHack/';
+const URL = process.env.PAGES_URL ?? 'https://alphaxiaoteng.github.io/escape-45s/';
 const targets = [
   'assets/art/ui/qr-deploy.png',
   'public/qr-game.png',

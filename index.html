@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+SC:wght@600;700;900&display=swap" rel="stylesheet" />
-    <title>查房 Rounds · 医院逃生</title>
+    <title>极限逃生 ESCAPE: 45 SECONDS · 3D 微恐解谜潜行逃生游戏</title>
   </head>
   <body data-phase="start">
     <main id="app">
@@ -56,10 +56,10 @@
               <span class="command-status">可用</span>
               <i class="cooldown-fill"></i>
             </button>
-            <button id="command-broadcast" type="button" class="command-btn" title="广播查房：引向远处病房 6 秒，随后警觉搜索 6 秒。先躲开视线才能引开。12 秒冷却。">
+            <button id="command-broadcast" type="button" class="command-btn" title="广播诱敌：引向远处病房 6 秒，随后警觉搜索 6 秒。先躲开视线才能引开。12 秒冷却。">
               <kbd class="key-badge">3</kbd>
               <div class="cmd-info">
-                <strong>广播查房</strong>
+                <strong>广播诱敌</strong>
                 <small>声东击西 · 警戒搜索</small>
               </div>
               <span class="command-status">可用</span>
@@ -111,10 +111,10 @@
 
           <!-- 游戏主视觉巨幅片名 (Start 封面专属展示) -->
           <div class="hero-title-lockup" aria-hidden="true">
-            <div class="hero-logo-cn">查 房</div>
+            <div class="hero-logo-cn">极限逃生</div>
             <div class="hero-logo-en-row">
               <span class="hero-logo-line"></span>
-              <span class="hero-logo-en">R O U N D S</span>
+              <span class="hero-logo-en">4 5   S E C O N D S</span>
               <span class="hero-logo-line"></span>
             </div>
           </div>
@@ -123,7 +123,7 @@
           <h1 id="overlay-title">今晚，走出医院。</h1>
           <p id="overlay-copy" class="briefing-copy">
             一款<strong class="highlight-timer">心理微恐潜行</strong> 逃生3D 游戏
-            <span class="briefing-subcopy">改写灯光、封门与广播，躲开夜间查房，存活 45 秒走出医院。</span>
+            <span class="briefing-subcopy">改写灯光、封门与广播，躲开夜间巡查追捕，存活 45 秒走出医院。</span>
           </p>
           
           <!-- 主机级底部通栏操作按键图例 -->
@@ -181,7 +181,7 @@
               </div>
               <div class="tactical-item">
                 <span class="key-cap square-key num-key">3</span>
-                <span class="tactical-desc">广播查房<small>声东击西</small></span>
+                <span class="tactical-desc">广播诱敌<small>声东击西</small></span>
               </div>
               <small class="tactical-hint">可按键或点击发动</small>
             </div>
@@ -284,7 +284,7 @@
                 </div>
                 <div class="tutorial-row">
                   <div class="tut-keys"><kbd class="num">3</kbd></div>
-                  <div class="tut-desc"><strong>广播查房</strong><span>引开值班员 6 秒</span></div>
+                  <div class="tut-desc"><strong>广播诱敌</strong><span>引开值班员 6 秒</span></div>
                 </div>
               </div>
             </div>
@@ -323,7 +323,7 @@
             </svg>
           </div>
           <h2>请旋转至横屏游玩</h2>
-          <p>《查房》为 3D 沉浸逃生视界，横向持握可开启完整遥控摇杆与战术指令按键。</p>
+          <p>《极限逃生：45秒》为 3D 沉浸逃生视界，横向持握可开启完整遥控摇杆与战术指令按键。</p>
           <button type="button" id="btn-force-landscape" class="primary landscape-btn">
             <span>进入全屏横屏</span>
             <svg class="arrow-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -346,7 +346,7 @@
           <div class="qr-preview-box">
             <img src="./qr-game.png" alt="游戏访问二维码" width="240" height="240" />
           </div>
-          <p class="qr-url mono">alphaxiaoteng.github.io/alphagame-VibeHack/</p>
+          <p class="qr-url mono">alphaxiaoteng.github.io/escape-45s/</p>
           <p class="qr-desc">支持 iPhone / Android 全屏触控，左下角虚拟摇杆、右侧奔跑与指令交互，无需安装客户端。</p>
         </div>
       </div>
@@ -357,17 +357,9 @@
         <div class="modal-card pitch-card">
           <div class="modal-head">
             <div class="pitch-title-block">
-              <strong>《查房》游戏介绍 · 极简教程</strong>
-              <div class="modal-tab-nav" role="tablist">
-                <button type="button" id="tab-btn-guide" class="modal-tab-btn active" role="tab" aria-selected="true">玩法教程</button>
-                <button type="button" id="tab-btn-deck" class="modal-tab-btn" role="tab" aria-selected="false">路演幻灯片</button>
-              </div>
+              <strong>《极限逃生：45秒》游戏介绍 · 极简教程</strong>
             </div>
             <div class="modal-actions">
-              <a href="/pitch" target="_blank" class="btn-subtle" title="新标签页全屏演示">
-                <span>独立全屏</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-              </a>
               <button class="modal-close" data-close-modal title="关闭">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
@@ -420,7 +412,7 @@
                     <p>紧急降下中庭防火卷帘门 5 秒，阻断当前追捕通道，强制猎人绕远路，瞬间拉开 10 米以上安全身位。</p>
                   </div>
                   <div class="guide-cmd-item">
-                    <span class="cmd-tag">3 广播查房</span>
+                    <span class="cmd-tag">3 广播诱敌</span>
                     <strong>声东击西</strong>
                     <p>假借医院内线广播诱导猎人转向远处病房核查 6 秒。必须在脱离直视后使用才能成功引开。</p>
                   </div>
@@ -446,21 +438,15 @@
               </div>
             </div>
 
-            <!-- 底部链接条 -->
+            <!-- 底部说明条 -->
             <div class="guide-footer-bar">
-              <span class="guide-hint">如需了解游戏立项背景、经济系统与商业路演架构：</span>
-              <button type="button" id="guide-switch-to-deck" class="guide-deck-btn">切换查看项目路演幻灯片 (PPT) →</button>
+              <span class="guide-hint">魔搭社区（ModelScope）第三期「AI 造游戏」开发者创作大赛参赛作品</span>
             </div>
-          </div>
-
-          <!-- 路演 PPT 页面 (按需加载，指向 /pitch，支持独立全屏) -->
-          <div id="pitch-deck-pane" class="pitch-frame-wrapper" hidden>
-            <iframe id="pitch-iframe" src="about:blank" title="查房路演 PPT 播放器" loading="lazy"></iframe>
           </div>
         </div>
       </div>
 
-      <noscript>《查房》需要启用 JavaScript 才能游玩。</noscript>
+      <noscript>《极限逃生：45秒》需要启用 JavaScript 才能游玩。</noscript>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

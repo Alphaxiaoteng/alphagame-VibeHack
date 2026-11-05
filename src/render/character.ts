@@ -26,14 +26,27 @@ export class HumanRig {
 
   constructor(warden: boolean) {
     this.isWarden = warden;
-    const skin = new THREE.MeshStandardMaterial({ color: warden ? 0xc8aa90 : 0xd6b395, roughness: 0.78 });
-    const hair = new THREE.MeshStandardMaterial({ color: warden ? 0x18181b : 0x272522, roughness: 0.95 });
+    // 皮肤材质高级调色：守卫采用阴冷青灰暗沉肤质，玩家采用虚弱苍白冷调，彻底告别单调塑料感
+    const skin = new THREE.MeshStandardMaterial({
+      color: warden ? 0xa89688 : 0xd8c2b0,
+      roughness: warden ? 0.72 : 0.76,
+      metalness: 0.05
+    });
+    const hair = new THREE.MeshStandardMaterial({ color: warden ? 0x141416 : 0x22201e, roughness: 0.95 });
     // 守卫/查房值班员采用深色战术医院制服（墨黑长裤 + 深碳灰勤务上衣）
-    const shirt = clothMaterial(warden ? 0x1e293b : 0x2f7d70);
+    const shirt = clothMaterial(warden ? 0x18202c : 0x2c6b63);
     this.shirt = shirt;
-    const pants = clothMaterial(warden ? 0x0f172a : 0x22363b);
-    const shoes = new THREE.MeshStandardMaterial({ color: warden ? 0x111827 : 0x202623, roughness: 0.5, metalness: 0.2 });
-    const badge = new THREE.MeshStandardMaterial({ color: warden ? 0x38bdf8 : 0xe9ece1, roughness: 0.4, metalness: 0.6 });
+    const pants = clothMaterial(warden ? 0x0c111c : 0x1e3034);
+    const shoes = new THREE.MeshStandardMaterial({ color: warden ? 0x0f172a : 0x1e2422, roughness: 0.45, metalness: 0.3 });
+    const badge = new THREE.MeshStandardMaterial({ color: warden ? 0x38bdf8 : 0xe9ece1, roughness: 0.3, metalness: 0.7 });
+    // 战术反光带材质（高反射金属微表面，受光照耀闪现微冷银光）
+    const reflectiveMat = new THREE.MeshStandardMaterial({
+      color: 0xe2e8f0,
+      emissive: warden ? 0x38bdf8 : 0x10b981,
+      emissiveIntensity: 0.15,
+      roughness: 0.2,
+      metalness: 0.85
+    });
     // 解剖模型本地朝 +z，转为游戏统一的 +x 朝向。
     this.body.rotation.y = Math.PI / 2;
     this.group.add(this.body);
@@ -44,21 +57,66 @@ export class HumanRig {
     const pelvis = mesh(new RoundedBoxGeometry(0.285, 0.19, 0.19, 2, 0.045), pants, 0, 0.875, 0);
     this.body.add(pelvis);
     this.body.add(mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.092, 12), skin, 0, 1.423, 0));
-    const head = mesh(new THREE.SphereGeometry(1, 20, 16), skin, 0, 1.575, 0.008);
+    // 极简艺术化头部与面罩设计（去除廉价突兀的假鼻子/球体耳朵，对标《Inside》与《小小梦魇》暗黑微恐极简审美）
+    const head = mesh(new THREE.SphereGeometry(1, 24, 18), skin, 0, 1.575, 0.008);
     head.scale.set(0.092, 0.123, 0.091);
     this.body.add(head);
-    const cap = mesh(new THREE.SphereGeometry(1, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.52), hair, 0, 1.593, 0);
+
+    // 头发 / 勤务帽
+    const cap = mesh(new THREE.SphereGeometry(1, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.52), hair, 0, 1.593, 0);
     cap.scale.set(0.094, 0.112, 0.095);
     this.body.add(cap);
-    const nose = mesh(new THREE.SphereGeometry(1, 10, 8), skin, 0, 1.568, 0.098);
-    nose.scale.set(0.02, 0.022, 0.027);
-    this.body.add(nose);
-    const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.65 });
-    for (const side of [-1, 1]) {
-      const ear = mesh(new THREE.SphereGeometry(1, 10, 8), skin, side * 0.092, 1.574, 0.005);
-      ear.scale.set(0.016, 0.03, 0.022); this.body.add(ear);
-      const eye = mesh(new THREE.SphereGeometry(0.0055, 8, 6), eyeMaterial, side * 0.038, 1.594, 0.084);
-      this.body.add(eye);
+
+    if (warden) {
+      // 巡查值班员：下压式深色勤务大檐帽 + 黑色勤务面罩 + 金属警徽
+      const brim = mesh(new RoundedBoxGeometry(0.17, 0.016, 0.08, 2, 0.004), hair, 0, 1.625, 0.065);
+      brim.rotation.x = 0.2;
+      this.body.add(brim);
+
+      const capBadgeMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.9, roughness: 0.2 });
+      const capBadge = mesh(new THREE.BoxGeometry(0.022, 0.02, 0.006), capBadgeMat, 0, 1.638, 0.088);
+      this.body.add(capBadge);
+
+      const wardenMaskMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.85 });
+      const mask = mesh(new RoundedBoxGeometry(0.11, 0.065, 0.06, 2, 0.01), wardenMaskMat, 0, 1.545, 0.065);
+      this.body.add(mask);
+
+      // 阴影深处微弱警惕的暗红巡查双眼
+      const eyeMat = new THREE.MeshStandardMaterial({
+        color: 0xff3b30,
+        emissive: 0xcc1111,
+        emissiveIntensity: 0.85,
+        roughness: 0.3
+      });
+      for (const side of [-1, 1]) {
+        const eye = mesh(new THREE.BoxGeometry(0.016, 0.006, 0.008), eyeMat, side * 0.034, 1.595, 0.082);
+        this.body.add(eye);
+      }
+
+      // 守卫战术双肩反光标识条
+      for (const side of [-1, 1]) {
+        const epaulet = mesh(new THREE.BoxGeometry(0.065, 0.012, 0.024), reflectiveMat, side * 0.155, 1.345, 0.01);
+        epaulet.rotation.z = side * -0.15;
+        this.body.add(epaulet);
+      }
+    } else {
+      // 潜行玩家：极简医用淡青雾面口罩，干净素雅，杜绝生硬五官拼装
+      const maskMat = new THREE.MeshStandardMaterial({ color: 0xdbeafe, roughness: 0.85 });
+      const mask = mesh(new RoundedBoxGeometry(0.105, 0.058, 0.055, 2, 0.01), maskMat, 0, 1.542, 0.062);
+      this.body.add(mask);
+
+      // 极简微深邃眼眸线（极具克制力与电影感）
+      const eyeMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5 });
+      for (const side of [-1, 1]) {
+        const eye = mesh(new THREE.BoxGeometry(0.014, 0.005, 0.006), eyeMat, side * 0.033, 1.592, 0.082);
+        this.body.add(eye);
+      }
+
+      // 玩家病号服领口滚边
+      const trimMat = new THREE.MeshStandardMaterial({ color: 0x1e4942, roughness: 0.7 });
+      const collar = mesh(new THREE.TorusGeometry(0.075, 0.008, 8, 16), trimMat, 0, 1.35, 0);
+      collar.rotation.x = Math.PI / 2;
+      this.body.add(collar);
     }
     const pocket = mesh(new RoundedBoxGeometry(0.075, 0.09, 0.014, 2, 0.004), shirt, -0.09, 1.21, 0.124);
     this.body.add(pocket);
@@ -111,6 +169,21 @@ export class HumanRig {
       flashlight.add(spotTarget);
       spot.target = spotTarget;
       this.flashlightSpot = spot;
+
+      // 战术体积光雾锥（Volumetric Light Cone 丁达尔效应微尘光柱）
+      const beamGeo = new THREE.ConeGeometry(1.2, 5.5, 18, 1, true);
+      beamGeo.translate(0, 2.75, 0);
+      const beamMat = new THREE.MeshBasicMaterial({
+        color: 0xfff6cf,
+        transparent: true,
+        opacity: 0.06,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide
+      });
+      const beamMesh = new THREE.Mesh(beamGeo, beamMat);
+      beamMesh.position.set(0, 0.12, 0);
+      flashlight.add(beamMesh);
 
       rightElbow.add(flashlight);
     }

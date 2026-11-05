@@ -1,5 +1,5 @@
 /**
- * 《查房》(Rounds) 3D 模型加载器与尺寸归一化装配服务
+ * 《极限逃生：45秒》(ESCAPE: 45 SECONDS) 3D 模型加载器与尺寸归一化装配服务
  * 使用 Three.js GLTFLoader 异步加载真实 .glb 资产，自动归一化尺寸与对齐脚底中心
  */
 
@@ -46,11 +46,20 @@ export class ModelLoaderService {
     const rawGroup = await this.loadRaw(url);
     const cloned = rawGroup.clone(true);
 
-    // 重新开启材质与阴影
+    // 重新开启材质与阴影，并执行去油消光 PBR 校准
     cloned.traverse((node) => {
       if ((node as THREE.Mesh).isMesh) {
         node.castShadow = true;
         node.receiveShadow = true;
+        const mesh = node as THREE.Mesh;
+        if (mesh.material) {
+          const mat = mesh.material as THREE.MeshStandardMaterial;
+          if (mat.roughness !== undefined) {
+            mat.roughness = Math.max(mat.roughness, 0.68); // 去除强反光塑料白斑
+            mat.metalness = Math.min(mat.metalness ?? 0.1, 0.25);
+            mat.envMapIntensity = 0.5;
+          }
+        }
       }
     });
 

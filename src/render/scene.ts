@@ -106,6 +106,9 @@ export class HospitalRenderer {
   private wardenIdleAction: THREE.AnimationAction | null = null;
   wardenAnimatedModel: THREE.Group | null = null;
   wardenFlashlightSpot: THREE.SpotLight | null = null;
+  private wardenVolumetricBeam: THREE.Mesh | null = null;
+  private flickerClock = 0;
+  private nextFlickerTime = 4.5;
 
   /** 异步加载并接入 Tripo 生成的带骨骼与 walk/idle 动画的高精 3D 值班员 */
   private async loadAnimatedWarden(): Promise<void> {
@@ -164,6 +167,23 @@ export class HospitalRenderer {
       this.guardRig.add(spotTarget);
       spot.target = spotTarget;
       this.wardenFlashlightSpot = spot;
+
+      // 战术体积光锥（Tripo 3D 值班员真实丁达尔可见光束）
+      const beamGeo = new THREE.ConeGeometry(1.5, 7.5, 20, 1, true);
+      beamGeo.rotateZ(-Math.PI / 2);
+      beamGeo.translate(3.75, 0, 0);
+      const beamMat = new THREE.MeshBasicMaterial({
+        color: 0xfff5cf,
+        transparent: true,
+        opacity: 0.055,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide
+      });
+      const beamMesh = new THREE.Mesh(beamGeo, beamMat);
+      beamMesh.position.set(0.2, 1.15, 0.1);
+      this.guardRig.add(beamMesh);
+      this.wardenVolumetricBeam = beamMesh;
 
       // 挂载至 guardRig 并隐藏兜底的程序化身体
       this.wardenAnimatedModel = model;
@@ -408,6 +428,17 @@ export class HospitalRenderer {
       this.previousPlayer = this.previousGuard = null;
       this.routeUpdate = -1;
     }
+    // 真实医院老旧日光灯偶发低频微闪（微恐沉浸体验）
+    this.flickerClock += dt;
+    if (this.flickerClock > this.nextFlickerTime) {
+      const flickerFactor = Math.sin(this.flickerClock * 42) > 0 ? 0.72 : 1.0;
+      this.ambient.intensity = (0.38 + this.lightsBlend * 0.45) * flickerFactor;
+      if (this.flickerClock > this.nextFlickerTime + 0.09) {
+        this.flickerClock = 0;
+        this.nextFlickerTime = 4.8 + Math.random() * 5.2;
+        this.ambient.intensity = 0.38 + this.lightsBlend * 0.45;
+      }
+    }
     const playerMeters = this.previousPlayer ? distance(this.previousPlayer, game.player.position) : 0;
     const guardMeters = this.previousGuard ? distance(this.previousGuard, game.guard.position) : 0;
     this.playerHuman.animate(playerMeters < 1 ? playerMeters : 0, dt, game.player.sprinting);
@@ -424,6 +455,16 @@ export class HospitalRenderer {
         this.wardenWalkAction.weight += (targetWalk - this.wardenWalkAction.weight) * Math.min(1, dt * 10);
         this.wardenIdleAction.weight += (targetIdle - this.wardenIdleAction.weight) * Math.min(1, dt * 10);
         this.wardenWalkAction.timeScale = isChase ? 1.4 : 1.0;
+      }
+      if (this.wardenVolumetricBeam) {
+        if (isChase) {
+          const shake = Math.sin(game.elapsed * 24) * 0.035;
+          this.wardenVolumetricBeam.rotation.y = shake;
+          this.wardenVolumetricBeam.rotation.z = shake * 0.5;
+        } else {
+          this.wardenVolumetricBeam.rotation.y = 0;
+          this.wardenVolumetricBeam.rotation.z = 0;
+        }
       }
     } else {
       this.guardHuman.animate(guardMeters < 1 ? guardMeters : 0, dt, game.guard.mode === 'chase');

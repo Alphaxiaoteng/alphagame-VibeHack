@@ -701,7 +701,7 @@ body[data-phase="start"] .briefing {
 body[data-phase="paused"] .briefing::before,
 body[data-phase="won"] .briefing::before,
 body[data-phase="lost"] .briefing::before {
-  content: "住院部临床档案 · 夜间查房记录单";
+  content: "住院部临床档案 · 夜间巡查记录单";
   display: block;
   padding-bottom: 10px;
   margin-bottom: 16px;
@@ -724,10 +724,10 @@ body[data-phase="start"] .hero-title-lockup {
 }
 .hero-logo-cn {
   font-family: var(--font-serif);
-  font-size: clamp(78px, 8.2vw, 106px);
+  font-size: clamp(52px, 5.4vw, 74px);
   font-weight: 900;
-  letter-spacing: 0.34em;
-  line-height: 1.0;
+  letter-spacing: 0.12em;
+  line-height: 1.05;
   background: linear-gradient(180deg, #f7f3eb 0%, #dfd6c5 58%, #9e917c 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

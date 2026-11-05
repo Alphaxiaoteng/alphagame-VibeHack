@@ -60,11 +60,19 @@ export class GltfCharacterRig {
       const scale = size.y > 0 ? 1.75 / size.y : 1;
       model.scale.setScalar(scale);
 
-      // 阴影投射与材质优化
+      // 阴影投射与去油消光 PBR 材质优化
       model.traverse(node => {
         if (node instanceof THREE.Mesh) {
           node.castShadow = true;
           node.receiveShadow = true;
+          if (node.material) {
+            const m = node.material as THREE.MeshStandardMaterial;
+            if (m.roughness !== undefined) {
+              m.roughness = Math.max(m.roughness, 0.72);
+              m.metalness = Math.min(m.metalness ?? 0.1, 0.15);
+              m.envMapIntensity = 0.5;
+            }
+          }
         }
       });
 

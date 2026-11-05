@@ -13,6 +13,11 @@ export class FirstPersonCamera {
   /** 约 60° 上下限，防止翻转。 */
   private static readonly PITCH_LIMIT = 1.05;
   private readonly look = new THREE.Vector3();
+  /** 生理呼吸与脚步重心起伏（Headbob & Breathing Sway 沉浸感核心） */
+  private bobStep = 0;
+  private bobY = 0;
+  private bobX = 0;
+  private idleClock = 0;
 
   resize(width: number, height: number): void {
     this.camera.aspect = width / Math.max(1, height);
@@ -22,6 +27,10 @@ export class FirstPersonCamera {
   reset(): void {
     this.yaw = 0;
     this.pitch = 0;
+    this.bobStep = 0;
+    this.bobY = 0;
+    this.bobX = 0;
+    this.idleClock = 0;
   }
 
   rotate(delta: number): void {
@@ -33,12 +42,30 @@ export class FirstPersonCamera {
     this.pitch = Math.max(-FirstPersonCamera.PITCH_LIMIT, Math.min(FirstPersonCamera.PITCH_LIMIT, this.pitch + delta));
   }
 
-  update(player: Point): void {
-    this.camera.position.set(player.x, 1.58, player.z);
+  update(player: Point, dt = 0.016, isMoving = false, isSprinting = false): void {
+    if (isMoving) {
+      const freq = isSprinting ? 14.0 : 9.2;
+      const ampY = isSprinting ? 0.032 : 0.016;
+      const ampX = isSprinting ? 0.016 : 0.008;
+      this.bobStep += dt * freq;
+      this.bobY = Math.sin(this.bobStep) * ampY;
+      this.bobX = Math.cos(this.bobStep * 0.5) * ampX;
+    } else {
+      // 静止时微弱胸腔呼吸起伏（真实生命体征）
+      this.idleClock += dt * 2.0;
+      this.bobY += (Math.sin(this.idleClock) * 0.004 - this.bobY) * Math.min(1, dt * 5);
+      this.bobX += (0 - this.bobX) * Math.min(1, dt * 5);
+    }
+
+    const eyeY = 1.58 + this.bobY;
+    const eyeX = player.x + Math.cos(this.yaw + Math.PI / 2) * this.bobX;
+    const eyeZ = player.z + Math.sin(this.yaw + Math.PI / 2) * this.bobX;
+
+    this.camera.position.set(eyeX, eyeY, eyeZ);
     this.look.set(
-      player.x + Math.cos(this.yaw) * Math.cos(this.pitch),
-      1.58 + Math.sin(this.pitch),
-      player.z + Math.sin(this.yaw) * Math.cos(this.pitch),
+      eyeX + Math.cos(this.yaw) * Math.cos(this.pitch),
+      eyeY + Math.sin(this.pitch),
+      eyeZ + Math.sin(this.yaw) * Math.cos(this.pitch),
     );
     this.camera.lookAt(this.look);
   }

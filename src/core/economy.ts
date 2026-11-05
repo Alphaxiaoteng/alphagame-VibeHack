@@ -153,7 +153,7 @@ export const COMMAND_COPY: Record<ThemeId, Record<CommandId, CommandCopy>> = {
   hospital: {
     lights: { name: '全院开灯', cost: '你也更容易暴露' },
     lockdown: { name: '封锁走廊', cost: '你也需要绕路' },
-    broadcast: { name: '广播查房', cost: '先躲开视线才能引开' },
+    broadcast: { name: '广播诱敌', cost: '先躲开视线才能引开' },
   },
   shinobi: {
     lights: { name: '照明符', cost: '你也更容易暴露' },

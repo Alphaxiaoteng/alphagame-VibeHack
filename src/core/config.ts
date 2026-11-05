@@ -1,4 +1,4 @@
-/** 权威玩法常量。若与 docs/GAME_DESIGN.md 不一致，以《查房_AI开发说明.md》为准。 */
+/** 权威玩法常量。若与 docs/GAME_DESIGN.md 不一致，以游戏设计文档为准。 */
 
 export interface Point {
   x: number;
@@ -109,10 +109,14 @@ export const EXIT_APPROACH: Point = { x: 26.5, z: 11 };
  *  西北角 (4.5,4.5) 与出生点同走廊；病房 01 门口 (4.5,11) 距出生点仅 8.5m 且是
  *  西南走廊的必经中间点——两者都会造成“开局即死”路线，均不入池。开局另有 6 秒目视宽限兜底。 */
 export const PATROL_WAYPOINTS: readonly Point[] = [
-  { x: 25, z: 4.5 },
-  { x: 25.5, z: 17.5 },
-  { x: 4.5, z: 17.5 },
-  { x: 25.5, z: 11 },
+  { x: 25, z: 4.5 },       // 0: 东北走廊主拐角（保持向后兼容）
+  { x: 25.5, z: 17.5 },    // 1: 东南走廊主拐角（保持向后兼容）
+  { x: 4.5, z: 17.5 },     // 2: 西南走廊主拐角（保持向后兼容）
+  { x: 25.5, z: 11 },      // 3: 东走廊安全门/病房02门口（保持向后兼容）
+  { x: 18, z: 4.5 },       // 4: 北走廊东段推床前通道
+  { x: 15, z: 17.5 },      // 5: 南走廊防火门B中枢
+  { x: 20, z: 16.5 },      // 6: 南走廊药房前哨
+  { x: 4.5, z: 11 },       // 7: 西走廊病房01外侧通道
 ];
 
 /**
@@ -211,7 +215,7 @@ export const COMMAND_IDS: readonly CommandId[] = ['lights', 'lockdown', 'broadca
 export const COMMANDS = {
   lights: { key: '1', name: '全院开灯', duration: 6, cost: '你也更容易暴露' },
   lockdown: { key: '2', name: '封锁走廊', duration: 5, cost: '你也要绕路' },
-  broadcast: { key: '3', name: '广播查房', duration: 6, cost: '之后搜查更严' },
+  broadcast: { key: '3', name: '广播诱敌', duration: 6, cost: '之后搜查更严' },
 } as const;
 export const COMMAND_COOLDOWN = 12;
 export const WARD_TARGETS: readonly Point[] = [{ x: 4.5, z: 11 }, { x: 25.5, z: 11 }];

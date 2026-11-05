@@ -1,10 +1,16 @@
-# 《查房：极限逃生》(ROUNDS)
+---
+sdk: static
+app_file: index.html
+pinned: false
+---
 
-**3D 微恐解谜潜行逃生游戏** ｜ VibeHacks #06 参赛开源作品
+# 《极限逃生：45秒》(ESCAPE: 45 SECONDS)
 
-![《查房：极限逃生》主视觉海报](docs/screenshots/compressed/05_key_art_poster.jpg)
+**3D 微恐解谜潜行逃生游戏** ｜ 魔搭社区（ModelScope）第三期「AI 造游戏」大赛参赛作品
 
-在主电源中断的住院部夜间走廊，躲避值班员的手电筒视锥与听觉追捕。合理利用「全区开灯」「封锁通道」「广播诱敌」三项战术技能改写走廊环境，坚持存活 **45 秒** 直至东侧安全门通电解锁，抵达门前逃出医院。
+![《极限逃生：45秒》主视觉海报](docs/screenshots/compressed/05_key_art_poster.jpg)
+
+在主电源中断的夜间走廊，躲避巡查者的手电筒视锥与听觉追捕。合理利用「全区开灯」「封锁通道」「广播诱敌」三项战术技能改写走廊环境，坚持存活 **45 秒** 直至东侧安全门通电解锁，抵达门前逃出病区。
 
 ---
 
@@ -14,9 +20,9 @@
 
 | 访问入口 | 链接地址 | 访问与操作说明 |
 | :--- | :--- | :--- |
-| **GitHub Pages 独立体验** | [https://alphaxiaoteng.github.io/alphagame-VibeHack/](https://alphaxiaoteng.github.io/alphagame-VibeHack/) | 官方 GitHub.io 全球 CDN 加速，电脑端与手机端免安装点开即玩 |
-| **公网路演大屏 PPT** | [https://alphaxiaoteng.github.io/alphagame-VibeHack/pitch.html](https://alphaxiaoteng.github.io/alphagame-VibeHack/pitch.html) | 支持键盘 `←` / `→` / `Space` 翻页、`F` 键全屏、图片点击高清放大 |
-| **GitHub 开源仓库** | [https://github.com/Alphaxiaoteng/alphagame-VibeHack](https://github.com/Alphaxiaoteng/alphagame-VibeHack) | 完整源码、3D 角色与病房资产、纯逻辑状态机与自动化测试 |
+| **魔搭创空间 (ModelScope Studio)** | [https://modelscope.cn/active/AIstudio](https://modelscope.cn/active/AIstudio) | 免安装秒开，基于纯静态 WebGL 容器秒级加载 |
+| **在线体验独立入口** | [https://alphaxiaoteng.github.io/escape-45s/](https://alphaxiaoteng.github.io/escape-45s/) | 全球 CDN 边缘加速，电脑端与手机端点开即玩 |
+| **开源代码仓库** | [https://github.com/Alphaxiaoteng/escape-45s](https://github.com/Alphaxiaoteng/escape-45s) | 完整源码、3D 角色与道具资产、纯逻辑状态机与 120 项自动化测试 |
 
 ### 手机端扫码即玩与交流
 
@@ -66,7 +72,7 @@
 
 | Waffo 收银台 · 特许核销单实机界面 | 商业架构与变现设计 |
 | :---: | :--- |
-| ![Waffo 收银台实机](docs/screenshots/compressed/08_waffo_checkout.jpg) | **1. 关卡买断与微交易设计**<br/>- **见习关卡（30s）**：免费试玩，降低冷启动门槛，作为社交裂变漏斗。<br/>- **高危病区与外观（\$0.99）**：单章微额买断制，提供更强 AI 压迫感关卡与专属病房护士装扮。<br/><br/>**2. 沉浸式收银台（零外部重定向）**<br/>- 针对游戏微恐背景定制「复古病历特许单」UI，保持游戏代入感。<br/>- 在线实机收银台直连：[https://alphaxiaoteng.github.io/alphagame-VibeHack/demo-checkout.html](https://alphaxiaoteng.github.io/alphagame-VibeHack/demo-checkout.html)<br/><br/>**3. 工业级服务端工程规范（`src/server/waffo.ts`）**<br/>- **会话签发**：基于 `@waffo/pancake-ts` 调用 Checkout Session API。<br/>- **异步回调核销**：独立接收 `/api/waffo/webhook`，严格校验 `X-Waffo-Signature` 请求头防重放攻击。<br/>- **账本一致性**：自动更新本地持久化账本（Ledger），经 Vitest 单元测试全覆盖。 |
+| ![Waffo 收银台实机](docs/screenshots/compressed/08_waffo_checkout.jpg) | **1. 关卡买断与微交易设计**<br/>- **见习关卡（30s）**：免费试玩，降低冷启动门槛，作为社交裂变漏斗。<br/>- **高危病区与外观（\$0.99）**：单章微额买断制，提供更强 AI 压迫感关卡与专属病房护士装扮。<br/><br/>**2. 沉浸式收银台（零外部重定向）**<br/>- 针对游戏微恐背景定制「复古病历特许单」UI，保持游戏代入感。<br/>- 在线实机收银台直连：[https://alphaxiaoteng.github.io/escape-45s/demo-checkout.html](https://alphaxiaoteng.github.io/escape-45s/demo-checkout.html)<br/><br/>**3. 工业级服务端工程规范（`src/server/waffo.ts`）**<br/>- **会话签发**：基于 `@waffo/pancake-ts` 调用 Checkout Session API。<br/>- **异步回调核销**：独立接收 `/api/waffo/webhook`，严格校验 `X-Waffo-Signature` 请求头防重放攻击。<br/>- **账本一致性**：自动更新本地持久化账本（Ledger），经 Vitest 单元测试全覆盖。 |
 
 ---
 

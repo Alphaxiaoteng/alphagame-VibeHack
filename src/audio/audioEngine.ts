@@ -471,7 +471,7 @@ export class AudioEngine {
     this.voice('lockdown');
   }
 
-  /** 广播查房技能专属：医院微恐失谐提示音 + 病房内线呼叫通报 */
+  /** 广播诱敌技能专属：医院微恐失谐提示音 + 病房内线呼叫通报 */
   broadcastSound(): void {
     this.paDing();
     this.voice('ward');
@@ -535,9 +535,11 @@ export class AudioEngine {
       if (!played) this.tone(game.player.sprinting ? 118 : 100, 0.075, 0.075);
       this.nextPlayerStep = game.elapsed + (game.player.sprinting ? 0.24 : 0.40);
     }
-    if (game.player.sprinting && game.player.stamina < 18 && game.elapsed >= this.nextBreathStep) {
-      this.playSfx('breathGasp', 0.55);
-      this.nextBreathStep = game.elapsed + 5.5;
+    // 疲劳与濒死急促喘息（体力 < 25 进入重喘，体力 < 5 窒息深吸，提升生理代入真实感）
+    if (game.player.stamina < 25 && game.elapsed >= this.nextBreathStep) {
+      const breathVol = game.player.stamina < 8 ? 0.82 : 0.58;
+      this.playSfx('breathGasp', breathVol, 0.95 + Math.random() * 0.1);
+      this.nextBreathStep = game.elapsed + (game.player.stamina < 8 ? 2.8 : 4.5);
     }
     const gap = distance(game.player.position, game.guard.position);
     // 脚步与追逐心跳/钥匙声均按秒表排程，不靠逐帧计数。

@@ -275,7 +275,7 @@ function boot(): void {
     if (badge) badge.textContent = preset.name;
     const overlayCopy = document.getElementById('overlay-copy');
     if (overlayCopy && game.phase === 'start') {
-      overlayCopy.innerHTML = `一款<strong class="highlight-timer">心理微恐潜行</strong> 逃生3D 游戏<span class="briefing-subcopy">改写灯光、封门与广播，躲开夜间查房，存活 ${preset.timeLimit} 秒走出医院。</span>`;
+      overlayCopy.innerHTML = `一款<strong class="highlight-timer">心理微恐潜行</strong> 逃生3D 游戏<span class="briefing-subcopy">改写灯光、封门与广播，躲开夜间巡查追捕，存活 ${preset.timeLimit} 秒走出医院。</span>`;
     }
     const introSub = document.querySelector('.intro-sub');
     if (introSub) {
@@ -1323,7 +1323,8 @@ function boot(): void {
       follow.yaw += Math.sin(t) * 0.0003;
       follow.pitch = Math.sin(t * 1.3) * 0.006;
     }
-    follow.update(game.player.position);
+    const isMoving = game.phase === 'playing' && (input.forward !== 0 || input.right !== 0);
+    follow.update(game.player.position, dt, isMoving, game.player.sprinting);
     // 奔跑时镜头轻微扩张（72°→78°）、停下回落：给出速度感，又不破坏明亮克制的观感。
     const sprintingForFov = game.phase === 'playing' && input.sprint && (input.forward !== 0 || input.right !== 0);
     const targetFov = sprintingForFov ? 78 : 72;

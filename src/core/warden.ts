@@ -49,6 +49,8 @@ export class PatrolGuard {
     this.facing = 0;
     this.path = [];
     this.revision = -1;
+    this.ambushRemaining = 0;
+    this.ambushCooldown = 8.0;
     this.replan(map);
   }
 
@@ -78,10 +80,11 @@ export class PatrolGuard {
    *  穿过玩家出生点，造成开局即死；绕行成本由值班员自己承担（寻路自动走南走廊）。 */
   private pickNextWaypoint(map: HospitalMap, playerPos?: Point): number {
     const candidates: number[] = [];
+    const minDistance = this.openingProtection ? 8.5 : 5.0;
     for (let index = 0; index < PATROL_WAYPOINTS.length; index += 1) {
       if (index === this.targetIndex) continue;
-      // 强制跨区：与当前路点直线距离 ≥10 m，防止相邻路点来回震荡（否则值班员在一个角打转）。
-      if (distance(PATROL_WAYPOINTS[index], PATROL_WAYPOINTS[this.targetIndex]) < 10) continue;
+      // 动态跨区过滤：保护期防大跨越撞脸，保护期后支持支路与枢纽网格化巡查，彻底拒绝死走一条路
+      if (distance(PATROL_WAYPOINTS[index], PATROL_WAYPOINTS[this.targetIndex]) < minDistance) continue;
       if (map.findPath(this.position, PATROL_WAYPOINTS[index], GUARD_RADIUS).length === 0) continue;
       // 开局保护窗内才避开出生点走廊：窗口关闭后恢复全图巡逻，否则值班员被锁死在东南半区。
       if (this.openingProtection) {
@@ -131,12 +134,34 @@ export class PatrolGuard {
   pauseRemaining = 0;
   private pauseFacing = 0;
   private pauseClock = 0;
+  /** 回马枪突袭回头检查：走廊巡查时偶尔停步反身扫视，专治侥幸尾随 */
+  private ambushRemaining = 0;
+  private ambushFacing = 0;
+  private ambushClock = 0;
+  private ambushCooldown = 8.0;
   /** 开局保护窗：true 时选路避开出生点走廊（防“上来就死”）；10 秒后由 Warden 关闭，恢复全图巡逻。 */
   openingProtection = true;
 
   movePatrol(dt: number, map: HospitalMap, playerPos?: Point, opts?: { openingProtected?: boolean }): void {
     if (map.revision !== this.revision) this.replan(map);
     if (opts?.openingProtected !== undefined) this.openingProtection = opts.openingProtected;
+    // 回马枪突袭回头判定
+    if (this.ambushRemaining > 0) {
+      this.ambushRemaining = Math.max(0, this.ambushRemaining - dt);
+      this.ambushClock += dt;
+      this.facing = this.ambushFacing + Math.sin(this.ambushClock * 2.5) * 0.45;
+      return;
+    }
+    this.ambushCooldown -= dt;
+    if (this.ambushCooldown <= 0 && !this.openingProtection && this.path.length > 0 && this.tuning.huntBias > 0) {
+      this.ambushCooldown = 9.0 + this.rand() * 7.0;
+      if (this.rand() < 0.22) {
+        this.ambushRemaining = 1.0;
+        this.ambushFacing = this.facing + Math.PI;
+        this.ambushClock = 0;
+        return;
+      }
+    }
     // 路点停留：按档位站立张望（朝向缓摆），期间不移动；被追逐时 Warden 不会进入本方法。
     if (this.pauseRemaining > 0) {
       this.pauseRemaining = Math.max(0, this.pauseRemaining - dt);
@@ -217,6 +242,10 @@ export class Warden extends PatrolGuard {
   /** 搜索到位后的扫视计时与基准朝向：左右张望而不是单向转圈。 */
   private searchScan = 0;
   private searchBaseFacing = 0;
+  /** 追踪优化与多分支状态：速度预判拦截、狂暴加速与盲区二级搜索 */
+  private prevPlayerPos: Point | null = null;
+  private chaseDuration = 0;
+  private secondarySearched = false;
 
   constructor(map: HospitalMap, readonly perception = true, rand: () => number = Math.random) {
     super(map, rand);
@@ -235,6 +264,9 @@ export class Warden extends PatrolGuard {
     this.pathTimer = 0;
     this.stuckTime = 0;
     this.searchScan = 0;
+    this.prevPlayerPos = null;
+    this.chaseDuration = 0;
+    this.secondarySearched = false;
     super.reset(map);
     this.routeRevision = map.revision;
   }
@@ -295,8 +327,29 @@ export class Warden extends PatrolGuard {
     if (!this.mode || this.mode === 'patrol' || !this.targetPoint) {
       super.replan(map);
     } else {
-      const goal = map.closestWalkable(this.targetPoint, GUARD_RADIUS);
+      let navTarget = this.targetPoint;
+      // 动态预判截击算法：若玩家正在移动，沿运动矢量计算走廊前置拦截点
+      if (this.mode === 'chase' && this.prevPlayerPos) {
+        const vx = this.targetPoint.x - this.prevPlayerPos.x;
+        const vz = this.targetPoint.z - this.prevPlayerPos.z;
+        const vLen = Math.hypot(vx, vz);
+        if (vLen > 0.04) {
+          const leadDist = Math.min(2.4, distance(this.position, this.targetPoint) * 0.38);
+          const candidate = {
+            x: this.targetPoint.x + (vx / vLen) * leadDist,
+            z: this.targetPoint.z + (vz / vLen) * leadDist,
+          };
+          if (map.canOccupy(candidate, GUARD_RADIUS)) {
+            navTarget = candidate;
+          }
+        }
+      }
+      const goal = map.closestWalkable(navTarget, GUARD_RADIUS);
       this.path = goal ? map.findPath(this.position, goal, GUARD_RADIUS) : [];
+      if (this.path.length === 0 && navTarget !== this.targetPoint) {
+        const fallback = map.closestWalkable(this.targetPoint, GUARD_RADIUS);
+        this.path = fallback ? map.findPath(this.position, fallback, GUARD_RADIUS) : [];
+      }
     }
     this.pathTimer = 0;
     this.routeRevision = map.revision;
@@ -324,17 +377,23 @@ export class Warden extends PatrolGuard {
         this.pendingAlertTarget = null;
       }
       this.mode = 'chase';
+      this.chaseDuration += dt;
+      this.secondarySearched = false;
+      this.prevPlayerPos = this.lastKnownPoint ? { ...this.lastKnownPoint } : null;
       this.lastKnownPoint = { ...player.position };
       this.targetPoint = { ...player.position };
       if (changed || this.pathTimer >= 0.25) this.replan(map);
     } else if (this.broadcastTarget && !this.broadcastInterrupted && this.mode !== 'broadcast') {
       // 声源消失后恢复仍在进行的广播；只有直接目视能永久取消诱导。
       this.mode = 'broadcast';
+      this.chaseDuration = 0;
       this.targetPoint = { ...this.broadcastTarget };
       this.searchRemaining = 0;
       this.replan(map);
     } else if (this.mode === 'chase') {
       this.mode = 'search';
+      this.chaseDuration = 0;
+      this.secondarySearched = false;
       const target = this.pendingAlertTarget ?? this.lastKnownPoint ?? this.position;
       this.targetPoint = { ...target };
       this.searchRemaining = this.alertSearch ? this.tuning.alertSearchSeconds : this.tuning.searchSeconds;
@@ -348,7 +407,9 @@ export class Warden extends PatrolGuard {
     }
 
     const before = { ...this.position };
-    let budget = (this.mode === 'chase' ? this.tuning.chaseSpeed : this.patrolSpeed) * dt;
+    // 动态狂暴追击速度（随追捕时间线性提升至最高 +16%），增强追捕压迫感
+    const chaseBoost = this.mode === 'chase' ? (1 + Math.min(0.16, this.chaseDuration * 0.035)) : 1.0;
+    let budget = (this.mode === 'chase' ? this.tuning.chaseSpeed * chaseBoost : this.patrolSpeed) * dt;
     for (let hop = 0; budget > 1e-6 && this.path.length > 0 && hop < 12; hop++) {
       const point = this.path[0];
       const gap = distance(this.position, point);
@@ -369,6 +430,16 @@ export class Warden extends PatrolGuard {
     else this.stuckTime = 0;
     if (this.stuckTime > 0.6) { this.replan(map); this.stuckTime = 0; }
     if (this.mode === 'search' && this.path.length === 0) {
+      // 智能次级盲区搜查：若到达第一盲点后时间尚充裕，探查前方延伸死角或邻近房门
+      if (!this.secondarySearched && this.searchRemaining > 1.4) {
+        this.secondarySearched = true;
+        const probeX = this.position.x + Math.cos(this.facing) * 2.2;
+        const probeZ = this.position.z + Math.sin(this.facing) * 2.2;
+        const probeTarget = map.closestWalkable({ x: probeX, z: probeZ }, GUARD_RADIUS);
+        if (probeTarget && distance(this.position, probeTarget) > 0.8) {
+          this.path = map.findPath(this.position, probeTarget, GUARD_RADIUS);
+        }
+      }
       this.searchRemaining = Math.max(0, this.searchRemaining - dt);
       if (this.searchScan === 0) this.searchBaseFacing = this.facing;
       this.searchScan += dt;
@@ -379,6 +450,7 @@ export class Warden extends PatrolGuard {
         this.mode = 'patrol';
         this.targetPoint = null;
         this.lastKnownPoint = null;
+        this.secondarySearched = false;
         this.targetIndex = PATROL_WAYPOINTS.reduce((best, point, index) => distance(this.position, point) < distance(this.position, PATROL_WAYPOINTS[best]) ? index : best, 0);
         this.replan(map);
       }

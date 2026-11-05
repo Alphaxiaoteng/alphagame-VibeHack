@@ -60,12 +60,48 @@ export function tileMaterial(): THREE.MeshStandardMaterial {
     grain(ctx, 256, 3600, 88);
   });
 
+  // 物理凹凸 Bump 贴图：刻画地砖接缝微凹陷与水磨石微骨料立体起伏
+  const bump = paintTexture(256, (ctx) => {
+    ctx.fillStyle = '#808080';
+    ctx.fillRect(0, 0, 256, 256);
+    for (let z = 0; z < 2; z++) {
+      for (let x = 0; x < 2; x++) {
+        ctx.strokeStyle = '#202020'; // 接缝深凹
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x * 128, z * 128, 128, 128);
+        ctx.strokeStyle = '#a0a0a0'; // 接缝微倒角高光
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x * 128 + 1, z * 128 + 1, 126, 126);
+      }
+    }
+    grain(ctx, 256, 2000, 142);
+  }, false);
+
+  // 粗糙度 Roughness 贴图：接缝消光不反光（亮白），瓷砖中央打蜡区柔和微倒影（暗灰）
+  const roughness = paintTexture(256, (ctx) => {
+    ctx.fillStyle = '#555555';
+    ctx.fillRect(0, 0, 256, 256);
+    for (let z = 0; z < 2; z++) {
+      for (let x = 0; x < 2; x++) {
+        ctx.strokeStyle = '#cccccc'; // 接缝高粗糙度
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(x * 128, z * 128, 128, 128);
+      }
+    }
+    grain(ctx, 256, 1800, 99);
+  }, false);
+
   albedo.repeat.set(30 / 1.2, 22 / 1.2);
+  bump.repeat.set(30 / 1.2, 22 / 1.2);
+  roughness.repeat.set(30 / 1.2, 22 / 1.2);
 
   return new THREE.MeshStandardMaterial({
     map: albedo,
-    roughness: 0.26,
-    metalness: 0.14
+    bumpMap: bump,
+    bumpScale: 0.016,
+    roughnessMap: roughness,
+    roughness: 0.44, // 医疗水磨石消光蜡面，结合贴图实现非均匀微表面散射
+    metalness: 0.06
   });
 }
 
@@ -93,9 +129,20 @@ export function plasterMaterial(): THREE.MeshStandardMaterial {
     grain(ctx, 256, 3200, 312);
   });
 
+  // 墙面乳胶漆微粒与防撞压条立体 Bump
+  const bump = paintTexture(256, (ctx) => {
+    ctx.fillStyle = '#808080';
+    ctx.fillRect(0, 0, 256, 256);
+    ctx.fillStyle = '#b0b0b0'; // 防撞条凸起
+    ctx.fillRect(0, 167, 256, 3);
+    grain(ctx, 256, 2800, 415);
+  }, false);
+
   return new THREE.MeshStandardMaterial({
     map: texture,
-    roughness: 0.78
+    bumpMap: bump,
+    bumpScale: 0.012,
+    roughness: 0.84 // 消光抗菌防撞墙板，沉稳压暗
   });
 }
 
